@@ -1,0 +1,58 @@
+{% extends "pageone/base.html" %}
+{% block body %}
+<!-- header-wrap -->
+<div id="header-wrap">
+    <header>
+      {% block header %}
+        <hgroup style="background: url({{ STATIC_URL }}{{ theme_info.logo|default:"pageone/images/logo.png" }} ) no-repeat;"/>
+            <h1><a href="/">PageOne</a></h1>
+            <h3>Just Another Styleshout Template</h3>
+        </hgroup>
+        <nav>
+	  {% block header-nav %}
+          <ul>
+	    {% include 'pageone/navigation.html' %}
+          </ul>
+	    {% endblock %}
+        </nav>
+	{% endblock %}
+    </header>
+</div>
+<!-- content-wrap -->
+
+  {% if messages %}
+<section class="messages">
+  <ul>
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+  </ul>
+</section>
+  {% endif %}
+
+<div class="content-wrap">
+  {% block content %}
+    <section>
+      <h1>Welcome.</h1>
+      <div class="intro-box">
+      <p class="intro">Your instalation of PageOne template with <strong>Synergy Template System</strong> seemes to be 
+	working poperly. Now it's time to add some cool content here... Build Your views, feed them with content and 
+	have a fun!
+      </p>
+      <p class="intro">
+	To have some custom conten loaded here, you have to override the block 'content' to put here something usefull.
+      </p>
+      </div>
+  {% endblock %}
+</div>
+
+<!-- footer -->
+<footer>
+    <div class="footer-content">
+        <ul class="footer-menu">
+	  {% include 'pageone/navigation.html' %}
+        </ul>
+        <p class="footer-text">Copyright 2011 PUMS. &nbsp;&nbsp;&nbsp; Software desing and development by <a href="http://codelab.pl"><strong>CodeLAB</strong></a> - visual theme is based on <a href="http://www.styleshout.com/">Styleshout</a> PageOne template.</p>
+    </div>
+</footer>
+{% endblock %}

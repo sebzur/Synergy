@@ -1,0 +1,132 @@
+/* ----------------------------- */
+/*  HTML Elements styles         */
+/* ----------------------------- */
+@import "tables.css";
+@import "commons.css";
+@import "forms.css";
+@import "navigation.css";
+
+img{
+  border: 0;
+}
+
+body{
+    background-color: #FDFDFD;
+    border-top: 5px solid #F2EBDC;
+    font-size: 78%;
+    font-family:  'Lucida Grande','Lucida Sans Unicode',Geneva,Verdana,Sans-Serif;
+    color:#666666;
+}
+
+
+a:link, a:visited {
+    color:#0788C3;
+    text-decoration:none;
+    outline-color:-moz-use-text-color;
+    outline-style:none;
+    outline-width:medium;
+    text-decoration:none;
+}
+
+
+h1, h2, h3, h4 {
+    color:#555555;
+}
+
+
+/* ----------------------------- */
+/*  Node title                   */
+/* ----------------------------- */
+h1.title{
+    border-bottom:1px solid #F2EBDC; 
+    font-size:1.5em;
+    font-weight:bold;
+}
+
+/* ----------------------------- */
+/*  A header section             */
+/* ----------------------------- */
+#header{
+}
+
+#logo-title{
+}
+
+img#logo-image{
+    border-right: 1px solid #E5E4E3;
+}
+
+#sitename{    
+    color: #8C4303;
+}
+
+#siteslogan{    
+    color: #D5D4D3;
+    margin-left: 5px;
+}
+
+
+/* ----------------------------- */
+/*  User navigation links        */
+/* ----------------------------- */
+
+#user-links{
+    font-weight: bold;
+}
+
+#user-links a{
+    font:bold 11px 'Trebuchet MS',Arial,Sans-Serif;
+    margin:0;
+    padding: 5px 5px 5px;
+    text-transform:uppercase;
+    text-decoration: none;
+/*    border-right:1px solid #F2EBDC; */
+    border-bottom:1px solid #F2EBDC; 
+    color: #8C4303;
+}
+
+#user-links a:hover{
+    color: #2B332E;
+    text-decoration: none;
+}
+
+#user-links a:hover{
+    text-decoration: none;
+}
+
+#user-links ul{
+    color: #C64126;
+    list-style: none;
+}
+
+
+/* ----------------------------- */
+/*  Sidebar                      */
+/* ----------------------------- */
+
+
+#sidebar{
+    border-left: 1px solid #F2EBDC; 
+}
+
+#sidebar ul{
+    padding-left: 20px;
+}
+
+#sidebar-inner{
+    padding-top: 10px;
+    padding-left: 20px;
+/*    border:1px solid #C0CCC4; */
+
+}
+
+
+/* ----------------------------- */
+/*  FOOTER                       */
+/* ----------------------------- */
+
+#footer{
+    margin-top:20px;
+    border-top: 1px solid #F2EBDC;
+    color: #4D4D4D;
+}

@@ -1,0 +1,58 @@
+{% extends "pageone/body.html" %}
+{% load url from future %}
+
+{% block content %}
+      <!-- Styles -->
+      <section id="styles" class="clearfix">
+
+	<h1>Login form</h1>
+
+
+        <div class="primary" style="margin-top: 40px;">
+	  {% if form.errors %}
+	  <p style="color: red; font-weight: bold;">Nazwa użytkownika i podane hasło nie pasują wzajemnie. Prosimy spróbować ponownie.</p>
+	  {% endif %}
+
+	<p >
+	  To login to the system You have to provide Your username and the password.  Please note, that the authorization
+	  system is <strong>case sensitive</strong>!
+	</p>
+
+
+  <form method="post" action="{% url 'django.contrib.auth.views.login' %}" class="inpage">
+    {% csrf_token %}
+
+    {{ form }}
+
+    <p>
+      <input class="button" type="submit" value="Login" />
+    </p>
+  
+    <input type="hidden" name="next" value="{{ next }}" />
+  </form>
+
+
+
+
+	</div>
+
+        <aside>
+	  <h2>New account</h2>
+	  <p>
+	    To register the new account You have to 
+	    <a href="/accounts/register"><strong>fill in the registration form</strong></a> and provide
+	    required data.
+	  </p>
+
+	  <h2>In case of problems..</h2>
+	  <p>
+	    Please do not hesitate to contact our IT group. The addresses are:
+	    <ul>
+	      <li>J. Kowal (j.kowalski@gmail.com)</li>
+	      <li>A. Mayer (a.mayer@gmail.com)</li>
+	    </ul>
+        </aside>
+
+      </section>
+{% endblock %}
+

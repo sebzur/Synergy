@@ -1,0 +1,22 @@
+{% extends "pageone/body.html" %}
+{% load synergy_region %}
+
+{% block content %}
+    {% region content %}
+      <!-- Styles -->
+      <section id="styles" class="clearfix">
+	{% region title %}
+        <h1>{{ title|default:"Styles." }}</h1>
+	{% endregion %}
+	{% region body %}
+	{% include 'pageone/default_node_content.html' %}
+	{% endregion %}
+            <aside>
+	      {% region sidebar %}
+	      {% include 'pageone/default_node_sidebar.html' %}
+	      {% endregion %}
+            </aside>
+
+      </section>
+{% endregion %}
+{% endblock %}

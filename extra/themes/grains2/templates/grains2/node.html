@@ -1,0 +1,15 @@
+{% extends "grains2/main.html" %}
+{% load synergy_region %}
+{% block content %}
+<div id="content-header">    
+  {% region title %}
+  <h1 class="title">{{ title|default:"No title provided" }}</h1>
+  {% endregion %}
+</div> <!-- /#content-header -->
+<div id="content-area" class="clearfix">
+  {% region body %}
+  No region template for region 'content' is provided and the theme is not using any context variables.
+  You have to provide the region template!
+  {% endregion %}
+</div>
+{% endblock %}

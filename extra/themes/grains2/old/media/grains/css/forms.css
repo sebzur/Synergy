@@ -1,0 +1,26 @@
+.form-field{
+    margin: 3px 0px 3px 0px;
+    padding: 5px;
+}
+
+.required label:after {
+    content: "*";
+    font-size: 9px;
+    padding-left: 4px;
+    color: #FF0000;
+}
+
+.field-error{
+    border-top: 1px solid red;
+    border-bottom: 1px solid red;
+    background-color: #FFE3E0;
+}
+
+ul.errorlist{
+    background-color: #F2ABAA;
+    color: #000000;
+}
+
+ul.errorlist li{
+    padding:3px 0px 3px 0px; 
+}
