@@ -89,7 +89,11 @@ class HistoricalRecords(object):
         Returns a dictionary of fields that will be added to the historical
         record model, in addition to the ones returned by copy_fields below.
         """
-        rel_nm = '_%s_history' % model._meta.object_name.lower()
+        # Related name of the objects are builded with the app_label and model name.
+        # The original Marty Alchin version was using only the model name, and with
+        # the larger projects that the same model name was used in multiple apps
+        # this was giving some clashing problems
+        rel_nm = '_%s_%s_history' % (model._meta.app_label, model._meta.object_name.lower())
         return {
             'history_id': models.AutoField(primary_key=True),
             'history_date': models.DateTimeField(default=datetime.datetime.now),
