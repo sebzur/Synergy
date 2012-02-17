@@ -12,7 +12,7 @@ class CurrentUserMiddleware(object):
                 setattr(instance, fiel.name, user)
 
 
-    def proces_request(self, request):
+    def process_request(self, request):
         # ------------------------------
         # This option is disabled now, we should give some 
         # settings option to configure which headers should 
@@ -23,7 +23,6 @@ class CurrentUserMiddleware(object):
         #            # This request shouldn't update anythiong,
         #            # so no signal handler should be attached
         #            return 
-
         if hasattr(request, 'user') and request.user.is_authenticated():
             user = request.user
         else:
@@ -40,8 +39,8 @@ class CurrentUserMiddleware(object):
                 setattr(instance, field.name, user)
 
 
-    def proces_response(self, request, response):
-        signals.pore_save.disconnect(dispatch_uid=request)
+    def process_response(self, request, response):
+        signals.pre_save.disconnect(dispatch_uid=request)
         return response
 
 record_current_user = decorator_from_middleware(CurrentUserMiddleware)
