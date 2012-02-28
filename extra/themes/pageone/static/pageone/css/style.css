@@ -96,7 +96,7 @@ p.intro { font-size: 18px; }
 
 /* links */
 a:link, a:visited {
-    color: #285935;
+/*    color: #285935; */
     text-decoration: none;
     outline: 0;
 }
