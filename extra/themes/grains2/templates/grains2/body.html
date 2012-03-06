@@ -6,11 +6,9 @@
       <div id="header">
 	<div id="header-inner" class="clearfix">  
 	  <div id="logo-title">
-	    <a href="/">
-	      <img src="{{ LOGO_URL }}" alt="pyoss logo" id="logo-image"/>
+	    <a href="/" style="background: url({{ STATIC_URL }}{{ theme_info.logo|default:"pageone/images/logo.png" }} ) no-repeat;"/>
 	    </a>
-	    <span id="sitename">{% block sitename %}{{ SITENAME|safe }}{% endblock %}</span>
-	    <span id="siteslogan"{% block siteslogan %}{% endblock %}</span>
+	    <span id="sitename">{{ theme_info.site_name|default:"<strong>Code</strong>LAB software" }}</span>
 	  </div> <!-- /#logo-title -->	
 	  <div id="user-links">	  
 	    <ul>

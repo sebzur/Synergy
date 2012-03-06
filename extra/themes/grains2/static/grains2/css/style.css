@@ -12,7 +12,8 @@ img{
 
 body{
     background-color: #FDFDFD;
-    border-top: 5px solid #F2EBDC;
+    border-top: 2px solid #EAEAEA;
+    border-bottom: 2px solid #EAEAEA;
     font-size: 78%;
     font-family:  'Lucida Grande','Lucida Sans Unicode',Geneva,Verdana,Sans-Serif;
     color:#666666;
@@ -30,7 +31,7 @@ a:link, a:visited {
 
 
 h1, h2, h3, h4 {
-    color:#555555;
+    color: #555555;
 }
 
 
@@ -47,6 +48,7 @@ h1.title{
 /*  A header section             */
 /* ----------------------------- */
 #header{
+    background-color: #EDEDED;
 }
 
 #logo-title{
@@ -57,7 +59,7 @@ img#logo-image{
 }
 
 #sitename{    
-    color: #8C4303;
+    color: #555555;
 }
 
 #siteslogan{    
@@ -82,7 +84,7 @@ img#logo-image{
     text-decoration: none;
 /*    border-right:1px solid #F2EBDC; */
     border-bottom:1px solid #F2EBDC; 
-    color: #8C4303;
+    color: #2B332E;
 }
 
 #user-links a:hover{

@@ -1,5 +1,6 @@
 from django import template
 from django.template.loader import render_to_string
+from django.conf import settings
 
 register = template.Library()
 
@@ -31,6 +32,8 @@ class RegionNode(template.Node):
          if context.get('region_info'):
               for tpl in context.get('region_info').get_template_names(self.region_name, postfix):
                    try:
+                        if settings.DEBUG:
+                             print tpl
                         return render_to_string(tpl, context)
                    except template.TemplateDoesNotExist:
                         continue

@@ -19,7 +19,10 @@ class LoadPluginNode(template.Node):
 
     def render(self, context):
         try:
+            print 'Loading', self.plugin_name
             return render_to_string('%s/load_plugin.html' % self.plugin_name, {})
         except template.VariableDoesNotExist:
             return ''
+        except Exception, error:
+            print error
 
