@@ -10,13 +10,15 @@ img{
   border: 0;
 }
 
+
 body{
+    background: url("graphics/page_bg.png") repeat scroll 0 0 #EBEBEB;
     background-color: #FDFDFD;
     border-top: 2px solid #EAEAEA;
     border-bottom: 2px solid #EAEAEA;
     font-size: 78%;
     font-family:  'Lucida Grande','Lucida Sans Unicode',Geneva,Verdana,Sans-Serif;
-    color:#666666;
+    color: #333333;
 }
 
 
@@ -31,7 +33,7 @@ a:link, a:visited {
 
 
 h1, h2, h3, h4 {
-    color: #555555;
+    color: #333333;
 }
 
 
@@ -39,7 +41,6 @@ h1, h2, h3, h4 {
 /*  Node title                   */
 /* ----------------------------- */
 h1.title{
-    border-bottom:1px solid #F2EBDC; 
     font-size:1.5em;
     font-weight:bold;
 }
@@ -48,7 +49,9 @@ h1.title{
 /*  A header section             */
 /* ----------------------------- */
 #header{
-    background-color: #EDEDED;
+    background: none repeat scroll 0 0 #1C1C1C;
+    border-bottom: 2px solid  #262626;
+    border-top: 2px solid  #262626;
 }
 
 #logo-title{
@@ -59,14 +62,8 @@ img#logo-image{
 }
 
 #sitename{    
-    color: #555555;
+    color: #EDEDED;
 }
-
-#siteslogan{    
-    color: #D5D4D3;
-    margin-left: 5px;
-}
-
 
 /* ----------------------------- */
 /*  User navigation links        */
@@ -79,12 +76,12 @@ img#logo-image{
 #user-links a{
     font:bold 11px 'Trebuchet MS',Arial,Sans-Serif;
     margin:0;
-    padding: 5px 5px 5px;
+    padding-right: 5px;
     text-transform:uppercase;
     text-decoration: none;
-/*    border-right:1px solid #F2EBDC; */
-    border-bottom:1px solid #F2EBDC; 
-    color: #2B332E;
+    border-right:1px solid #C4302B; 
+    color: #EDEDED;
+    
 }
 
 #user-links a:hover{
@@ -108,10 +105,11 @@ img#logo-image{
 
 
 #sidebar{
-    border-left: 1px solid #F2EBDC; 
+    border-left: 1px solid #F3F3F3;
 }
 
-#sidebar ul{
+#sidebar ul
+{
     padding-left: 20px;
 }
 
@@ -131,4 +129,102 @@ img#logo-image{
     margin-top:20px;
     border-top: 1px solid #F2EBDC;
     color: #4D4D4D;
+    padding: 0 30px 0 30px;
+}
+
+
+/* -------------------------------- */
+/* The idea of horizontal-rule is borrowed */
+/* from YouTube CSS                  */
+/* -------------------------------- */
+
+
+.horizontal-rule span {
+    border: medium none;
+    display: block;
+    height: 80px;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    top: -80px;
+    z-index: -100;
+}
+
+.horizontal-rule {
+    border-bottom: 1px solid #FFFFFF;
+    border-top: 1px solid #DDDDDD;
+    height: 0;
+    margin: 0;
+    position: relative;
+    z-index: -99;
+}
+
+.horizontal-rule .first {
+    background: -moz-radial-gradient(right bottom , rgba(0, 0, 0, 0.06), transparent 80px) repeat scroll 0 0 transparent;
+    left: 0;
+    width: 80px;
+}
+
+.horizontal-rule .second {
+    background: -moz-radial-gradient(left bottom , rgba(0, 0, 0, 0.06), transparent 80px) repeat scroll 0 0 transparent;
+    right: 0;
+    width: 80px;
+}
+
+.horizontal-rule .third {
+    background: -moz-linear-gradient(center bottom , rgba(0, 0, 0, 0.06), transparent 80px) repeat scroll 0 0 transparent;
+    margin-left: 80px;
+    margin-right: 80px;
+    position: relative;
+    top: -80px;
+}
+
+
+
+
+.vertical-rule {
+    position: relative;
+}
+
+.vertical-rule-main, .vertical-rule-corner-top, .vertical-rule-corner-bottom{
+    border: 0 none;
+    width: 30px;
+    z-index: -1;
+}
+.vertical-rule-main, .vertical-rule-corner-top, .vertical-rule-corner-bottom {
+    left: 0;
+}
+
+.vertical-rule-main{
+    bottom: 30px;
+    height: auto;
+    position: absolute;
+    top: 30px;
+}
+
+.vertical-rule-main{
+    background: -moz-linear-gradient(left center , rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.08) 1px, rgba(0, 0, 0, 0.08) 1px, transparent 30px, transparent 100%) repeat scroll 0 0 transparent;
+}
+
+
+.vertical-rule-corner-top, .vertical-rule-corner-bottom {
+    height: 30px;
+    position: absolute;
+}
+
+.vertical-rule-corner-top{
+    top: 0;
+}
+
+.vertical-rule-corner-top{
+    background: -moz-radial-gradient(left bottom , circle , rgba(0, 0, 0, 0.08), transparent 30px, transparent 100%) repeat scroll 0 0 transparent;
+}
+
+
+.vertical-rule-corner-bottom{
+    bottom: 0;
+}
+
+.vertical-rule-corner-bottom{
+    background: -moz-radial-gradient(left top , circle , rgba(0, 0, 0, 0.08), transparent 30px, transparent 100%) repeat scroll 0 0 transparent;
 }

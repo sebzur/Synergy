@@ -28,7 +28,7 @@ class RegionNode(template.Node):
               postfix = region_postfixes[self.region_name]
          else:
               postfix = ''
-
+    
          if context.get('region_info'):
               for tpl in context.get('region_info').get_template_names(self.region_name, postfix):
                    try:

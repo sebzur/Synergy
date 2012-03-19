@@ -3,7 +3,7 @@ body {
 }
 
 #page{
-    /* Don't allow the browser to make the site unreadable. */
+    /* Don't allow the browsber to make the site unreadable. */
     min-width: 960px; 
 }
 
@@ -68,6 +68,22 @@ img#logo-image{
   clear: both;
   visibility: hidden;
 }
+
+
+.clearfix {
+    display: inline-block;
+}
+ 
+html[xmlns] .clearfix {
+    display: block;
+}
+ 
+* html .clearfix {
+    height: 1%;
+}
+
+/* End of clearfix */
+
 
 #main {
     overflow:hidden;

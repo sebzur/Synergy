@@ -13,11 +13,12 @@
 .field-error{
     border-top: 1px solid red;
     border-bottom: 1px solid red;
-    background-color: #FFE3E0;
+    background-color: #C4302B;;
 }
 
 ul.errorlist{
-    background-color: #F2ABAA;
+    background-color: #FFE6E6;
+    border: 1px solid #C4302B;
     color: #000000;
 }
 
