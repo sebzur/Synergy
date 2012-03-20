@@ -9,27 +9,44 @@
     <link type="text/css" rel="stylesheet" media="all" href="{{ STATIC_URL }}/grains2/css/login.css" />
   </head>
 
-  <body>
-    <div id="header">
+  <body >
+      <div id="header"></div>
+      <div id="login-stripe">
+
+	<div id="login-form">
+	  <form method="post" action="{% url django.contrib.auth.views.login %}">
+	    {% csrf_token %}
+	    {{ form.username.label_tag }} {{ form.username }} <br />
+	    {{ form.password.label_tag }}  {{ form.password }} <br />
+	    <input type="hidden" name="next" value="{{ next }}" />
+	    <p>
+	      <input id="submit" type="submit" value="Login"  />
+	    </p>
+	  </form>
+	</div>
+	<div id="info">
+	  <h4>Formularz logowania</h4>
+
+	  {% if form.errors %}
+	  <p id="error-message">
+	    Nazwa użytkownika (login) oraz hasło nie pasują wzajemnnie
+	  </p>
+	  {% else %}
+
+
+	  <p style="margin-top: 10px;">
+	    Aby zalogować się do systemu należy wprowadzić dane autentykacyjne: <strong>nazwę użytkownika oraz hasło</strong>.
+	    Jeżeli nie posiadasz tych danych, skontaktuj się z administratorem systemu.
+	  </p>
+
+
+	  {% endif %}
+
+
+	</div>
+	<div style="clear:both;"></div>
+      </div>
     </div>
-    <div id="login-stripe">
-      <img src="{{ LOGIN_LOGO_URL }}" />
-      <form method="post" action="{% url django.contrib.auth.views.login %}">
-	{% csrf_token %}
-	{{ form.username.label_tag }} {{ form.username }} <br />
-	{{ form.password.label_tag }}  {{ form.password }} <br />
-	<input type="submit" value="Login"  />
-	<input type="hidden" name="next" value="{{ next }}" />
-      </form>
-    </div>
-    {% if form.errors %}
-    <div id="error-message">
-      <p>Nazwa użytkownika (login) oraz hasło nie pasują wzajemnie i nie pozwalają na zalogowanie. Prosimy spróbować ponownie.</p>
-    </div>
-    {% endif %}
-    <div id="info-text">
-    {{ INFOTEXT|safe }}
-    </dev>
   </body>
 </html>
 

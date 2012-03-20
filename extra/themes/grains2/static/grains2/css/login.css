@@ -13,10 +13,7 @@ body{
     /* Don't allow the browser to make the site unreadable. */
     min-width: 960px; 
     font-family:  'Lucida Grande','Lucida Sans Unicode',Geneva,Verdana,Sans-Serif;
-    background-image: url(graphics/body_bg.png);
-    background-color: #F2F1E8; /* kolor dosyć dokładnie dobrany do tła-obrazu */
-    background-position: top left; 
-    background-repeat: no-repeat;
+    background: url("graphics/page_bg.png") repeat scroll 0 0 #EBEBEB;
     margin:0px;
     padding:0px;
 }
@@ -24,8 +21,9 @@ body{
 
 /* na razie tylko jako spacer */
 #header{
-    height: 20px;
+    height: 200px;
 }
+
 
 #login-stripe{
   background-image: url(graphics/black_alpha_bg.png);
@@ -33,7 +31,7 @@ body{
   background-repeat: repeat-x;
   border-top: 2px solid #6B6B6A;
   border-bottom: 2px solid #6B6B6A;
-  padding:20px 50px 20px 20px;
+  padding:20px 50px 20px 100px;
 }
 
 #login-stripe img{
@@ -50,16 +48,34 @@ body{
 #login-stripe input{
     color: #494127;
     padding-left: 5px;
-    border: 2px solid white;
+    border: 2px solid #E0E0E0;
     margin-bottom:10px;
-    background-color: #F1F3CA;
+    background-color: #EDEDED;
+    width: 97%;
 }
+
+
+#login-stripe input#submit{
+    color: black;
+    padding-left: 5px;
+    border: 2px solid #E0E0E0;
+    margin-bottom:10px;
+    background-color: #EDEDED;
+    maring-left: 5px;
+    float: right;
+    font-weight: bold;
+    width: 40%;
+}
+
+
 
 #error-message{
     margin-top: 20px;
-    text-align: center;
     font-weight: bold;
-    color: #BE851A;
+    border: 2px solid #E0E0E0;
+    background-color: #EDEDED;
+    padding: 10px;
+
 }
 
 
@@ -83,4 +99,19 @@ body{
     padding: 0 60px 0 60px;
     text-align: justify;
     color: #6B6B6A;
+}
+
+
+#login-form{
+    float: left;
+    border-right: 1px solid #E9E9E9;
+    padding-right: 50px;
+    width: 20%;
+}
+
+#info{
+    float: left;
+    padding: 10px 0 10px 10px;
+    margin-left: 40px;
+    width: 60%;
 }

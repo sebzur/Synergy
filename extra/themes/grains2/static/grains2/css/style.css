@@ -132,6 +132,21 @@ img#logo-image{
     padding: 0 30px 0 30px;
 }
 
+#footer img{
+    width: 200px;
+    padding: 10px 20px 0px 10px;
+    border-right: 1px solid white;
+    float: left;
+    maring-right: 20px;
+}
+
+#footer-menu{
+    margin-left: 20px;
+    padding: 10px;
+    float: left;
+    color: #8e8e8e;
+}
+
 
 /* -------------------------------- */
 /* The idea of horizontal-rule is borrowed */

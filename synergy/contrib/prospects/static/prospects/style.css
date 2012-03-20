@@ -1,0 +1,21 @@
+#prospect-form-table th{
+    padding: 5px;
+    font-weight: bold;
+}
+
+table#prospect-form-table select, table#prospect-form-table input {
+    width: 100%;
+}
+
+input#prospect-form-submit{
+    font-weight: bold;
+    padding: 5px;
+    width: 20%;
+}
+
+#results{
+    margin-top: 30px;
+}
+
+
+
