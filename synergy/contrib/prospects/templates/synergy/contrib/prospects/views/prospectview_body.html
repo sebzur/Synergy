@@ -9,7 +9,12 @@
       {% endfor %}
     </thead>
   <tr>
-  {% for field in form %}
+    {% for field in form %}
+    <td>{{ field.errors }}</td>
+    {% endfor %}
+  </tr>
+  <tr>
+    {% for field in form %}
   <td>{{ field }}</td>
   {% endfor %}
   </tr>    
