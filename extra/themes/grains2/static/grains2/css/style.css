@@ -5,6 +5,7 @@
 @import "commons.css";
 @import "forms.css";
 @import "navigation.css";
+@import "horizontal.css";
 
 img{
   border: 0;
@@ -146,54 +147,6 @@ img#logo-image{
     float: left;
     color: #8e8e8e;
 }
-
-
-/* -------------------------------- */
-/* The idea of horizontal-rule is borrowed */
-/* from YouTube CSS                  */
-/* -------------------------------- */
-
-
-.horizontal-rule span {
-    border: medium none;
-    display: block;
-    height: 80px;
-    margin: 0;
-    padding: 0;
-    position: absolute;
-    top: -80px;
-    z-index: -100;
-}
-
-.horizontal-rule {
-    border-bottom: 1px solid #FFFFFF;
-    border-top: 1px solid #DDDDDD;
-    height: 0;
-    margin: 0;
-    position: relative;
-    z-index: -99;
-}
-
-.horizontal-rule .first {
-    background: -moz-radial-gradient(right bottom , rgba(0, 0, 0, 0.06), transparent 80px) repeat scroll 0 0 transparent;
-    left: 0;
-    width: 80px;
-}
-
-.horizontal-rule .second {
-    background: -moz-radial-gradient(left bottom , rgba(0, 0, 0, 0.06), transparent 80px) repeat scroll 0 0 transparent;
-    right: 0;
-    width: 80px;
-}
-
-.horizontal-rule .third {
-    background: -moz-linear-gradient(center bottom , rgba(0, 0, 0, 0.06), transparent 80px) repeat scroll 0 0 transparent;
-    margin-left: 80px;
-    margin-right: 80px;
-    position: relative;
-    top: -80px;
-}
-
 
 
 

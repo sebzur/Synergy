@@ -1,3 +1,5 @@
+@import "horizontal.css";
+
 /* wyzerowanie ustawien domyslnych */
 div,span,table,form,ul,li,td,ol,tr,p,h1,h2,h3,h4,h5,a{
     padding:0px;
@@ -29,8 +31,6 @@ body{
   background-image: url(graphics/black_alpha_bg.png);
   background-position: top center; 
   background-repeat: repeat-x;
-  border-top: 2px solid #6B6B6A;
-  border-bottom: 2px solid #6B6B6A;
   padding:20px 50px 20px 100px;
 }
 
@@ -115,3 +115,6 @@ body{
     margin-left: 40px;
     width: 60%;
 }
+
+
+
