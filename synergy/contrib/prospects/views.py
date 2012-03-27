@@ -9,7 +9,16 @@ from django.core.urlresolvers import reverse
 
 from synergy.contrib.prospects.forms import prospectform_factory
 
+
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import login_required
+
 class ProspectView(RegionViewMixin, FormView):
+
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(ProspectView, self).dispatch(*args, **kwargs)
 
     def get_prospect(self):
         return get_model('prospects', 'Prospect').objects.get(pk=self.kwargs.get('pk'))
