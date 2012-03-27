@@ -1,0 +1,51 @@
+{% extends "epapyrus_skin/base.html" %}
+{% load synergy_region %} 
+{% load markup %}
+{% block body %}
+<div id="all_wrapper">
+    <div id="up_stripe"></div>
+    <div id="header" class="width_wrapper">
+            <h1> epapyrus </h1>
+            <p> <em> write &amp; share your tech and science ideas </em></p>
+    </div>
+    
+    <div id="navigation" class="width_wrapper">
+    {% block main_menu %} 
+       {% include 'epapyrus_skin/default_menu.html' %}
+    {% endblock %}    
+   </div>
+   
+     
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrapper" class="width_wrapper clear">
+      <div id="main_content">
+      {% block content %}  
+        
+        {% region content %}
+           {% include 'epapyrus_skin/default_node.html' %}
+        {% endregion %}
+      {% endblock%}
+        
+      </div>
+      <!-- Sidebar section -->
+        <div id="sidebar">
+       {% block sidebar %}
+        {% region sidebar %}
+             {% include 'epapyrus_skin/default_sidebar.html' %}
+        {% endregion %}     
+       {% endblock %}     
+        </div>
+       <div class="clear"></div>
+    </div>
+    
+    <!-- Footer section-->
+ 
+    <div id="footer" class="width_wrapper clear">
+    {% block footer %}
+      {% include 'epapyrus_skin/default_footer.html' %}
+    {% endblock %}
+    </div>
+    
+</div>
+
+{% endblock %}

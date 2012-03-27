@@ -1,0 +1,77 @@
+html, body, table, div, ul, ol, li, h1, h2, h3, p, img
+{
+  margin:0px;
+  border:0px;
+  padding:0px;
+}
+
+html
+{
+    font-size:16px;    
+    font-family: Arial, Helvetica, "Liberation Sans", "Nimbus Sans L", "Garuda", "Free Sans";  
+    width:100%;
+}
+
+#all_wrapper
+{
+  width:100%;    
+}
+
+#up_stripe
+{
+  height:3px;
+}
+
+
+/* class  for all page elements  except top stripe */
+.width_wrapper
+{
+  width:1000px;
+  margin-left:auto;
+  margin-right:auto;
+  padding-left:30px;
+}
+
+#navigation > ul
+{
+    list-style:none;
+}
+
+#navigation > ul > li
+{
+    float:left;
+    padding:15px 22px 15px 0px; 
+}
+
+.admin_menu
+{
+    float:right;
+}
+
+
+/* usefull class */
+.clear
+{
+    clear:both;
+}
+
+#main_content
+{
+   width:68%;
+   float:left;
+   padding: 60px 10px 20px 10px;
+ 
+}
+
+#sidebar
+{
+    margin-left:76%;
+    margin-right:20px;
+    padding-top:60px;
+}
+
+#footer
+{
+    margin-top:20px;
+    padding-top:20px;
+}

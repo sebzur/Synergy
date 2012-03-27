@@ -1,0 +1,29 @@
+{% load synergy_region %}
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html> 
+  <head>
+    <title>{% block pagetitle %}{{ page_title|default:"epapyrus" }}{% endblock %}</title>  
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="robots" content="none, noarchive">
+    <meta name="description" content="{{ page_content|default:'epapyrus - write and share your tech and science ideas' }}">
+    {% block prehead %}
+    {# ------------ EXTRA PRE-HEAD CONTENT --------------- #}
+    {% endblock %} 
+    {# ------------ CSS --------------- #}
+     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}epapyrus/css/code.css">
+     
+     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}epapyrus/css/layout.css">
+     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}epapyrus/css/epapyrus_style.css">
+     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}epapyrus/css/default_style.css">
+     
+     
+    {% block posthead %}
+    {% region posthead %}
+    {% endregion %}
+       {# ------------ EXTRA POST-HEAD CONTENT --------------- #}
+    {% endblock %} 
+  </head>
+  <body>  
+    {% block body %}{% endblock %}
+  </body>
+</html>
