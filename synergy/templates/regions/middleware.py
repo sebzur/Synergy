@@ -8,6 +8,7 @@ class RegionInfoMiddleware(object):
     def process_view(self, request, view_func, view_args, view_kwargs):
         if RegionViewMixin._registry.has_key(view_func.__name__):
             request.region_info = RegionInfo(request, view_func, view_args, view_kwargs )
+           
     
 class RegionInfo(object):
     def __init__(self, request, view_func, view_args, view_kwargs):
@@ -36,7 +37,6 @@ class RegionInfo(object):
          '{region_name}[_postfix]',]                           -- all views
          
         """
-
         region_template_name =  "%s" % region + '_%s' % postfix if postfix else region
         region_template_file = "%s.%s" % (region_template_name, self.get_template_format())
         path_elements = self.get_path_elements()
