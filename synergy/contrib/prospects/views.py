@@ -12,6 +12,7 @@ from synergy.contrib.prospects.forms import prospectform_factory
 
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
+import signals
 
 class ProspectView(RegionViewMixin, FormView):
 
@@ -26,6 +27,11 @@ class ProspectView(RegionViewMixin, FormView):
     def get_form_class(self):
         return prospectform_factory(self.get_prospect())
 
+    def get_form_kwargs(self, *args, **kwargs):
+        kwargs = super(ProspectView, self).get_form_kwargs(*args, **kwargs)
+        kwargs['request'] = self.request
+        return kwargs
+
     def get_context_data(self, *args, **kwargs):
         ctx = super(ProspectView, self).get_context_data(*args, **kwargs)
         ctx['title'] = u"%s" % self.get_prospect().verbose_name
@@ -33,7 +39,6 @@ class ProspectView(RegionViewMixin, FormView):
 
         results = []
         if kwargs['form'].is_valid():
-
             results = self.get_results(**dict(self._filter_empty(kwargs['form'].cleaned_data)))
         ctx['results'] = results
 
@@ -46,7 +51,9 @@ class ProspectView(RegionViewMixin, FormView):
 
     def get_results(self, *args, **kwargs):
         query = dict([(field.split('aspect_')[1], {'operator': 'exact', 'value': value}) for field, value in kwargs.iteritems()])
-        return self.get_prospect().filter(**query)
+        results = self.get_prospect().filter(**query)
+        signals.prospect_results_created.send(sender=self.get_prospect(), results=results, request=self.request)
+        return results
 
     def form_valid(self, form):
         return self.render_to_response(self.get_context_data(form=form))

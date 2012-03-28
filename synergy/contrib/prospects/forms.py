@@ -5,7 +5,7 @@ from django import forms
 from django.db.models import get_model
 from django.template.loader import render_to_string
 from django.utils.datastructures import SortedDict
-
+import signals
 
 def get_formfield_name(aspect):
     return "aspect_%d" % aspect.id
@@ -39,9 +39,10 @@ def get_fields(prospect):
 class ProspectBaseForm(forms.BaseForm):
     """ Dataset base form. """
 
-    def __init__(self, instance=None, *args, **kwargs):
+    def __init__(self, request, instance=None, *args, **kwargs):
         super(ProspectBaseForm, self).__init__(*args, **kwargs)
         self.instance = instance
+        signals.prospect_form_created.send(sender=instance, form=self, request=request)
 
     def _as_table(self):
         """ Overriden as_table method """

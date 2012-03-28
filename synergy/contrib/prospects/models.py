@@ -8,10 +8,13 @@ class Prospect(models.Model):
         return self.sources.all()
 
     def filter(self, **query):
+        return dict(self._filter(**query))
+
+    def _filter(self, **query):
         for source in self.get_sources():
             ids = source.aspects.values_list('id', flat=True)
             subquery = dict([(id, query.get(id)) for id in filter(lambda x: int(x) in ids, query.keys())])
-            yield source.filter(**subquery)
+            yield source, source.filter(**subquery)
             
 
 # In general source does not have to be a SQL database. One can think 
@@ -33,8 +36,6 @@ class Source(models.Model):
         #  aspect_2: {'operator': 'exact', 'value': value},
         #  ....
         #  }
-        
-        print 'Querying source', dict(self.build_query(query))
         return self.all().filter(**dict(self.build_query(query)))
 
     def build_query(self, query):

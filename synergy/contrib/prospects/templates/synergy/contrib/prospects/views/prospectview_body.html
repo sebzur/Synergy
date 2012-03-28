@@ -30,8 +30,8 @@
 <h3>Wyniki wyszukiwania</h3>
 {% if results %}
 
-{% for source_result in  results %}
-   {% for obj in source_result %}
+{% for source, results in results.iteritems %}
+   {% for obj in results %}
       {{ obj|teaser }}
    {% endfor %}
 {% endfor %}
