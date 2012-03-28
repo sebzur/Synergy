@@ -5,6 +5,7 @@ class ThemeInfo(object):
     def __init__(self, theme_settings):
         self.settings = theme_settings
         self.logo = self.settings.get('logo', None)
+        self.site_name = self.settings.get('site_name', None)
 
 theme_info_obj = ThemeInfo(getattr(settings, 'THEME_INFO', {}))
 
