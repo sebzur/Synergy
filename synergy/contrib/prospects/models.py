@@ -58,6 +58,7 @@ class Aspect(models.Model):
     # models introspecting
     attribute = models.SlugField(max_length=255, verbose_name="Machine name")
     source = models.ForeignKey('Source', related_name="aspects")
+    weight = models.IntegerField(verbose_name="Aspect weight", default=0)
 
     def get_field(self):
         return self.source.get_model()._meta.get_field(self.attribute)
@@ -111,6 +112,9 @@ class Aspect(models.Model):
 
     def to_python(self, value):
         return self.get_field().to_python(value)
+
+    class Meta:
+        ordering = ('weight', )
 
 class ProspectState(models.Model):
     prospect = models.ForeignKey('Prospect')
