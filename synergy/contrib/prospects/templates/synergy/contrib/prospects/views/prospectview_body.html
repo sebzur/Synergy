@@ -4,20 +4,27 @@
 
   <table id="prospect-form-table">
     <thead>
-      {% for field in form %}
+      {% for field in form.get_aspect_fields %}
       <th class="ui-state-default">{{ field.label_tag }}</th>
       {% endfor %}
     </thead>
   <tr>
-    {% for field in form %}
+    {% for field in form.get_aspect_fields %}
     <td>{{ field.errors }}</td>
     {% endfor %}
   </tr>
   <tr>
-    {% for field in form %}
+    {% for field in form.get_aspect_fields %}
   <td>{{ field }}</td>
   {% endfor %}
   </tr>    
+
+  <tr>
+    {% for field in form.get_lookup_fields %}
+  <td>{{ field }}</td>
+  {% endfor %}
+  </tr>    
+
   </table>
 
 {% csrf_token %}

@@ -7,12 +7,13 @@ from synergy.templates.regions.views import RegionViewMixin
 
 from django.core.urlresolvers import reverse
 
-from synergy.contrib.prospects.forms import prospectform_factory
+from synergy.contrib.prospects.forms import prospectform_factory, build_query
 
 
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 import signals
+
 
 class ProspectView(RegionViewMixin, FormView):
 
@@ -39,19 +40,13 @@ class ProspectView(RegionViewMixin, FormView):
 
         results = []
         if kwargs['form'].is_valid():
-            results = self.get_results(**dict(self._filter_empty(kwargs['form'].cleaned_data)))
+            results = self.get_results(**dict(kwargs['form'].cleaned_data))
         ctx['results'] = results
-
         return ctx
 
-    def _filter_empty(self, data):
-        for k, v in data.iteritems():
-            if v:
-                yield (k, v)
-
     def get_results(self, *args, **kwargs):
-        query = dict([(field.split('aspect_')[1], {'operator': 'exact', 'value': value}) for field, value in kwargs.iteritems()])
-        results = self.get_prospect().filter(**query)
+        
+        results = self.get_prospect().filter(**build_query(kwargs))
         signals.prospect_results_created.send(sender=self.get_prospect(), results=results, request=self.request)
         return results
 

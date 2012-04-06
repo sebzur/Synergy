@@ -8,6 +8,10 @@ class ProspectAdmin(admin.ModelAdmin):
 class SourceAdmin(admin.ModelAdmin):
     list_display = ('content_type', 'prospect')
 
+class AspectAdmin(admin.ModelAdmin):
+    list_display = ('attribute', 'source')
+
+
 admin.site.register(Prospect, ProspectAdmin)
 admin.site.register(Source, SourceAdmin)
-admin.site.register(Aspect)
+admin.site.register(Aspect, AspectAdmin)

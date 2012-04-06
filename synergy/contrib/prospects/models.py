@@ -4,6 +4,9 @@ class Prospect(models.Model):
     name = models.SlugField(verbose_name="Machine name")
     verbose_name = models.CharField(max_length=255, verbose_name="Verbose name")
 
+    def __unicode__(self):
+        return self.verbose_name
+
     def get_sources(self):
         return self.sources.all()
 
@@ -23,6 +26,10 @@ class Prospect(models.Model):
 class Source(models.Model):
     content_type = models.ForeignKey('contenttypes.ContentType')
     prospect = models.ForeignKey('Prospect', related_name='sources')
+
+
+    def __unicode__(self):
+        return "%s, %s" % (self.content_type, self.prospect)
 
     def all(self):
         return self.get_model().objects.all()
@@ -57,6 +64,50 @@ class Aspect(models.Model):
 
     def get_formfield(self):
         return self.get_field().formfield()        
+
+    def get_lookups(self):
+        """ Returns lookups valid for the field type defined by the aspect """
+        fields = {'AutoField':  None,
+                   'BigIntegerField': None,
+                   'BooleanField': None,
+                   'CharField': 'textual',
+                   'CommaSeparatedIntegerField': None,
+                   'DateField': None,
+                   'DateTimeField': 'continous',
+                   'DecimalField': None,
+                   'EmailField': None,
+                   'FileField': None,
+                   'FileField': None,
+                   'FieldFile': None,
+                   'FilePathField': None,
+                   'FloatField': None,
+                   'ImageField': None,
+                   'IntegerField': None,
+                   'IPAddressField': None,
+                   'GenericIPAddressField': None,
+                   'NullBooleanField': None,
+                   'PositiveIntegerField': None,
+                   'PositiveSmallIntegerField': None,
+                   'SlugField': None,
+                   'SmallIntegerField': None,
+                   'TextField': None,
+                   'TimeField': None,
+                   'URLField': None,
+                   'ForeignKey': 'relation',
+                   'ManyToManyField': None,
+                   'OneToOneField': None}
+
+        
+        lookups = {'textual': (('exact', 'Exact'), ('iexact', 'Case-insensitive exact'), ('contains', 'Contains'), ('icontains', 'Case-insensitive contains'), 
+                               ('startswith', 'Starts with'), ('istartswith', 'Case-insensitive starts with'), ('endswith', 'Ends with'),
+                               ('iendswith', 'Case-insensitve ends with')),
+                   'continous': (('exact', 'Exact'), ('gt', 'Greater then'), ('gte', 'Greater then or exact'), ('lt', 'Lower then'), ('lte', 'Lower then or exact')),
+                   'relation': (('exact', 'Exact'),),
+                   }
+
+        internal_type = fields.get(self.get_field().get_internal_type())
+        return lookups.get(internal_type, (('exact', 'Exact'),))
+        
 
     def to_python(self, value):
         return self.get_field().to_python(value)
