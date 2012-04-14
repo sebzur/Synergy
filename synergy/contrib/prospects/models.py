@@ -61,7 +61,15 @@ class Aspect(models.Model):
     weight = models.IntegerField(verbose_name="Aspect weight", default=0)
 
     def get_field(self):
-        return self.source.get_model()._meta.get_field(self.attribute)
+        chain = self.attribute.split('__')
+        model = self.source.get_model()
+        for i, attribute in enumerate(chain):
+            field = model._meta.get_field(attribute)
+            if chain[i+1:]:
+                if not field.rel:
+                    raise ValueError('Something went wrong. Field retrival for `%s` stoped at `%s` while it should represents relation' % (self.attribute, attribute))
+                model = field.rel.to
+        return field
 
     def get_formfield(self):
         return self.get_field().formfield()        
@@ -116,10 +124,17 @@ class Aspect(models.Model):
     class Meta:
         ordering = ('weight', )
 
-class ProspectState(models.Model):
-    prospect = models.ForeignKey('Prospect')
+#class ProspectState(models.Model):
+#    owner = models.ForeignKey('auth.User')
+#    prospect = models.ForeignKey('Prospect')
+#    name = models.SlugField(verbose_name="Machine name")
+#    verbose_name = models.CharField(max_length=255, verbose_name="Verbose name")
 
-class AspectValue(models.Model):
-    value = models.CharField(max_length=255)
-    aspect = models.ForeignKey('Aspect')
-    prospect = models.ForeignKey('Prospect')
+#class AspectValue(models.Model):
+#    aspect = models.ForeignKey('Aspect')
+#    prospect_state = models.ForeignKey('ProspectState')
+    
+#    value = models.CharField(max_length=255, verbose_name="A value entered")
+#    lookup = models.CharField(max_length=255, verbose_name="Lookup")
+    
+
