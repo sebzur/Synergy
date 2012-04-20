@@ -21,15 +21,23 @@ def split_field_name(field_name):
 def build_field_name(prefix, aspect_hash):
     return "%s__%s" % (prefix, aspect_hash)
 
-def get_fields(prospect):
+def get_fields(prospect, variant):
     fields = SortedDict()
     for source in prospect.sources.all():
-        for aspect in source.aspects.all():
+        excluded = get_model('prospects', 'aspectvalue').objects.filter(variant__name=variant, is_exposed=False).values_list('aspect', flat=True)
+        for aspect in source.aspects.exclude(id__in=excluded):
             aspect_hash = build_aspect_hash(aspect)
             aspect_field_name = build_field_name("aspect", aspect_hash)
             lookup_field_name = build_field_name("lookup", aspect_hash)
             fields[aspect_field_name] = aspect.get_formfield()
             fields[lookup_field_name] = forms.ChoiceField(choices=aspect.get_lookups())
+            try:
+                stored_variant = aspect.variant_values.get(variant__name=variant)
+                fields[aspect_field_name].initial = stored_variant.value
+                fields[lookup_field_name].initial = stored_variant.lookup
+            except:
+                pass
+
 
             if isinstance(fields[aspect_field_name], forms.FloatField):
                 # lokalizację ustawiami ze względu na potrzebnei
@@ -40,7 +48,6 @@ def get_fields(prospect):
                 # USE_L10N ważne, bo sprwadza to cleaner m.in. w FloatField
                 fields[attribute_full_name].localize = True
                 fields[attribute_full_name].widget.is_localized = True
-
 
             #overrides = {'label': attribute.verbose_name, 'required': attribute.required and is_key_required, 'help_text': attribute.data_type.help_text}
             overrides = {'required': False}
@@ -87,7 +94,7 @@ def build_query(data):
     query = dict([(get_hash_property(hash, 'id'),  {'operator': data.get(build_field_name("lookup", hash)), 'value': data.get(build_field_name("aspect", hash))}) for hash in aspect_hashes])
     return query
 
-def prospectform_factory(prospect):
-    fields = get_fields(prospect)
+def prospectform_factory(prospect, variant):
+    fields = get_fields(prospect, variant)
     attributes = {}
     return type('ProspectForm', (ProspectBaseForm,), {'base_fields': fields, 'attributes': attributes, 'prospect': prospect})

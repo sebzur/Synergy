@@ -1,8 +1,17 @@
+import fields
+
 from django.db import models
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes import generic
+
 
 class Prospect(models.Model):
-    name = models.SlugField(verbose_name="Machine name")
+    name = models.SlugField(verbose_name="Machine name", unique=True)
     verbose_name = models.CharField(max_length=255, verbose_name="Verbose name")
+    # Operators are applied to the output of the prospect (prospect variants to be
+    # specific) evalutaion. This is where one can do some custom, really cool things
+    # with the data...
+    operators = models.ManyToManyField('Operator', through="ProspectOperator")
 
     def __unicode__(self):
         return self.verbose_name
@@ -19,6 +28,17 @@ class Prospect(models.Model):
             subquery = dict([(id, query.get(id)) for id in filter(lambda x: int(x) in ids, query.keys())])
             yield source, source.filter(**subquery)
             
+class Operator(models.Model):
+    callable = fields.CallableField(max_length=255, verbose_name="The callable to call after the prospects returns the data", blank=True)    
+    description = models.TextField()
+
+class ProspectOperator(models.Model):
+    operator = models.ForeignKey('Operator')
+    prospect = models.ForeignKey('Prospect')
+    weight = models.PositiveSmallIntegerField(default=0)
+    
+    class Meta:
+        ordering = ('weight',)
 
 # In general source does not have to be a SQL database. One can think 
 # about is as a generic data source, i.e. SQL engine, file storage, web resource 
@@ -27,9 +47,8 @@ class Source(models.Model):
     content_type = models.ForeignKey('contenttypes.ContentType')
     prospect = models.ForeignKey('Prospect', related_name='sources')
 
-
     def __unicode__(self):
-        return "%s, %s" % (self.content_type, self.prospect)
+        return u"%s, %s" % (self.content_type, self.prospect)
 
     def all(self):
         return self.get_model().objects.all()
@@ -48,7 +67,6 @@ class Source(models.Model):
     def build_query(self, query):
         for aspect_id in query:
             yield ("%s__%s" % (self.aspects.get(id=aspect_id).attribute, query.get(aspect_id).get('operator')), query.get(aspect_id).get('value'))
-            
 
 class Aspect(models.Model):
     # Attribute is stored as a string (slug) in native Django
@@ -59,6 +77,9 @@ class Aspect(models.Model):
     attribute = models.SlugField(max_length=255, verbose_name="Machine name")
     source = models.ForeignKey('Source', related_name="aspects")
     weight = models.IntegerField(verbose_name="Aspect weight", default=0)
+
+    def __unicode__(self):
+        return self.attribute
 
     def get_field(self):
         chain = self.attribute.split('__')
@@ -81,7 +102,7 @@ class Aspect(models.Model):
                    'BooleanField': None,
                    'CharField': 'textual',
                    'CommaSeparatedIntegerField': None,
-                   'DateField': None,
+                   'DateField': 'continous',
                    'DateTimeField': 'continous',
                    'DecimalField': None,
                    'EmailField': None,
@@ -124,17 +145,62 @@ class Aspect(models.Model):
     class Meta:
         ordering = ('weight', )
 
-#class ProspectState(models.Model):
-#    owner = models.ForeignKey('auth.User')
-#    prospect = models.ForeignKey('Prospect')
-#    name = models.SlugField(verbose_name="Machine name")
-#    verbose_name = models.CharField(max_length=255, verbose_name="Verbose name")
+class ProspectVariant(models.Model):
+    prospect = models.ForeignKey('Prospect')
+    name = models.SlugField(verbose_name="Machine name", unique=True)
+    verbose_name = models.CharField(max_length=255, verbose_name="Verbose name")
+    is_default = models.BooleanField(verbose_name="Is this state the default one?")
+    # The results will be cached with the timeout specified here.
+    cache_timeout = models.PositiveSmallIntegerField(verbose_name="Cache timeout", null=True, blank=True)
 
-#class AspectValue(models.Model):
-#    aspect = models.ForeignKey('Aspect')
-#    prospect_state = models.ForeignKey('ProspectState')
-    
-#    value = models.CharField(max_length=255, verbose_name="A value entered")
-#    lookup = models.CharField(max_length=255, verbose_name="Lookup")
-    
+    def filter(self, **query):
+        data = self.prospect.filter(**query)
+        if self.prospect.operators.exists():
+            for operator in self.prospect.operators.all():
+                data = operator.callable(data)
+        return data
 
+    def __unicode__(self):
+        return self.verbose_name
+    
+    class Meta:
+        unique_together = ('prospect', 'is_default')
+
+class AspectValue(models.Model):
+    aspect = models.ForeignKey('Aspect', related_name="variant_values")
+    variant = models.ForeignKey('ProspectVariant')
+    value = models.CharField(max_length=255, verbose_name="A value entered")
+    lookup = models.CharField(max_length=255, verbose_name="Lookup")
+    is_exposed = models.BooleanField(verbose_name="Should this aspect settings be exposed to the user?", default=False)
+
+    class Meta:
+        unique_together = (('variant', 'aspect'),)
+    
+class VariantDisplay(models.Model):
+    variant = models.ForeignKey('ProspectVariant', related_name="displays")
+    display_type = models.ForeignKey(ContentType, limit_choices_to={'model__in': ('custompostfixdisplay',)})
+    display_id = models.PositiveIntegerField()
+    display = generic.GenericForeignKey('display_type', 'display_id')
+
+    class Meta:
+        unique_together = (('variant', 'display_type', 'display_id'),)
+
+class Display(models.Model):
+    prospect = models.ForeignKey('Prospect')
+    name = models.SlugField(max_length=255, verbose_name="Display name")
+    variants = generic.GenericRelation('prospects.VariantDisplay', content_type_field='display_type', 
+                                       object_id_field='display_id', related_name="%(class)s")
+    class Meta:
+        abstract = True
+        unique_together = (('name', 'prospect'),)
+
+class CustomPostfixDisplay(Display):
+    postfix = models.SlugField(max_length=255, verbose_name="Postfix value")
+    use_posthead = models.BooleanField(verbose_name="Is template using posthead entries?")
+
+# --------------------------------------------
+# some ideas for the future imlementation are:
+# - custom template display
+# - teaser display settings
+# - table display
+# -------------------------------------------

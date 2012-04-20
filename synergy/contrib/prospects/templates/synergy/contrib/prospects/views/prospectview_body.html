@@ -1,5 +1,5 @@
 {% load prospects_rendering %}
-
+{% load synergy_region %}
 <form action="." method="POST">
 
   <table id="prospect-form-table">
@@ -34,16 +34,17 @@
 </form>
 
 <div id="results">
-<h3>Wyniki wyszukiwania</h3>
-{% if results %}
-
-{% for source, results in results.iteritems %}
-   {% for obj in results %}
-      {{ obj|teaser }}
-   {% endfor %}
-{% endfor %}
-{% else %}
-Dla zapytania nie zwrócono żadnych wyników. Użyto albo zbyt ostrych kryteriów wyszukiwania, albo zapytanie wyszukujące nie zostało zgłoszone.
-{% endif %}
+  {% region prospect %}
+  <h3>Wyniki wyszukiwania</h3>
+  {% if results %}
+  {% for source, results in results.iteritems %}
+    {% for obj in results %}
+       {{ obj|teaser }}
+    {% endfor %}
+  {% endfor %}
+  {% else %}
+    Dla zapytania nie zwrócono żadnych wyników. Użyto albo zbyt ostrych kryteriów wyszukiwania, albo zapytanie wyszukujące nie zostało zgłoszone.
+  {% endif %}
+  {% endregion %}
 </div>
 
