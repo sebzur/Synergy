@@ -33,6 +33,7 @@ class ProspectView(RegionViewMixin, FormView):
     def get_form_kwargs(self, *args, **kwargs):
         kwargs = super(ProspectView, self).get_form_kwargs(*args, **kwargs)
         kwargs['request'] = self.request
+        kwargs['instance'] = self.get_prospect_variant()
         return kwargs
 
     def get_context_data(self, *args, **kwargs):
@@ -54,7 +55,7 @@ class ProspectView(RegionViewMixin, FormView):
 
     def get_results(self, variant, *args, **kwargs):
         results = self.get_prospect_variant().filter(**build_query(kwargs))
-        signals.prospect_results_created.send(sender=self.get_prospect(), results=results, request=self.request)
+        signals.prospect_results_created.send(sender=self.get_prospect_variant(), results=results, request=self.request)
         return results
 
     def form_valid(self, form):
