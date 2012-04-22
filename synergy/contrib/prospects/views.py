@@ -21,8 +21,14 @@ class ProspectView(RegionViewMixin, FormView):
     def dispatch(self, *args, **kwargs):
         return super(ProspectView, self).dispatch(*args, **kwargs)
 
+    def get_variant_display(self):
+        return get_model('prospects', 'VariantDisplay').objects.get(id=self.kwargs.get('pk'))
+
+    def get_display(self):
+        return self.get_variant_display().display
+
     def get_prospect_variant(self):
-        return get_model('prospects', 'ProspectVariant').objects.get(pk=self.kwargs.get('pk'), name=self.kwargs.get('variant'))
+        return self.get_variant_display().variant
 
     def get_prospect(self):
         return self.get_prospect_variant().prospect
@@ -41,12 +47,13 @@ class ProspectView(RegionViewMixin, FormView):
         ctx['title'] = u"%s" % self.get_prospect().verbose_name
         ctx['prospect'] = self.get_prospect()
 
-        if self.get_prospect_variant().displays.filter(display_type__model="custompostfixdisplay").exists():
-            display = self.get_prospect_variant().displays.filter(display_type__model="custompostfixdisplay").get().display
+        if self.get_variant_display().display_type.model == "custompostfixdisplay":
+            display = self.get_display()
             postfixes = {'prospect': display.postfix,}
             if display.use_posthead:
                 postfixes['posthead'] = display.postfix
             ctx['region_postfixes'] = postfixes
+
         results = []
         if kwargs['form'].is_valid():
             results = self.get_results(self.kwargs.get('variant'), **dict(kwargs['form'].cleaned_data))

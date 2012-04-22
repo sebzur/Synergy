@@ -23,36 +23,37 @@ def build_field_name(prefix, aspect_hash):
 
 def get_fields(prospect, variant):
     fields = SortedDict()
-    for source in prospect.sources.all():
-        excluded = get_model('prospects', 'aspectvalue').objects.filter(variant__name=variant, is_exposed=False).values_list('aspect', flat=True)
-        for aspect in source.aspects.exclude(id__in=excluded):
-            aspect_hash = build_aspect_hash(aspect)
-            aspect_field_name = build_field_name("aspect", aspect_hash)
-            lookup_field_name = build_field_name("lookup", aspect_hash)
-            fields[aspect_field_name] = aspect.get_formfield()
-            fields[lookup_field_name] = forms.ChoiceField(choices=aspect.get_lookups())
-            try:
-                stored_variant = aspect.variant_values.get(variant__name=variant)
-                fields[aspect_field_name].initial = stored_variant.value
-                fields[lookup_field_name].initial = stored_variant.lookup
-            except:
-                pass
+    source = prospect.get_source()
+
+    excluded = get_model('prospects', 'aspectvalue').objects.filter(variant__name=variant, is_exposed=False).values_list('aspect', flat=True)
+    for aspect in source.aspects.exclude(id__in=excluded):
+        aspect_hash = build_aspect_hash(aspect)
+        aspect_field_name = build_field_name("aspect", aspect_hash)
+        lookup_field_name = build_field_name("lookup", aspect_hash)
+        fields[aspect_field_name] = aspect.get_formfield()
+        fields[lookup_field_name] = forms.ChoiceField(choices=aspect.get_lookups())
+        try:
+            stored_variant = aspect.variant_values.get(variant__name=variant)
+            fields[aspect_field_name].initial = stored_variant.value
+            fields[lookup_field_name].initial = stored_variant.lookup
+        except:
+            pass
 
 
-            if isinstance(fields[aspect_field_name], forms.FloatField):
-                # lokalizację ustawiami ze względu na potrzebnei
-                # czasami przecinki zamiast kropek
-                # wtedy w settings.py trzeba jeszcze ustawić:
-                # DECIMAL_SEPARATOR = ","
-                # USE_L10N = True
-                # USE_L10N ważne, bo sprwadza to cleaner m.in. w FloatField
-                fields[attribute_full_name].localize = True
-                fields[attribute_full_name].widget.is_localized = True
+        if isinstance(fields[aspect_field_name], forms.FloatField):
+            # lokalizację ustawiami ze względu na potrzebnei
+            # czasami przecinki zamiast kropek
+            # wtedy w settings.py trzeba jeszcze ustawić:
+            # DECIMAL_SEPARATOR = ","
+            # USE_L10N = True
+            # USE_L10N ważne, bo sprwadza to cleaner m.in. w FloatField
+            fields[attribute_full_name].localize = True
+            fields[attribute_full_name].widget.is_localized = True
 
-            #overrides = {'label': attribute.verbose_name, 'required': attribute.required and is_key_required, 'help_text': attribute.data_type.help_text}
-            overrides = {'required': False}
-            for k, v in overrides.iteritems():
-                setattr(fields[aspect_field_name], k, v)
+        #overrides = {'label': attribute.verbose_name, 'required': attribute.required and is_key_required, 'help_text': attribute.data_type.help_text}
+        overrides = {'required': False}
+        for k, v in overrides.iteritems():
+            setattr(fields[aspect_field_name], k, v)
 
     return fields
 

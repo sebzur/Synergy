@@ -18,10 +18,10 @@ admin.site.register(Aspect, AspectAdmin)
 
 admin.site.register(ProspectVariant)
 admin.site.register(AspectValue)
-
-admin.site.register(CustomPostfixDisplay)
 admin.site.register(VariantDisplay)
-
-
 admin.site.register(Operator)
 admin.site.register(ProspectOperator)
+
+admin.site.register(CustomPostfixDisplay)
+admin.site.register(TableDisplay)
+admin.site.register(Column)

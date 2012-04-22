@@ -16,17 +16,16 @@ class Prospect(models.Model):
     def __unicode__(self):
         return self.verbose_name
 
-    def get_sources(self):
-        return self.sources.all()
+    def get_source(self):
+        return self.source
 
     def filter(self, **query):
-        return dict(self._filter(**query))
+        return self._filter(**query)
 
     def _filter(self, **query):
-        for source in self.get_sources():
-            ids = source.aspects.values_list('id', flat=True)
-            subquery = dict([(id, query.get(id)) for id in filter(lambda x: int(x) in ids, query.keys())])
-            yield source, source.filter(**subquery)
+        ids = self.get_source().aspects.values_list('id', flat=True)
+        subquery = dict([(id, query.get(id)) for id in filter(lambda x: int(x) in ids, query.keys())])
+        return self.get_source().filter(**subquery)
             
 class Operator(models.Model):
     callable = fields.CallableField(max_length=255, verbose_name="The callable to call after the prospects returns the data", blank=True)    
@@ -45,7 +44,7 @@ class ProspectOperator(models.Model):
 # available via REST interface, GranaryDB 
 class Source(models.Model):
     content_type = models.ForeignKey('contenttypes.ContentType')
-    prospect = models.ForeignKey('Prospect', related_name='sources')
+    prospect = models.OneToOneField('Prospect', related_name='source')
 
     def __unicode__(self):
         return u"%s, %s" % (self.content_type, self.prospect)
@@ -198,6 +197,14 @@ class CustomPostfixDisplay(Display):
     postfix = models.SlugField(max_length=255, verbose_name="Postfix value")
     use_posthead = models.BooleanField(verbose_name="Is template using posthead entries?")
 
+class TableDisplay(Display):
+    pass
+
+class Column(models.Model):
+    table = models.ForeignKey('TableDisplay')
+    verbose_name = models.CharField(max_length=255, verbose_name="Column header")
+    attribue = models.CharField(max_length=255, verbose_name="Attribute")
+    
 # --------------------------------------------
 # some ideas for the future imlementation are:
 # - custom template display
