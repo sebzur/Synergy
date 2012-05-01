@@ -281,7 +281,7 @@ class RepresentationModel(models.Model):
     variant = generic.GenericRelation('ListRepresentation', content_type_field="representation_type", object_id_field="representation_id")
 
     def __unicode__(self):
-        return u"%s %s" % (self.variant.get().variant.verbose_name, self.variant.get().name)
+        return u"%s" % self.__class__
 
     def get_context_data(self, *args, **kwargs):
         # Every display can add something to the context
