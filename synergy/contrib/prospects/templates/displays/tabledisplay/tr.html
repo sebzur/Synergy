@@ -1,0 +1,6 @@
+{% load prospects_rendering %}
+<tr>
+  {% for column in table.columns.all %}
+     {{ obj|td:column }}
+  {% endfor %}
+</tr>

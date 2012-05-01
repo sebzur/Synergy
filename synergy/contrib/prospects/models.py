@@ -3,6 +3,27 @@ import fields
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
+from django.core.urlresolvers import reverse
+
+def get_field(model, attribute):
+    chain = attribute.split('__')
+    for i, attribute in enumerate(chain):
+        field = model._meta.get_field(attribute)
+        if chain[i+1:]:
+            if not field.rel:
+                raise ValueError('Something went wrong. Field retrival for `%s` stoped at `%s` while it should represents relation' % (self.attribute, attribute))
+            model = field.rel.to
+    return field
+
+def get_related_value(obj, path):
+    chain = path.split('__')
+    for i, attribute in enumerate(chain):
+        value = getattr(obj, attribute)
+        if chain[i+1:]:
+            if not value:
+                raise ValueError('Something went wrong. Field retrival for `%s` stoped at `%s` while it should represents relation' % (path, attribute))
+            obj = value
+    return value
 
 
 class Prospect(models.Model):
@@ -152,12 +173,20 @@ class ProspectVariant(models.Model):
     # The results will be cached with the timeout specified here.
     cache_timeout = models.PositiveSmallIntegerField(verbose_name="Cache timeout", null=True, blank=True)
 
+    header = models.TextField(verbose_name="Variant header text", help_text="If present, it will be used to render the header", blank=True)
+    footer = models.TextField(verbose_name="Variant footer text", help_text="If present, it will be used to render the footer", blank=True)
+    empty_text = models.TextField(verbose_name="Empty text", help_text="If present, this will be used in case the variant returns no results", blank=True)
+    css_classes = models.CharField(max_length=255, help_text="The CSS class names will be added to the prospect variant. This enables you to use specific CSS code for each variant. You may define multiples classes separated by spaces.", blank=True)
+
     def filter(self, **query):
         data = self.prospect.filter(**query)
         if self.prospect.operators.exists():
             for operator in self.prospect.operators.all():
                 data = operator.callable(data)
         return data
+
+    def get_model_name(self):
+        return self.prospect.source.content_type.model
 
     def __unicode__(self):
         return self.verbose_name
@@ -174,37 +203,123 @@ class AspectValue(models.Model):
 
     class Meta:
         unique_together = (('variant', 'aspect'),)
+
+
+class Field(models.Model):
+    variant = models.ForeignKey('ProspectVariant')
+    verbose_name = models.CharField(max_length=255, verbose_name="Column header")
+    attribute = models.CharField(max_length=255, verbose_name="Attribute")
+    weight = models.IntegerField()
+
+    exclude_from_output = models.BooleanField(verbose_name="Exclude from display", default=False)
+    as_object_link = models.BooleanField(verbose_name="Link this field to its node", default=False)
+    default_text = models.CharField(max_length=255, verbose_name="If the field is empty, display this text instead", blank=True)
+    default_if_none_text = models.CharField(max_length=255, verbose_name="If the field is empty, display this text instead", blank=True)
+    # The field output can be rewriten. The synatx is: %(token)s where token is a valid replacement string.
+    rewrite_as = models.CharField(max_length=255, verbose_name="Rewrite the output of this field", help_text="If checked, you can alter the output of this field by specifying a string of text with replacement tokens that can use any existing field output.", blank=True)
     
-class VariantDisplay(models.Model):
-    variant = models.ForeignKey('ProspectVariant', related_name="displays")
-    display_type = models.ForeignKey(ContentType, limit_choices_to={'model__in': ('custompostfixdisplay',)})
-    display_id = models.PositiveIntegerField()
-    display = generic.GenericForeignKey('display_type', 'display_id')
+    def get_object_link(self, obj):
+        return reverse('detail', args=[self.variant.name, obj.pk])
+
+    def extract(self, obj):
+        if self.attribute.split('__')[0] in obj.__class__._meta.get_all_field_names():
+            value =  get_related_value(obj, self.attribute)
+        else:
+            value = getattr(obj, self.attribute)()
+        if self.as_object_link:
+            return {'url': self.get_object_link(obj), 'value': value}
+        return value
+
+    def __unicode__(self):
+        return self.attribute
+    
+class FieldURL(models.Model):
+    field = models.OneToOneField('Field')
+    url = models.CharField(max_length=200)
+    # if resolve_url is set, Django will try to
+    # resolve the value to get the full URL
+    reverse_url = models.BooleanField(default=True)
+    css_class = models.CharField(max_length=255, blank=True)
+    prefix_text = models.CharField(max_length=255, blank=True)
+    suffix_text = models.CharField(max_length=255, blank=True)
+    target= models.CharField(choices=(('_blank', '_blank'), ('_parent', '_parent')), max_length=32)
+    alt_text = models.CharField(max_length=200, blank=True)
+
+class ObjectDetail(models.Model):
+    variant = models.OneToOneField('ProspectVariant')
+    postfix = models.BooleanField(default=False)
+    use_posthead = models.BooleanField(default=False)
+    context_operator = fields.CallableField(max_length=255, verbose_name="The callable to call on the context", blank=True)    
+
+    def get_context_data(self, *args, **kwargs):
+        if self.postfix:
+            postfix_value = "%s_%s" % (self.variant.get_model_name(), self.variant.name)
+            postfixes = {'objectdetail': postfix_value}
+            if self.use_posthead:
+                postfixes['posthead'] = postfix_value
+            return {'region_postfixes': postfixes}
+        return {}
+
+    
+class ListRepresentation(models.Model):
+    variant = models.OneToOneField('ProspectVariant')
+    name = models.SlugField(max_length=255, verbose_name="Display name", unique=True, db_index=True)
+
+    representation_type = models.ForeignKey(ContentType, limit_choices_to={'model__in': ('custompostfix', 'table')})
+    representation_id = models.PositiveIntegerField()
+    representation = generic.GenericForeignKey('representation_type', 'representation_id')
 
     class Meta:
-        unique_together = (('variant', 'display_type', 'display_id'),)
+        unique_together = (('name', 'variant'), ('representation_type', 'representation_id'))
 
-class Display(models.Model):
-    prospect = models.ForeignKey('Prospect')
-    name = models.SlugField(max_length=255, verbose_name="Display name")
-    variants = generic.GenericRelation('prospects.VariantDisplay', content_type_field='display_type', 
-                                       object_id_field='display_id', related_name="%(class)s")
+# ---------------------------------
+# Representations section
+# ---------------------------------
+
+
+class RepresentationModel(models.Model):
+    variant = generic.GenericRelation('ListRepresentation', content_type_field="representation_type", object_id_field="representation_id")
+
+    def __unicode__(self):
+        return u"%s %s" % (self.variant.get().variant.verbose_name, self.variant.get().name)
+
+    def get_context_data(self, *args, **kwargs):
+        # Every display can add something to the context
+        return {}
+
     class Meta:
         abstract = True
-        unique_together = (('name', 'prospect'),)
 
-class CustomPostfixDisplay(Display):
+class CustomPostfix(RepresentationModel):
     postfix = models.SlugField(max_length=255, verbose_name="Postfix value")
     use_posthead = models.BooleanField(verbose_name="Is template using posthead entries?")
 
-class TableDisplay(Display):
-    pass
+    def get_context_data(self, *args, **kwargs):
+        postfixes = {'prospect': self.postfix,}
+        if self.use_posthead:
+            postfixes['posthead'] = self.postfix
+        return {'region_postfixes': postfixes}
+
+
+class Table(RepresentationModel):
+
+    def get_context_data(self, *args, **kwargs):
+        postfixes = {'prospect': 'tabledisplay'}
+        postfixes['posthead'] = 'tabledisplay'
+        return {'region_postfixes': postfixes}
 
 class Column(models.Model):
-    table = models.ForeignKey('TableDisplay')
-    verbose_name = models.CharField(max_length=255, verbose_name="Column header")
-    attribue = models.CharField(max_length=255, verbose_name="Attribute")
-    
+    table = models.ForeignKey('Table', related_name="columns")
+    field = models.ForeignKey('Field', related_name="columns")
+    sortable = models.BooleanField(verbose_name="Is this column sortable?")
+    weight = models.IntegerField()
+
+    class Meta:
+        ordering = ('weight',)
+
+
+
+
 # --------------------------------------------
 # some ideas for the future imlementation are:
 # - custom template display

@@ -17,3 +17,16 @@ def teaser(obj):
         tpl = 'synergy/contrib/prospects/teaser.html'
         return render_to_string(tpl, {'object': obj})
 
+@register.filter(name='tr')
+def table_row(obj, table):
+    tpl = 'displays/tabledisplay/tr.html'
+    return render_to_string(tpl, {'obj': obj, 'table': table})
+
+@register.filter(name='td')
+def table_column(obj, column):
+    tpl = 'displays/tabledisplay/td.html'
+    value = column.field.extract(obj)
+    return render_to_string(tpl, {'value': value, 'column': column})
+
+
+

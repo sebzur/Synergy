@@ -1,0 +1,7 @@
+<td>
+  {% if column.field.as_object_link %}
+  <a href="{{ value.url }}">{{ value.value }}</a>
+  {% else %}
+  {{ value }}
+  {% endif %}
+</td>

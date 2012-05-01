@@ -25,6 +25,8 @@ class JSONDescriptor(property):
 class CallableField(models.CharField):
 
     def importer(self, post_operator):
+        if not post_operator:
+            return None
         splitted_name = post_operator.split('.')
         callable_name = splitted_name[-1]
         import_path = '.'.join(splitted_name[:-1])

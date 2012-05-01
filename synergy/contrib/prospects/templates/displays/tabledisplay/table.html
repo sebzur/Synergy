@@ -1,0 +1,15 @@
+{% load prospects_rendering %}
+<h4>Table</h4>
+
+  <table class="results-dable display" id="prospect-results">
+    <thead>
+      {% for column in table.columns.all %}
+         <th>{{ column.field.verbose_name }}</th>
+      {% endfor %}
+    </thead>
+    <tbody>
+      {% for obj in results %}
+         {{ obj|tr:table }}
+      {% endfor %}
+    </tbody>
+  </table>
