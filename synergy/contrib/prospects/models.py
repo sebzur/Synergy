@@ -6,6 +6,7 @@ from django.contrib.contenttypes import generic
 from django.core.urlresolvers import reverse
 from django.template.base import VariableDoesNotExist
 from django.conf import settings
+from django.utils.encoding import smart_str 
 
 def get_field(model, attribute):
     chain = attribute.split('__')
@@ -49,7 +50,7 @@ class Prospect(models.Model):
 
     def _filter(self, **query):
         ids = self.get_source().aspects.values_list('id', flat=True)
-        subquery = dict([(id, query.get(id)) for id in filter(lambda x: int(x) in ids, query.keys())])
+        subquery = dict([(smart_str(id), query.get(id)) for id in filter(lambda x: int(x) in ids, query.keys())])
         return self.get_source().filter(**subquery)
             
 class Operator(models.Model):
