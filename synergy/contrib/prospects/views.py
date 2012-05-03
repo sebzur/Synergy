@@ -14,6 +14,7 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 import signals
 
+from django.utils.encoding import smart_str 
 
 class ProspectMixin(object):
     @method_decorator(login_required)
@@ -60,7 +61,9 @@ class ListView(ProspectMixin, RegionViewMixin, generic.FormView):
 
         results = []
         if kwargs['form'].is_valid():
-            results = self.get_results(**dict(kwargs['form'].cleaned_data))
+            kwgs = dict((smart_str(key), value) for key, value in kwargs['form'].cleaned_data.iteritems())
+            # some older python version require dict keys to be strings when passed as kwargs
+            results = self.get_results(**kwgs)
         ctx['results'] = results
         return ctx
 
