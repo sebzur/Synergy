@@ -1,0 +1,12 @@
+{% extends "grains/main.html" %}
+
+{% block content %}
+      <div id="content-header">    
+	<h1 class="title">{% block title %}{% endblock %}</h1>
+      </div> <!-- /#content-header -->
+      <div id="content-area" class="clearfix">
+	{% block body %}
+	  The body 	block is empty. You shuld provide something here..
+	{% endblock %}
+      </div>
+{% endblock %}

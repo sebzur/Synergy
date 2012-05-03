@@ -1,6 +1,5 @@
-{% extends "grains2/base.html" %}
-{% load synergy_region %}
-{% block body %}
+{% extends "grains/frame.html" %}
+{% block page %}
     <div id="page">
       {# ------------ HEADER --------------- #}
       <div id="header">
@@ -10,13 +9,13 @@
 	      <img src="{{ LOGO_URL }}" alt="pyoss logo" id="logo-image"/>
 	    </a>
 	    <span id="sitename">{% block sitename %}{{ SITENAME|safe }}{% endblock %}</span>
-	    <span id="siteslogan"{% block siteslogan %}{% endblock %}</span>
+	    <span id="siteslogan">{% block siteslogan %}{% endblock %}</span>
 	  </div> <!-- /#logo-title -->	
 	  <div id="user-links">	  
 	    <ul>
 	      {% if user.is_authenticated %}
-		<li><a href="#PROFILE">Login: {{ user }}</a></li>
-		<li><a href="{% url logout %}">Wyloguj / Logout</a></li>
+		<li><a href="#PROFILE">Zalogowany jako: {{ user }}</a></li>
+		<li><a href="{% url logout %}">Wyloguj</a></li>
 	      {% endif %}
 	    </ul>
 	  </div> <!-- /#user links -->
@@ -31,11 +30,9 @@
     {# ------------ FOOTER --------------- #}
     <div id="footer">
       <div id="footer-inner">
-	{% region footer %}
 	{% if user.is_authenticated %}
-	  <span id="creators">Code<strong>LAB</strong> |  <a href="http://codelab.pl">http://codelab.pl</a></span>
+	  <span id="creators">Code<strong>LAB</strong> | problemy związane z oprogramowaniem należy zgłaszać po adresem e-mail: <a href="mailto:codelab@codelab.pl">codelab@codelab.pl</a></span>
 	{% endif %}
-	  {% endregion %}
       </div>
     </div>
     </div>

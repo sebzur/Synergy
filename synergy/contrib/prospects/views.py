@@ -51,6 +51,7 @@ class ListView(ProspectMixin, RegionViewMixin, generic.FormView):
 
         ctx['title'] = u"%s" % self.get_prospect().verbose_name
         ctx['prospect'] = self.get_prospect()
+        ctx['variant'] = self.get_prospect_variant()
 
         repr_obj = self.get_representation()
         ctx[repr_obj._meta.object_name.lower()] = repr_obj

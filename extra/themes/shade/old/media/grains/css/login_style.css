@@ -1,0 +1,86 @@
+/* wyzerowanie ustawien domyslnych */
+div,span,table,form,ul,li,td,ol,tr,p,h1,h2,h3,h4,h5,a{
+    padding:0px;
+    margin:0px;
+    border:0px;
+}
+
+:link,:hover,:active,:visited{
+    text-decoration:none;
+}
+
+body{ 
+    /* Don't allow the browser to make the site unreadable. */
+    min-width: 960px; 
+    font-family:  'Lucida Grande','Lucida Sans Unicode',Geneva,Verdana,Sans-Serif;
+    background-image: url(graphics/body_bg.png);
+    background-color: #F2F1E8; /* kolor dosyć dokładnie dobrany do tła-obrazu */
+    background-position: top left; 
+    background-repeat: no-repeat;
+    margin:0px;
+    padding:0px;
+}
+
+
+/* na razie tylko jako spacer */
+#header{
+    height: 20px;
+}
+
+#login-stripe{
+  background-image: url(graphics/black_alpha_bg.png);
+  background-position: top center; 
+  background-repeat: repeat-x;
+  border-top: 2px solid #6B6B6A;
+  border-bottom: 2px solid #6B6B6A;
+  padding:20px 50px 20px 20px;
+}
+
+#login-stripe img{
+    float: right;
+}
+
+#login-stripe label{
+    color: white;
+    font-size:11px;
+    font-weight:bold;
+    display:block;
+}
+
+#login-stripe input{
+    color: #494127;
+    padding-left: 5px;
+    border: 2px solid white;
+    margin-bottom:10px;
+    background-color: #F1F3CA;
+}
+
+#error-message{
+    margin-top: 20px;
+    text-align: center;
+    font-weight: bold;
+    color: #BE851A;
+}
+
+
+#thank-you{
+    color: #F1F3CA;
+    font-weight: bold;
+    font-size: 24px;
+    display: block;
+    height: 126px;
+    width: 400px;
+    text-align: center;
+}
+
+#small-thank-you{
+    margin-top: 20px;
+    font-size: 15px;
+}
+
+#info-text{
+    margin-top: 20px;
+    padding: 0 60px 0 60px;
+    text-align: justify;
+    color: #6B6B6A;
+}

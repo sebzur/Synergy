@@ -1,0 +1,199 @@
+/* ----------------------------- */
+/*  HTML Elements styles         */
+/* ----------------------------- */
+@import "tables.css";
+@import "commons.css";
+@import "forms.css";
+@import "navigation.css";
+@import "horizontal.css";
+
+img{
+  border: 0;
+}
+
+
+body{
+    background: url("graphics/page_bg.png") repeat scroll 0 0 #EBEBEB;
+    background-color: #FDFDFD;
+    border-top: 2px solid #EAEAEA;
+    border-bottom: 2px solid #EAEAEA;
+    font-size: 78%;
+    font-family:  'Lucida Grande','Lucida Sans Unicode',Geneva,Verdana,Sans-Serif;
+    color: #333333;
+}
+
+
+a:link, a:visited {
+    color:#0788C3;
+    text-decoration:none;
+    outline-color:-moz-use-text-color;
+    outline-style:none;
+    outline-width:medium;
+    text-decoration:none;
+}
+
+
+h1, h2, h3, h4 {
+    color: #333333;
+}
+
+
+/* ----------------------------- */
+/*  Node title                   */
+/* ----------------------------- */
+h1.title{
+    font-size:1.5em;
+    font-weight:bold;
+}
+
+/* ----------------------------- */
+/*  A header section             */
+/* ----------------------------- */
+#header{
+    background: none repeat scroll 0 0 #1C1C1C;
+    border-bottom: 2px solid  #262626;
+    border-top: 2px solid  #262626;
+}
+
+#logo-title{
+}
+
+img#logo-image{
+    border-right: 1px solid #E5E4E3;
+}
+
+#sitename{    
+    color: #EDEDED;
+}
+
+/* ----------------------------- */
+/*  User navigation links        */
+/* ----------------------------- */
+
+#user-links{
+    font-weight: bold;
+}
+
+#user-links a{
+    font:bold 11px 'Trebuchet MS',Arial,Sans-Serif;
+    margin:0;
+    padding-right: 5px;
+    text-transform:uppercase;
+    text-decoration: none;
+    border-right:1px solid #C4302B; 
+    color: #EDEDED;
+    
+}
+
+#user-links a:hover{
+    color: #2B332E;
+    text-decoration: none;
+}
+
+#user-links a:hover{
+    text-decoration: none;
+}
+
+#user-links ul{
+    color: #C64126;
+    list-style: none;
+}
+
+
+/* ----------------------------- */
+/*  Sidebar                      */
+/* ----------------------------- */
+
+
+#sidebar{
+    border-left: 1px solid #F3F3F3;
+}
+
+#sidebar ul
+{
+    padding-left: 20px;
+}
+
+#sidebar-inner{
+    padding-top: 10px;
+    padding-left: 20px;
+/*    border:1px solid #C0CCC4; */
+
+}
+
+
+/* ----------------------------- */
+/*  FOOTER                       */
+/* ----------------------------- */
+
+#footer{
+    margin-top:20px;
+    border-top: 1px solid #F2EBDC;
+    margin-bottom: 50px;
+    color: #4D4D4D;
+    padding: 0 30px 50px 30px;
+}
+
+#footer img{
+    width: 70px;
+    padding: 10px 20px 0px 10px;
+    border-right: 1px solid white;
+    float: left;
+    maring-right: 20px;
+}
+
+#footer-menu{
+    margin-left: 20px;
+    padding: 10px;
+    float: left;
+    color: #8e8e8e;
+}
+
+
+
+.vertical-rule {
+    position: relative;
+}
+
+.vertical-rule-main, .vertical-rule-corner-top, .vertical-rule-corner-bottom{
+    border: 0 none;
+    width: 30px;
+    z-index: -1;
+}
+.vertical-rule-main, .vertical-rule-corner-top, .vertical-rule-corner-bottom {
+    left: 0;
+}
+
+.vertical-rule-main{
+    bottom: 30px;
+    height: auto;
+    position: absolute;
+    top: 30px;
+}
+
+.vertical-rule-main{
+    background: -moz-linear-gradient(left center , rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.08) 1px, rgba(0, 0, 0, 0.08) 1px, transparent 30px, transparent 100%) repeat scroll 0 0 transparent;
+}
+
+
+.vertical-rule-corner-top, .vertical-rule-corner-bottom {
+    height: 30px;
+    position: absolute;
+}
+
+.vertical-rule-corner-top{
+    top: 0;
+}
+
+.vertical-rule-corner-top{
+    background: -moz-radial-gradient(left bottom , circle , rgba(0, 0, 0, 0.08), transparent 30px, transparent 100%) repeat scroll 0 0 transparent;
+}
+
+
+.vertical-rule-corner-bottom{
+    bottom: 0;
+}
+
+.vertical-rule-corner-bottom{
+    background: -moz-radial-gradient(left top , circle , rgba(0, 0, 0, 0.08), transparent 30px, transparent 100%) repeat scroll 0 0 transparent;
+}

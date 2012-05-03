@@ -1,7 +1,11 @@
 {% load prospects_rendering %}
 {% load synergy_region %}
-<form action="." method="POST">
 
+<p>
+  {{ variant.header|default:"The get the results fill in the form fields and submit the query. The results will be listed below the form." }}
+</p>
+
+<form action="." method="POST">
   <table id="prospect-form-table">
     <thead>
       {% for field in form.get_aspect_fields %}
@@ -29,7 +33,7 @@
 
 {% csrf_token %}
 <p>
-  <input id="prospect-form-submit" type="submit" value="Wyszukaj" />
+  <input id="prospect-form-submit" type="submit" value="{{ variant.submit_label|default:"Submit" }}" />
 </p>
 </form>
 
@@ -51,3 +55,8 @@
   {% endregion %}
 </div>
 
+{% if variant.footer %}
+<p>
+  {{ variant.footer }}
+</p>
+{% endif %}

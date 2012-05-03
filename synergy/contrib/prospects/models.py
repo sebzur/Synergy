@@ -4,6 +4,8 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.core.urlresolvers import reverse
+from django.template.base import VariableDoesNotExist
+from django.conf import settings
 
 def get_field(model, attribute):
     chain = attribute.split('__')
@@ -16,6 +18,8 @@ def get_field(model, attribute):
     return field
 
 def get_related_value(obj, path):
+    if path == 'self':
+        return obj
     chain = path.split('__')
     for i, attribute in enumerate(chain):
         value = getattr(obj, attribute)
@@ -177,6 +181,7 @@ class ProspectVariant(models.Model):
     footer = models.TextField(verbose_name="Variant footer text", help_text="If present, it will be used to render the footer", blank=True)
     empty_text = models.TextField(verbose_name="Empty text", help_text="If present, this will be used in case the variant returns no results", blank=True)
     css_classes = models.CharField(max_length=255, help_text="The CSS class names will be added to the prospect variant. This enables you to use specific CSS code for each variant. You may define multiples classes separated by spaces.", blank=True)
+    submit_label = models.CharField(max_length=255, verbose_name="Sumbmit button label", default="Submit")
 
     def filter(self, **query):
         data = self.prospect.filter(**query)
@@ -208,9 +213,14 @@ class AspectValue(models.Model):
 class Field(models.Model):
     variant = models.ForeignKey('ProspectVariant')
     verbose_name = models.CharField(max_length=255, verbose_name="Column header")
-    attribute = models.CharField(max_length=255, verbose_name="Attribute")
+    # -----------------------------------------
+    # The two fields below define the field value.
+    # - db_field selects the model instance field or instance related field
+    # - lookup tells what should be retrieved from the value (after the filed was selected)
+    db_field = models.SlugField(max_length=255, verbose_name="Database field")
+    lookup = models.CharField(max_length=255, verbose_name="Lookup", help_text="Use dotted notation here to resolve value", blank=True)
+    # -----------------------------------------
     weight = models.IntegerField()
-
     exclude_from_output = models.BooleanField(verbose_name="Exclude from display", default=False)
     as_object_link = models.BooleanField(verbose_name="Link this field to its node", default=False)
     default_text = models.CharField(max_length=255, verbose_name="If the field is empty, display this text instead", blank=True)
@@ -222,16 +232,56 @@ class Field(models.Model):
         return reverse('detail', args=[self.variant.name, obj.pk])
 
     def extract(self, obj):
-        if self.attribute.split('__')[0] in obj.__class__._meta.get_all_field_names():
-            value =  get_related_value(obj, self.attribute)
-        else:
-            value = getattr(obj, self.attribute)()
+        # Should check if obj is instance of the variant source
+        value =  get_related_value(obj, self.db_field)
+        if self.lookup:
+            value = self._resolve_lookup(value, self.lookup)
         if self.as_object_link:
             return {'url': self.get_object_link(obj), 'value': value}
         return value
 
+    def _resolve_lookup(self, obj, lookup):
+        """
+        Performs resolution of a real variable (i.e. not a literal) against the
+        given context.
+        """
+        current = obj
+        chain = lookup.split('.')
+        try: # catch-all for silent variable failures
+            for bit in chain:
+                try: # dictionary lookup
+                    current = current[bit]
+                except (TypeError, AttributeError, KeyError):
+                    try: # attribute lookup
+                        current = getattr(current, bit)
+                    except (TypeError, AttributeError):
+                        try: # list-index lookup
+                            current = current[int(bit)]
+                        except (IndexError, # list index out of range
+                                ValueError, # invalid literal for int()
+                                KeyError,   # current is a dict without `int(bit)` key
+                                TypeError,  # unsubscriptable object
+                                ):
+                            raise VariableDoesNotExist("Failed lookup for key [%s] in %r", (bit, current)) # missing attribute
+                if callable(current):
+                    if getattr(current, 'alters_data', False):
+                        current = settings.TEMPLATE_STRING_IF_INVALID
+                    else:
+                        try: # method call (assuming no args required)
+                            current = current()
+                        except TypeError: # arguments *were* required
+                            # GOTCHA: This will also catch any TypeError
+                            # raised in the function itself.
+                            current = settings.TEMPLATE_STRING_IF_INVALID # invalid method call
+        except Exception, e:
+            if getattr(e, 'silent_variable_failure', False):
+                current = settings.TEMPLATE_STRING_IF_INVALID
+            else:
+                raise
+        return current
+
     def __unicode__(self):
-        return self.attribute
+        return self.db_field
     
 class FieldURL(models.Model):
     field = models.OneToOneField('Field')
@@ -242,7 +292,7 @@ class FieldURL(models.Model):
     css_class = models.CharField(max_length=255, blank=True)
     prefix_text = models.CharField(max_length=255, blank=True)
     suffix_text = models.CharField(max_length=255, blank=True)
-    target= models.CharField(choices=(('_blank', '_blank'), ('_parent', '_parent')), max_length=32)
+    target= models.CharField(choices=(('_blank', '_blank'), ('_parent', '_parent')), max_length=32, blank=True)
     alt_text = models.CharField(max_length=200, blank=True)
 
 class ObjectDetail(models.Model):
@@ -286,6 +336,12 @@ class RepresentationModel(models.Model):
     def get_context_data(self, *args, **kwargs):
         # Every display can add something to the context
         return {}
+
+    def get_variant(self):
+        return self.variant.get().variant
+
+    def get_name(self):
+        return self.variant.get().name
 
     class Meta:
         abstract = True
