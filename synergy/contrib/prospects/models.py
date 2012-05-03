@@ -91,7 +91,7 @@ class Source(models.Model):
 
     def build_query(self, query):
         for aspect_id in query:
-            yield ("%s__%s" % (self.aspects.get(id=aspect_id).attribute, query.get(aspect_id).get('operator')), query.get(aspect_id).get('value'))
+            yield (smart_str("%s__%s" % (self.aspects.get(id=aspect_id).attribute, query.get(aspect_id).get('operator'))), query.get(aspect_id).get('value'))
 
 class Aspect(models.Model):
     # Attribute is stored as a string (slug) in native Django
