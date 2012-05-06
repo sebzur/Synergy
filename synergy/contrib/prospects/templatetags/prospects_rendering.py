@@ -27,10 +27,14 @@ def table_row(obj, table):
 @register.filter(name='td')
 def table_column(obj, column):
     tpl = 'displays/tabledisplay/td.html'
-    value = column.field.extract(obj)
-    return render_to_string(tpl, {'value': value, 'column': column})
+    value = column.field.get_value(obj)
+    return render_to_string(tpl, {'object': obj, 'value': value, 'column': column})
 
 
+@register.filter
+def css_styles(column, value):
+    styles = column.get_styles(value)
+    return ' '.join('%s=%s' % (style, styles.get(style)) for style in styles if styles.get(style))
 
 class VariantsNode(template.Node):
     def __init__(self, format_string, var_name):

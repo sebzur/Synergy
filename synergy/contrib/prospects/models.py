@@ -31,6 +31,47 @@ def get_related_value(obj, path):
     return value
 
 
+def resolve_lookup(obj, lookup):
+        """
+        Performs resolution of a real variable (i.e. not a literal) against the
+        given context.
+        """
+        current = obj
+        chain = lookup.split('.')
+        try: # catch-all for silent variable failures
+            for bit in chain:
+                try: # dictionary lookup
+                    current = current[bit]
+                except (TypeError, AttributeError, KeyError):
+                    try: # attribute lookup
+                        current = getattr(current, bit)
+                    except (TypeError, AttributeError):
+                        try: # list-index lookup
+                            current = current[int(bit)]
+                        except (IndexError, # list index out of range
+                                ValueError, # invalid literal for int()
+                                KeyError,   # current is a dict without `int(bit)` key
+                                TypeError,  # unsubscriptable object
+                                ):
+                            raise VariableDoesNotExist("Failed lookup for key [%s] in %r", (bit, current)) # missing attribute
+                if callable(current):
+                    if getattr(current, 'alters_data', False):
+                        current = settings.TEMPLATE_STRING_IF_INVALID
+                    else:
+                        try: # method call (assuming no args required)
+                            current = current()
+                        except TypeError: # arguments *were* required
+                            # GOTCHA: This will also catch any TypeError
+                            # raised in the function itself.
+                            current = settings.TEMPLATE_STRING_IF_INVALID # invalid method call
+        except Exception, e:
+            if getattr(e, 'silent_variable_failure', False):
+                current = settings.TEMPLATE_STRING_IF_INVALID
+            else:
+                raise
+        return current
+
+
 class Prospect(models.Model):
     name = models.SlugField(verbose_name="Machine name", unique=True)
     verbose_name = models.CharField(max_length=255, verbose_name="Verbose name")
@@ -232,57 +273,20 @@ class Field(models.Model):
     def get_object_link(self, obj):
         return reverse('detail', args=[self.variant.name, obj.pk])
 
-    def extract(self, obj):
+    def get_value(self, obj):
         # Should check if obj is instance of the variant source
         value =  get_related_value(obj, self.db_field)
-        if self.lookup:
+        if self.lookup and not (value is None): # if value is None, leave the lookup
             value = self._resolve_lookup(value, self.lookup)
         if self.as_object_link:
             return {'url': self.get_object_link(obj), 'value': value}
         return value
 
     def _resolve_lookup(self, obj, lookup):
-        """
-        Performs resolution of a real variable (i.e. not a literal) against the
-        given context.
-        """
-        current = obj
-        chain = lookup.split('.')
-        try: # catch-all for silent variable failures
-            for bit in chain:
-                try: # dictionary lookup
-                    current = current[bit]
-                except (TypeError, AttributeError, KeyError):
-                    try: # attribute lookup
-                        current = getattr(current, bit)
-                    except (TypeError, AttributeError):
-                        try: # list-index lookup
-                            current = current[int(bit)]
-                        except (IndexError, # list index out of range
-                                ValueError, # invalid literal for int()
-                                KeyError,   # current is a dict without `int(bit)` key
-                                TypeError,  # unsubscriptable object
-                                ):
-                            raise VariableDoesNotExist("Failed lookup for key [%s] in %r", (bit, current)) # missing attribute
-                if callable(current):
-                    if getattr(current, 'alters_data', False):
-                        current = settings.TEMPLATE_STRING_IF_INVALID
-                    else:
-                        try: # method call (assuming no args required)
-                            current = current()
-                        except TypeError: # arguments *were* required
-                            # GOTCHA: This will also catch any TypeError
-                            # raised in the function itself.
-                            current = settings.TEMPLATE_STRING_IF_INVALID # invalid method call
-        except Exception, e:
-            if getattr(e, 'silent_variable_failure', False):
-                current = settings.TEMPLATE_STRING_IF_INVALID
-            else:
-                raise
-        return current
+        return resolve_lookup(obj, lookup)
 
     def __unicode__(self):
-        return self.db_field
+        return u"%s::%s" % (self.db_field, self.lookup)
     
 class FieldURL(models.Model):
     field = models.OneToOneField('Field')
@@ -374,10 +378,36 @@ class Column(models.Model):
     def __unicode__(self):
         return u"%s %s" % (self.table, self.field)
 
+    def get_styles(self, value):
+        return {'class': ' '.join(self.get_triggered_styles('c', value)),
+                'style': ' '.join(self.get_triggered_styles('s', value))
+                }
+
+    def get_triggered_styles(self, css_mode, value):
+        return (style.css for style in self.styles.filter(css_mode=css_mode) if style.is_triggered(value))
+
     class Meta:
         ordering = ('weight',)
 
+class CellStyle(models.Model):
+    MODES = (('c', 'class'), ('s', 'style'))
+    column = models.ForeignKey('Column', related_name="styles")
+    css_mode = models.CharField(max_length=1, choices=MODES)
+    css = models.CharField(max_length=128, verbose_name="CSS class name")
+    trigger_lookup = models.CharField(max_length=128, verbose_name="A lookup on the object that triggers the class name to be applied", blank=True)
+    weight = models.IntegerField()
 
+    def get_table(self):
+        return self.column.table
+
+    def is_triggered(self, obj):
+        """ Obj is the objects that is the source of the field in column """
+        if self.trigger_lookup and not (obj is None):
+            return bool(resolve_lookup(obj, self.trigger_lookup))
+        return True
+
+    class Meta:
+        ordering = ('weight',)
 
 
 # --------------------------------------------

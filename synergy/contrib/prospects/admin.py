@@ -17,6 +17,11 @@ class ColumnAdmin(admin.ModelAdmin):
     search_fields = ('field__db_field',)
     list_filter = ('table',)
 
+class CellStyleAdmin(admin.ModelAdmin):
+    list_display = ('column', 'get_table')
+    search_fields = ('css',)
+    list_filter = ('column__table',)
+
 
 admin.site.register(Prospect, ProspectAdmin)
 admin.site.register(Source, SourceAdmin)
@@ -36,6 +41,7 @@ admin.site.register(ObjectDetail)
 admin.site.register(CustomPostfix)
 admin.site.register(Table)
 admin.site.register(Column, ColumnAdmin)
+admin.site.register(CellStyle, CellStyleAdmin)
 
 
 

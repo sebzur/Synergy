@@ -18,4 +18,13 @@ input#prospect-form-submit{
 }
 
 
+/* Table styles */
+.valid{
+    background-color: #CAFFB8;
+}
+
+.invalid{
+    background-color: #FFCAAB;
+}
+
 
