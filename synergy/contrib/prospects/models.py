@@ -308,7 +308,7 @@ class ObjectDetail(models.Model):
 
     def get_context_data(self, *args, **kwargs):
         if self.postfix:
-            postfix_value = "%s_%s" % (self.variant.get_model_name(), self.variant.name)
+            postfix_value = "%s" % self.variant.name
             postfixes = {'objectdetail': postfix_value}
             if self.use_posthead:
                 postfixes['posthead'] = postfix_value
