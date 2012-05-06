@@ -332,7 +332,7 @@ class RepresentationModel(models.Model):
     variant = generic.GenericRelation('ListRepresentation', content_type_field="representation_type", object_id_field="representation_id")
 
     def __unicode__(self):
-        return u"%s" % self.__class__
+        return u"%s" % self.variant.get().name
 
     def get_context_data(self, *args, **kwargs):
         # Every display can add something to the context
@@ -370,6 +370,9 @@ class Column(models.Model):
     field = models.ForeignKey('Field', related_name="columns")
     sortable = models.BooleanField(verbose_name="Is this column sortable?")
     weight = models.IntegerField()
+
+    def __unicode__(self):
+        return u"%s %s" % (self.table, self.field)
 
     class Meta:
         ordering = ('weight',)

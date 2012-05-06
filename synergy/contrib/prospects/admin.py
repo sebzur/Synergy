@@ -12,6 +12,12 @@ class AspectAdmin(admin.ModelAdmin):
     list_display = ('attribute', 'source')
 
 
+class ColumnAdmin(admin.ModelAdmin):
+    list_display = ('field', 'table')
+    search_fields = ('field__db_field',)
+    list_filter = ('table',)
+
+
 admin.site.register(Prospect, ProspectAdmin)
 admin.site.register(Source, SourceAdmin)
 admin.site.register(Aspect, AspectAdmin)
@@ -29,7 +35,7 @@ admin.site.register(ListRepresentation)
 admin.site.register(ObjectDetail)
 admin.site.register(CustomPostfix)
 admin.site.register(Table)
-admin.site.register(Column)
+admin.site.register(Column, ColumnAdmin)
 
 
 
