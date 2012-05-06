@@ -336,7 +336,10 @@ class RepresentationModel(models.Model):
     variant = generic.GenericRelation('ListRepresentation', content_type_field="representation_type", object_id_field="representation_id")
 
     def __unicode__(self):
-        return u"%s" % self.variant.get().name
+        try:
+            return u"%s" % self.variant.get().name
+        except ListRepresentation.DoesNotExist, error:
+            return "%s" % error
 
     def get_context_data(self, *args, **kwargs):
         # Every display can add something to the context
