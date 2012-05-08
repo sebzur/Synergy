@@ -1,0 +1,27 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
+  <head>
+    <title>CodeLAB software</title>  
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="keywords" content=""/>
+    <meta name="description" content=""/>
+    <meta name="author" content=""/>
+    <link href="{{ MEDIA_URL }}/grains/css/login_style.css" rel="stylesheet" type="text/css" media="all" />
+  </head>
+
+  <body>
+    <div id="header">
+    </div>
+    <div id="login-stripe">
+      <img src="{{ LOGIN_LOGO_URL }}" />
+      <div id="thank-you">
+	Nastąpiło poprawne wylogowanie<br />
+	<p id="small-thank-you">Dziękujemy za spędzony czas </p>
+      </div>
+    </div>
+    <div id="error-message">
+      <p><a href="{% url login %}">Zaloguj się ponownie</a></p>
+    </div>
+  </body>
+</html>
+

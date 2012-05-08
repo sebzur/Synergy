@@ -1,0 +1,39 @@
+{% extends "grains/frame.html" %}
+{% block page %}
+    <div id="page">
+      {# ------------ HEADER --------------- #}
+      <div id="header">
+	<div id="header-inner" class="clearfix">  
+	  <div id="logo-title">
+	    <a href="/">
+	      <img src="{{ LOGO_URL }}" alt="pyoss logo" id="logo-image"/>
+	    </a>
+	    <span id="sitename">{% block sitename %}{{ SITENAME|safe }}{% endblock %}</span>
+	    <span id="siteslogan">{% block siteslogan %}{% endblock %}</span>
+	  </div> <!-- /#logo-title -->	
+	  <div id="user-links">	  
+	    <ul>
+	      {% if user.is_authenticated %}
+		<li><a href="#PROFILE">Zalogowany jako: {{ user }}</a></li>
+		<li><a href="{% url logout %}">Wyloguj</a></li>
+	      {% endif %}
+	    </ul>
+	  </div> <!-- /#user links -->
+	</div> <!-- /#header-inner -->
+      </div>
+    {# ------------ MAIN --------------- #}
+      <div id="main">
+	<div id="main-inner">
+	  {% block main %}{% endblock %}
+	</div><!-- end #wrapper -->
+      </div><!-- end #wrapper -->
+    {# ------------ FOOTER --------------- #}
+    <div id="footer">
+      <div id="footer-inner">
+	{% if user.is_authenticated %}
+	  <span id="creators">Code<strong>LAB</strong> | problemy związane z oprogramowaniem należy zgłaszać po adresem e-mail: <a href="mailto:codelab@codelab.pl">codelab@codelab.pl</a></span>
+	{% endif %}
+      </div>
+    </div>
+    </div>
+{% endblock %}

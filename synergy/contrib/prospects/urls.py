@@ -3,6 +3,7 @@ from django.conf.urls.defaults import *
 from synergy.contrib.prospects import views
 
 urlpatterns = patterns('',
-                       url(r'^prospect/(?P<pk>\d+)/$', views.ProspectView.as_view(), name="prospect"),
+                       url(r'^list/(?P<variant>[-\w]+)/$', views.ListView.as_view(), name="list"),
+                       url(r'^detail/(?P<variant>[-\w]+)/(?P<pk>\d+)/$', views.DetailView.as_view(), name="detail"),
                        )
 
