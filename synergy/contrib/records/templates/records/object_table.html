@@ -1,3 +1,5 @@
+{% load records_tags %}
+
 <table>
   {% for field, value in fields.iteritems %}
   <tr>
@@ -6,4 +8,12 @@
   </tr>
   {% endfor %}
 </table>
+
+
+{% for field, objects in m2m_fields.iteritems %}
+{% for object in objects %}
+{{ object|as_table }}
+{% endfor %}
+{% endfor %}
+
 

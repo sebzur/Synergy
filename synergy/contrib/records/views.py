@@ -37,7 +37,8 @@ class CreateObjectView(ProtectedView, RegionViewMixin, ObjectViewMixin, CreateVi
         return forms.createform_factory(setup.model.model_class(), setup.related_models.all())
 
     def get_success_url(self):
-        obj = self.get_parent() or self.object
+        #obj = self.get_parent() or self.object
+        obj =  self.object
         # self.object jest ustawiany przy zapisie
         return reverse('detail', args=[self.get_model_setup().object_detail.variant.name, obj.id])
 

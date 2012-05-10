@@ -28,7 +28,6 @@ def teaser(obj):
     context = {'object': obj, 'object_name': obj._meta.verbose_name, 'tracked_model_relations': {}, 'untracked_model_relations': {}, 'record_relations': {},
                'parent': parent, 'setup': setup}
 
-
     
     for related_model in setup.related_models.all():
         context['record_relations'][related_model] = related_model.model.model_class().objects.filter(**{related_model.setup.model.model: obj})
@@ -51,9 +50,13 @@ def teaser(obj):
 @register.filter(name='as_table')
 def as_table(obj):
 
-    context = {'fields': {}, 'object': obj}
+    context = {'fields': {}, 'object': obj, 'm2m_fields': {}}
     for field in obj._meta.fields:
         context['fields'][field.verbose_name] = getattr(obj, field.name)
+
+    for m2m_field in obj._meta.many_to_many:
+        context['m2m_fields'][m2m_field] = getattr(obj, m2m_field.name).all()
+
     
     tpl = 'records/object_table.html'
     return render_to_string(tpl, context)
