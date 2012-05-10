@@ -1,0 +1,25 @@
+{% load ui_loaders %}
+{% load synergy_region %}
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
+  <head>
+    <title>{% block pagetitle %}CodeLAB software{% endblock %}</title>  
+    {# FavIcon should be added... #}
+    {# ------------ CSS --------------- #}
+    <link type="text/css" rel="stylesheet" media="all" href="{{ STATIC_URL }}/shade/css/layout.css" /> 
+    <link type="text/css" rel="stylesheet" media="all" href="{{ STATIC_URL }}/shade/css/style.css" />
+    {% load_plugin jquery %}
+    {% load_plugin jqueryui %}
+    <!--[if lte IE 7]>
+        <link type="text/css" rel="stylesheet" media="all" href="{{ STATIC_URL }}/shade/css/layout_from_stu_ie.css" />
+    <![endif]-->
+    {% region posthead %}
+    {% endregion %}
+    {# ------------ JS --------------- #}
+    {# ------------ ROBOTS --------------- #}
+    <meta name="robots" content="NONE,NOARCHIVE" />
+  </head>
+  <body>  
+    {% block body %} {% endblock %}
+  </body>
+</html>

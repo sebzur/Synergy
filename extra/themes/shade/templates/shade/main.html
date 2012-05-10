@@ -1,0 +1,27 @@
+{% extends "shade/body.html" %}
+{% load synergy_region %}
+{% block main %}
+<div id="sidebar">
+
+<span class="vertical-rule-main"></span>
+<span class="vertical-rule-corner-top"></span>
+<span class="vertical-rule-corner-bottom"></span>
+
+  <div id="sidebar-inner">
+    {% region sidebar %}{% endregion %}
+  </div> <!-- end content -->
+
+
+</div> <!-- end outer3 -->
+<div id="content">
+  <div id="content-top">     
+    {% block content_top %} {% endblock %}
+  </div>
+  <div id="content-inner">
+    {% block content %}
+    The content block is empty. You shuld provide something here..
+    {% endblock %}
+  </div>
+</div> <!-- end content -->
+</div> <!-- end outer2 -->
+{% endblock %}

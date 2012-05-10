@@ -1,0 +1,49 @@
+{% extends "shade/base.html" %}
+{% load synergy_region %}
+{% block body %}
+    <div id="page">
+      {# ------------ HEADER --------------- #}
+      <div id="header">
+	<div id="header-inner" class="clearfix">  
+	  <div id="logo-title">
+	    <a href="/" style="background: url({{ STATIC_URL }}{{ theme_info.logo|default:"pageone/images/logo.png" }} ) no-repeat;"/>
+	    </a>
+	    <span id="sitename">{{ theme_info.site_name|safe|default:"<strong>Code</strong>LAB software" }}</span>
+	  </div> <!-- /#logo-title -->	
+	  <div id="user-links">	  
+	    <ul>
+	      {% if user.is_authenticated %}
+		<li><a href="#PROFILE">Login: {{ user }}</a></li>
+		<li><a href="{% url logout %}">Wyloguj / Logout</a></li>
+	      {% endif %}
+	    </ul>
+	  </div> <!-- /#user links -->
+	</div> <!-- /#header-inner -->
+      </div>
+    {# ------------ MAIN --------------- #}
+      <div id="main">
+	<div id="main-inner">
+	  {% block main %}{% endblock %}
+	</div><!-- end #wrapper -->
+      </div><!-- end #wrapper -->
+    {# ------------ FOOTER --------------- #}
+    <div id="footer">
+      <div class="horizontal-rule ">
+	<span class="first"></span>
+	<span class="second"></span>
+	<span class="third"></span>
+      </div>
+      <div id="footer-inner">
+	{% region footer %}
+	<a href="http://codelab.pl"><img src="{{ STATIC_URL }}shade/graph/codelab_footer.png" /></a>
+	<div id="footer-menu">
+	  <br />
+	  <br />
+	  Problemy techniczne w pracy oprogramowania należy zgłaszać pod adresem <a href="mailto:support@codelab.pl">support@codelab.pl</a><br/>
+	  Dane znajdujące się w systemie są własnością prawnie chronioną.<br />
+	</div>
+        {% endregion %}
+      </div>
+    </div>
+    </div>
+{% endblock %}
