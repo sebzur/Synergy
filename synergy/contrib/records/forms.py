@@ -12,7 +12,7 @@ def createform_factory(created_model, related_models, excluded_fields=[]):
         def __init__(self, instance=None, parent=None, *args, **kwargs):
             super(CreateBaseForm, self).__init__(instance=instance, *args, **kwargs)
 
-            self.external = {}
+            self.external = SortedDict()
             if parent:
                 parent_field = get_parent_field(self.instance._meta)
                 self.fields[parent_field.name].initial = parent.id
@@ -27,28 +27,25 @@ def createform_factory(created_model, related_models, excluded_fields=[]):
                     self.fields[field.name].queryset = self.fields[field.name].queryset.filter(group__name=field.name)
 
             for related_model in related_models:
+                self.external[related_model] = []
                 for i in range(related_model.elements_count):
 
                     ins = None
                     if not self.instance.pk is None:
                         ins = related_model.model.model_class().objects.filter(**{related_model.setup.model.model: self.instance})[i]
-                    print 'Woring with instance', ins
                     df = createform_factory(related_model.model.model_class(), [], excluded_fields=[self._meta.model._meta.object_name.lower()])(instance=ins, *args, **kwargs)
-                    #ext = model_forms.fields_for_model(related_model.model.model_class(), exclude=[self._meta.model._meta.object_name.lower()])
-                    prefix = "%s_%d_" % (related_model.model.model, i)
-                    self.external[prefix] = df
+                    self.external[related_model].append(df)
 
         def is_valid(self):
             valid = [super(CreateBaseForm, self).is_valid()]
-            for ex in self.external.values():
+            for ex in itertools.chain(*self.external.values()):
                 valid.append(ex.is_valid())
             return all(valid)
 
         def save(self, *args, **kwargs):
-            print 'Saving', self._meta.model
             self.instance = super(CreateBaseForm, self).save(*args, **kwargs)
 
-            for f in self.external.values():
+            for f in itertools.chain(*self.external.values()):
                 ins = f.save(commit=False)
                 setattr(ins, self._meta.model._meta.object_name.lower(), self.instance)
                 ins.save()

@@ -1,13 +1,7 @@
 
 <div class="grains-form">
 <form action="." method="POST">
-  {% csrf_token %}
-  {{ form.as_p }}
-
-  {% for k,v in form.external.iteritems %}
-  {{ v.as_p }}
-  {% endfor %}
-
+  {% include 'synergy/contrib/records/views/form.html' %}
   <input class="button" type="submit" value="Zarejestruj" />
 </form>
 </div>
