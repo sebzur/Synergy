@@ -197,3 +197,93 @@ img#logo-image{
 .vertical-rule-corner-bottom{
     background: -moz-radial-gradient(left top , circle , rgba(0, 0, 0, 0.08), transparent 30px, transparent 100%) repeat scroll 0 0 transparent;
 }
+
+
+
+/* ---------------------------------------------------
+    Form
+----------------------------------------------------- */
+.grains-form form {
+    
+}
+
+.grains-form form p {
+    font-size: 14.5px;
+    color: #1C1C1C;
+}
+
+.grains-form form label {
+    display: block;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 25px;
+    margin: 0 0 5px 0;
+    text-shadow: 1px 1px 0 rgba(255, 255, 255, 1);
+}
+.grains-form form label span {
+    color: #046416;
+}
+.grains-form form input,
+.grains-form form select,
+.grains-form form textarea {
+    width:100%;
+    margin-bottom: 10px;
+    padding: 4px 0px 4px 4px;
+    color: #4A4949;
+    background: #ebebeb;
+    border-width: 1px;
+    border-style: solid;
+    border-color: #b8b8b8 #EBEBEB #EBEBEB #b8b8b8;
+    font: 15px Helvetica, Arial, Sans-serif;
+
+    -moz-box-shadow:inset 0 3px 1px rgba(0, 0, 0, .1);
+    -webkit-box-shadow:inset 0 1px 3px rgba(0, 0, 0, .1);
+    box-shadow:inset 0 1px 3px rgba(0, 0, 0, .1);
+}
+.grains-form form textarea {
+    height: 225px;
+    margin-bottom: 0;
+}
+.grains-form form input:focus,
+.grains-form form select:focus,
+.grains-form form textarea:focus {
+	background: #F4F4F4;
+}
+
+.grains-form form input.button, .grains-form form input.dangerous-button {
+    height: 38px;
+    margin: 5px 0;
+
+    font-size: 14px;
+    font-weight: bold;
+    color: #ffffff;
+    
+    cursor: pointer;
+    text-shadow: 0 -1px 0 rgba(0,0,0,0.5);
+
+}
+
+
+.grains-form form input.button {
+    background: #434343;
+    border: 1px solid #474747;
+    box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #474747;
+    -moz-box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #474747;
+    -webkit-box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #474747;
+
+}
+
+
+.grains-form form input.dangerous-button {
+    background: #FF2000;
+    border: 1px solid #FF0006;
+    box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #FF0006;
+    -moz-box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #FF0006;
+    -webkit-box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #FF0006;
+
+}
+
+
+.ie7 .grains-form form input.button, .ie7 .grains-form form input.dangerous-button {
+    padding: 0 2px;
+}

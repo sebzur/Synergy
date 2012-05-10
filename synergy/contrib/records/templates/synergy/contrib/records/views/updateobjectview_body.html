@@ -1,0 +1,20 @@
+
+
+<div class="grains-form">
+<form action="." method="POST">
+  {% csrf_token %}
+  {{ form.as_p }}
+
+
+  {% for k,v in form.external.iteritems %}
+  {{ v.as_p }}
+  {% endfor %}
+
+
+  <input class="button" type="submit" value="Zarejestruj" />
+  <input class="dangerous-button" type="submit" value="Usuń" name="_delete" />
+
+</form>
+</div>
+
+

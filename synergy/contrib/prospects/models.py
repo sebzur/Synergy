@@ -306,6 +306,9 @@ class ObjectDetail(models.Model):
     use_posthead = models.BooleanField(default=False)
     context_operator = fields.CallableField(max_length=255, verbose_name="The callable to call on the context", blank=True)    
 
+    def __unicode__(self):
+        return self.variant.name
+
     def get_context_data(self, *args, **kwargs):
         if self.postfix:
             postfix_value = "%s" % self.variant.name
