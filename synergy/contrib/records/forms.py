@@ -66,7 +66,12 @@ def createform_factory(created_model, related_models, excluded_fields=[]):
             self.external_m2m = {}
             for related_m2m_model in created_model._meta.many_to_many:
                 self.external_m2m[related_m2m_model] = []
-                for choice in related_m2m_model.rel.to._default_manager.all():
+                choice_manager  = related_m2m_model.rel.to._default_manager
+                if choice_manager.model is categorical_model:
+                    choices = choice_manager.filter(group__name=related_m2m_model.rel.through._meta.object_name.lower())
+                else:
+                    choices = choice_manager.all()
+                for choice in choices:
                     ins = None
                     if not self.instance.pk is None:
                         try:
