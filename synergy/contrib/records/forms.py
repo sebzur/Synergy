@@ -18,7 +18,7 @@ def create_m2m_form_factory(rel, from_model):
             self.select = select
             self.fields[r_name].initial = select.id
             self.fields[r_name].widget = forms.widgets.HiddenInput()
-            self.fields["%s_%d" % (select._meta.object_name.lower(), select.id)] = forms.BooleanField(label=select, required=False, initial=bool(instance))
+            self.fields.insert(0, "%s_%d" % (select._meta.object_name.lower(), select.id), forms.BooleanField(label=select, required=False, initial=bool(instance)))
 
         def save(self, *args, **kwargs):
             return super(M2MBaseForm, self).save(*args, **kwargs)

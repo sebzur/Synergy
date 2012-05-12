@@ -5,6 +5,7 @@ from django.db.models import get_model
 import re
 
 from synergy.contrib.records.models import get_parent_field
+from django.utils.datastructures import SortedDict
 
 register = template.Library()
 
@@ -50,7 +51,7 @@ def teaser(obj):
 @register.filter(name='as_table')
 def as_table(obj):
 
-    context = {'fields': {}, 'object': obj, 'm2m_fields': {}}
+    context = {'fields': SortedDict(), 'object': obj, 'm2m_fields': SortedDict()}
     for field in obj._meta.fields:
         context['fields'][field.verbose_name] = getattr(obj, field.name)
 

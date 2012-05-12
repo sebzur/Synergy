@@ -55,7 +55,7 @@ class CreateObjectView(ProtectedView, RegionViewMixin, ObjectViewMixin, CreateVi
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(CreateObjectView, self).get_context_data(*args, **kwargs)
-        ctx['title'] = 'Nowy pacjent'
+        ctx['title'] = '%s - nowy wpis' % self.get_model()._meta.verbose_name
         return  ctx
 
 
@@ -73,7 +73,7 @@ class UpdateObjectView(ProtectedView, RegionViewMixin, UpdateView, ObjectViewMix
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(UpdateObjectView, self).get_context_data(*args, **kwargs)
-        ctx['title'] = 'Nowy pacjent'
+        ctx['title'] = u'%s' % self.object
         return  ctx
 
     def form_valid(self, form):
