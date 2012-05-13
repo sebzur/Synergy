@@ -1,0 +1,18 @@
+<table>
+  <thead>
+    {% for header in headers %}
+    <th class="ui-state-default">
+      {{ header }}
+    </th>
+    {% endfor %}
+  </thead>
+  <tbody>
+    {% for row, values in data.iteritems %}
+    <tr class="{% cycle "odd" "even" %}">
+      {% for value in values %}
+      <td>{{ value }}</td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

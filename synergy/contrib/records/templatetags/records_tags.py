@@ -49,15 +49,32 @@ def teaser(obj):
 
 
 @register.filter(name='as_table')
-def as_table(obj):
+def as_table(obj, parent):
 
-    context = {'fields': SortedDict(), 'object': obj, 'm2m_fields': SortedDict()}
+    context = {'fields': SortedDict(), 'object': obj, 'm2m_fields': SortedDict(), 'parent': parent}
+
     for field in obj._meta.fields:
         context['fields'][field.verbose_name] = getattr(obj, field.name)
+
+    if not parent is obj:
+        context['fields'].pop(parent._meta.object_name.lower())
+        context['fields'].pop('ID')
 
     for m2m_field in obj._meta.many_to_many:
         context['m2m_fields'][m2m_field] = getattr(obj, m2m_field.name).all()
 
     
     tpl = 'records/object_table.html'
+    return render_to_string(tpl, context)
+
+
+@register.filter(name='related_objects_table')
+def related_objects_table(objects, parent):
+    fields = [f for f in objects.model._meta.fields if not f.name in ('id', parent._meta.object_name.lower())]
+    context = {'headers': [f.verbose_name for f in fields], 'data': SortedDict(),  'parent': parent}
+
+    for obj in objects:
+        context['data'][obj] = [getattr(obj, field.name) for field in fields]
+    
+    tpl = 'records/related_objects_table.html'
     return render_to_string(tpl, context)

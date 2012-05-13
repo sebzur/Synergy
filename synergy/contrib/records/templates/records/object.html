@@ -13,17 +13,16 @@
     <div id="accordion">
       <h3><a href="#"><strong>{{ object_name }}</strong></a></h3>
       <div>
-	(<a href="{% url update setup.name object.id %}">Edytuj</a>)
-	{{ object|as_table }}
+	{{ object|as_table:object }}
+	<p class="object-link">
+	<a href="{% url update setup.name object.id %}">Edytuj</a>
+	</p>
       </div>
-
 
   {% for record, objects in record_relations.iteritems %}
   <h3><a href="#"><strong>{{ record.get_model_verbose_name|title }}</strong></a></h3>
   <div>
-    {% for obj in objects %}
-    {{ obj|as_table }}
-    {% endfor %}
+    {{ objects|related_objects_table:object }}
   </div>
   {% endfor %}
 </div>

@@ -2,17 +2,18 @@
 
 <table>
   {% for field, value in fields.iteritems %}
-  <tr>
-    <td>{{ field }}</td>
-    <td>{{ value }}</td>
+  <tr class="{% cycle "odd" "even" %}">
+    <td class="record-field">{{ field }}</td>
+    <td class="record-value">{{ value }}</td>
   </tr>
   {% endfor %}
 </table>
 
 
 {% for field, objects in m2m_fields.iteritems %}
+<h4>{{ field.verbose_name }}</h4>
 {% for object in objects %}
-{{ object|as_table }}
+{{ object }}
 {% endfor %}
 {% endfor %}
 
