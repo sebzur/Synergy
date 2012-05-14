@@ -26,8 +26,8 @@ def teaser(obj):
 
     setup = ct.record_setup
 
-    context = {'object': obj, 'object_name': obj._meta.verbose_name, 'tracked_model_relations': {}, 'untracked_model_relations': {}, 'record_relations': {},
-               'parent': parent, 'setup': setup}
+    context = {'object': obj, 'object_name': obj._meta.verbose_name, 'tracked_model_relations': {}, 'untracked_model_relations': {}, 
+               'record_relations': {}, 'parent': parent, 'setup': setup}
 
     
     for related_model in setup.related_models.all():
@@ -36,13 +36,18 @@ def teaser(obj):
     
     db_rels = [rel for rel in obj._meta.get_all_related_objects() if not rel.model in classes_in_record]
     for rel in db_rels:
-        queryset = getattr(obj, rel.get_accessor_name())
+        if rel.field.rel.multiple:
+            related_object = getattr(obj, rel.get_accessor_name())
+        else:
+            try:
+                related_object = getattr(obj, rel.get_accessor_name())
+            except:
+                related_object = None
         try:
-            print rel.var_name, get_model('records', 'RecordSetup').objects.values_list('model__model', flat=True)
             context['tracked_model_relations'][rel] = {'setup': get_model('records', 'RecordSetup').objects.get(model__model=rel.var_name),
-                                                       'queryset': queryset}
+                                                       'related_object': related_object}
         except get_model('records', 'RecordSetup').DoesNotExist:
-            context['untracked_model_relations'][rel] = {'queryset': queryset}
+            context['untracked_model_relations'][rel] = {'related_object': related_object}
 
     tpl = 'records/object.html'
     return render_to_string(tpl, context)
