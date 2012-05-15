@@ -1,0 +1,20 @@
+{% load records_tags %}
+
+<table>
+  {% for field, value in fields.iteritems %}
+  <tr class="{% cycle "odd" "even" %}">
+    <td class="record-field">{{ field }}</td>
+    <td class="record-value">{{ value|default:"n/a" }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+
+{% for field, objects in m2m_fields.iteritems %}
+<h4>{{ field.verbose_name }}</h4>
+{% for object in objects %}
+{{ object }}
+{% endfor %}
+{% endfor %}
+
+

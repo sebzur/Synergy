@@ -178,7 +178,7 @@ class Aspect(models.Model):
                    'FilePathField': None,
                    'FloatField': None,
                    'ImageField': None,
-                   'IntegerField': None,
+                   'IntegerField': 'continous',
                    'IPAddressField': None,
                    'GenericIPAddressField': None,
                    'NullBooleanField': None,
@@ -199,6 +199,7 @@ class Aspect(models.Model):
                                ('iendswith', 'Case-insensitve ends with')),
                    'continous': (('exact', 'Exact'), ('gt', 'Greater then'), ('gte', 'Greater then or exact'), ('lt', 'Lower then'), ('lte', 'Lower then or exact')),
                    'relation': (('exact', 'Exact'),),
+                   
                    }
 
         internal_type = fields.get(self.get_field().get_internal_type())
@@ -305,6 +306,9 @@ class ObjectDetail(models.Model):
     postfix = models.BooleanField(default=False)
     use_posthead = models.BooleanField(default=False)
     context_operator = fields.CallableField(max_length=255, verbose_name="The callable to call on the context", blank=True)    
+
+    def __unicode__(self):
+        return self.variant.name
 
     def get_context_data(self, *args, **kwargs):
         if self.postfix:
