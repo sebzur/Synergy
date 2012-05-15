@@ -29,6 +29,11 @@ class ObjectViewMixin(object):
     def get_queryset(self):
         return self.get_model()._default_manager.all()
 
+    def get_return_context(self, obj):
+        parent = {'object': obj, 'setup': None}
+        if parent.get('object'):
+            parent['setup'] = get_model('records', 'RecordSetup').objects.get(model__model=parent.get('object')._meta.object_name.lower())
+        return parent
 
 class CreateObjectView(ProtectedView, RegionViewMixin, ObjectViewMixin, CreateView):
 
@@ -56,6 +61,7 @@ class CreateObjectView(ProtectedView, RegionViewMixin, ObjectViewMixin, CreateVi
     def get_context_data(self, *args, **kwargs):
         ctx = super(CreateObjectView, self).get_context_data(*args, **kwargs)
         ctx['title'] = '%s - nowy wpis' % self.get_model()._meta.verbose_name
+        ctx['parent'] = self.get_return_context(self.get_parent())
         return  ctx
 
 
@@ -74,6 +80,7 @@ class UpdateObjectView(ProtectedView, RegionViewMixin, UpdateView, ObjectViewMix
     def get_context_data(self, *args, **kwargs):
         ctx = super(UpdateObjectView, self).get_context_data(*args, **kwargs)
         ctx['title'] = u'%s' % self.object
+        ctx['parent'] = self.get_return_context(self.object)
         return  ctx
 
     def form_valid(self, form):

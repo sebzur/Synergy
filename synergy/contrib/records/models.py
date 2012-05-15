@@ -17,7 +17,7 @@ def get_parent_for_instance(instance):
 
 
 class ValuesGroup(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     is_ordinal = models.BooleanField()
 
     def __unicode__(self):
@@ -36,6 +36,7 @@ class CategoricalValue(models.Model):
         return self.value
     
     class Meta:
+        unique_together = (('key', 'value', 'group'),)
         ordering = ('weight', 'value')
 
 class RecordSetup(models.Model):

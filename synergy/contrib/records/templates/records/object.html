@@ -29,7 +29,7 @@
 
 </div>
 
-<div class="content-navigation" style="padding: 20px; float:left; width: 35%;">
+<div  style="padding: 20px; float:left; width: 35%;">
 
   <h3>Zarejestrowane skojarzone modele</h3>
   <p>
@@ -38,11 +38,11 @@
   </p>
   <ul>
   {% for rel, value_dict in tracked_model_relations.iteritems %}
-  <li><strong>{{ rel.opts.verbose_name|title }}</strong> (wpisów: {{ value_dict.queryset.all.count }})
-    <a href="{% url create-related value_dict.setup.name object.id %}">Dodaj nowe</a> 
+  <li style="padding: 5px;"><a style="font-weight: bold;" href="{% url create-related value_dict.setup.name object.id %}">Dodaj</a> <strong>{{ rel.opts.verbose_name|title }}</strong>
+    
     <ul>
-    {% for entry in value_dict.queryset.all %}
-    <li><a href="{% url detail value_dict.setup.object_detail.variant.name entry.id %}"> {{ entry }} </a></li>
+    {% for entry in value_dict.related_object.all %}
+    <li style="padding-top: 5px;"><a href="{% url detail value_dict.setup.object_detail.variant.name entry.id %}"> {{ entry }} </a></li>
     {% endfor %}
     </ul>
 

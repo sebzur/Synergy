@@ -37,6 +37,8 @@ def createform_factory(created_model, related_models, excluded_fields=[]):
         def __init__(self, instance=None, parent=None, *args, **kwargs):
             super(CreateBaseForm, self).__init__(instance=instance, *args, **kwargs)
 
+            print kwargs.get('data')
+
             self.external = SortedDict()
             if parent:
                 parent_field = get_parent_field(self.instance._meta)
@@ -53,10 +55,14 @@ def createform_factory(created_model, related_models, excluded_fields=[]):
 
             for related_model in related_models:
                 self.external[related_model] = []
+                instances = related_model.model.model_class().objects.filter(**{related_model.setup.model.model: self.instance})
                 for i in range(related_model.elements_count):
                     ins = None
                     if not self.instance.pk is None:
-                        ins = related_model.model.model_class().objects.filter(**{related_model.setup.model.model: self.instance})[i]
+                        try:
+                            ins = instances[i]
+                        except IndexError:
+                            ins = None
                     prefix="%s_%d" % (related_model.model.model, i)
                     df = createform_factory(related_model.model.model_class(), [], excluded_fields=[self._meta.model._meta.object_name.lower()])(instance=ins, 
                                                                                                                                                  prefix=prefix,
@@ -67,6 +73,7 @@ def createform_factory(created_model, related_models, excluded_fields=[]):
             for related_m2m_model in created_model._meta.many_to_many:
                 self.external_m2m[related_m2m_model] = []
                 choice_manager  = related_m2m_model.rel.to._default_manager
+                print 'Processingm2m', choice_manager
                 if choice_manager.model is categorical_model:
                     choices = choice_manager.filter(group__name=related_m2m_model.rel.through._meta.object_name.lower())
                 else:
@@ -81,8 +88,10 @@ def createform_factory(created_model, related_models, excluded_fields=[]):
                             ins = None
 
                     prefix="%s_%d" % (related_m2m_model.model._meta.object_name.lower(), choice.id)
-                    self.external_m2m[related_m2m_model].append(create_m2m_form_factory(related_m2m_model.rel, related_m2m_model.model)(instance=ins, select=choice, 
-                                                                                                                                        prefix=prefix, *args, **kwargs))
+                    #cp_kwargs = kwargs.copy()
+                    #cp_kwargs['prefix'] = prefix
+                    self.external_m2m[related_m2m_model].append(create_m2m_form_factory(related_m2m_model.rel, related_m2m_model.model)(prefix=prefix, instance=ins, select=choice, 
+                                                                                                                                        *args, **kwargs))
                 
 
         def is_valid(self):

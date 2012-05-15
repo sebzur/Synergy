@@ -1,30 +1,3 @@
-  {% csrf_token %}
-  {{ form.as_p }}
-
-  <div id="accordion">  
-  {% for k, v in form.external.iteritems %}
-  <h3><a href="#"><strong>{{ k.get_model_verbose_name }}</strong></a></h3>
-  <div>
-    {% for r_form in v %}
-    <fieldset>
-      <legend>Wartość nr #{{ forloop.counter }} </legend>
-    {{ r_form.as_p }}
-    </fieldset>
-    {% endfor %}
-  </div>
-  {% endfor %}
-
-
-  {% for k, v in form.external_m2m.iteritems %}
-
-  <h3><a href="#"><strong>{{ k.verbose_name }}</strong></a></h3>
-  <div>
-    {% for r_form in v %}
-    <fieldset>
-      <legend>Wartość nr #{{ forloop.counter }} </legend>
-      {{ r_form.as_p }}
-    </fieldset>
-    {% endfor %}
-  </div>
-  {% endfor %}
-</div>
+{% load records_tags %}
+{% csrf_token %}
+{{ form|rform:1 }}
