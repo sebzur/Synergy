@@ -29,6 +29,7 @@ admin.site.register(Aspect, AspectAdmin)
 
 admin.site.register(ProspectVariant)
 admin.site.register(AspectValue)
+admin.site.register(UserRelation)
 
 admin.site.register(Field)
 admin.site.register(FieldURL)
@@ -38,6 +39,9 @@ admin.site.register(ProspectOperator)
 
 admin.site.register(ListRepresentation)
 admin.site.register(ObjectDetail)
+admin.site.register(VariantContext)
+admin.site.register(VariantContextAspectValue)
+
 admin.site.register(CustomPostfix)
 admin.site.register(Table)
 admin.site.register(Column, ColumnAdmin)

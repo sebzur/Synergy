@@ -1,5 +1,35 @@
 {% load synergy_region %}
+{% load prospects_rendering %}
 
 {% region objectdetail %}
-{{ object }}
+ {% if objectdetail.get_record %}
+   {{ object|as_record }}
+ {% else %}
+   {{ object }}
+ {% endif %}
 {% endregion %}
+
+
+{% region objectcontext %}
+<div class="clearfix">
+</div>
+
+{% if variant_contexts %}
+
+<div id="tabs">
+  <ul>
+    {% for variant_context in variant_contexts %}
+    <li><a href="#tabs-{{ variant_context.id }}">{{ variant_context.variant.verbose_name }}</a></li>
+    {% endfor %}
+  </ul>
+
+  {% for variant_context, query in variant_contexts.iteritems %}
+  <div id="tabs-{{ variant_context.id }}">
+    {% render_results variant_context.variant request.user query %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% endregion %}
+

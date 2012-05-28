@@ -132,7 +132,7 @@ class Source(models.Model):
 
     def build_query(self, query):
         for aspect_id in query:
-            yield (smart_str("%s__%s" % (self.aspects.get(id=aspect_id).attribute, query.get(aspect_id).get('operator'))), query.get(aspect_id).get('value'))
+            yield (smart_str("%s__%s" % (self.aspects.get(id=aspect_id).attribute, query.get(aspect_id).get('lookup'))), query.get(aspect_id).get('value'))
 
 class Aspect(models.Model):
     # Attribute is stored as a string (slug) in native Django
@@ -217,6 +217,7 @@ class ProspectVariant(models.Model):
     name = models.SlugField(verbose_name="Machine name", unique=True)
     verbose_name = models.CharField(max_length=255, verbose_name="Verbose name")
     is_default = models.BooleanField(verbose_name="Is this state the default one?")
+    record = models.ForeignKey('records.RecordSetup', null=True)
     # The results will be cached with the timeout specified here.
     cache_timeout = models.PositiveSmallIntegerField(verbose_name="Cache timeout", null=True, blank=True)
 
@@ -226,8 +227,17 @@ class ProspectVariant(models.Model):
     css_classes = models.CharField(max_length=255, help_text="The CSS class names will be added to the prospect variant. This enables you to use specific CSS code for each variant. You may define multiples classes separated by spaces.", blank=True)
     submit_label = models.CharField(max_length=255, verbose_name="Sumbmit button label", default="Submit")
 
-    def filter(self, **query):
+    def filter(self, user, **query):
+        """ Returns variant results.
+
+        Query is a dictionary with a structure:
+        {'aspect_id': {'lookup': gt|lt|exact|[...], 'value': [...]}}
+
+        """ 
         data = self.prospect.filter(**query)
+        for user_relation in self.user_relations.all():
+            values = user_relation.content_type.model_class().objects.filter(**{user_relation.user_field: user}).values_list(user_relation.value_field, flat=True)
+            data = data.filter(**{"%s__in" % user_relation.related_by_field: values})
         if self.prospect.operators.exists():
             for operator in self.prospect.operators.all():
                 data = operator.callable(data)
@@ -252,6 +262,33 @@ class AspectValue(models.Model):
     class Meta:
         unique_together = (('variant', 'aspect'),)
 
+class UserRelation(models.Model):
+    variant = models.ForeignKey('ProspectVariant', related_name="user_relations")
+    # content type with user FK
+    content_type = models.ForeignKey('contenttypes.ContentType')
+    # db field related to user which will be used to query for the 
+    # content_type objects related with authenticated user
+    user_field = models.SlugField(max_length=255, verbose_name="User field")
+    value_field = models.SlugField(max_length=255, verbose_name="Value field")
+    # relation field has to point to content_type 
+    related_by_field = models.SlugField(max_length=255, verbose_name="Related by field")
+    weight = models.IntegerField()
+    
+    class Meta:
+        ordering = ('weight', )
+        verbose_name = "User relation"
+        verbose_name_plural = "User relations"
+        unique_together = (('variant', 'content_type'),)
+
+    
+#class VariantRelation(models.Model):
+#    variant = models.ForeignKey('ProspectVariant')
+#    related_variant = models.ForeignKey('ProspectVariant')
+#    db_field = models.SlugField(max_length=255, verbose_name="Database field")
+#    relation_field = models.CharField(max_length=255, verbose_name="Lookup")
+
+#    class Meta:
+#        unique_together = (('variant', 'related_variant'),)
 
 class Field(models.Model):
     variant = models.ForeignKey('ProspectVariant')
@@ -307,18 +344,43 @@ class ObjectDetail(models.Model):
     use_posthead = models.BooleanField(default=False)
     context_operator = fields.CallableField(max_length=255, verbose_name="The callable to call on the context", blank=True)    
 
+    def get_record(self):
+        return self.variant.record
+
     def __unicode__(self):
         return self.variant.name
 
-    def get_context_data(self, *args, **kwargs):
+    def get_context_data(self, obj, *args, **kwargs):
+        
+        ctx = {'variant_contexts': dict((v_c, v_c.get_query(obj)) for v_c in self.variant_contexts.all())}
+
         if self.postfix:
             postfix_value = "%s" % self.variant.name
             postfixes = {'objectdetail': postfix_value}
             if self.use_posthead:
                 postfixes['posthead'] = postfix_value
-            return {'region_postfixes': postfixes}
-        return {}
+            ctx.update({'region_postfixes': postfixes})
+        return ctx
 
+
+class VariantContext(models.Model):
+    object_detail = models.ForeignKey('prospects.ObjectDetail', related_name="variant_contexts")
+    variant = models.ForeignKey('ProspectVariant')
+
+    def get_query(self, obj):
+        return dict([(str(aspect_value.aspect.id), {'lookup': aspect_value.lookup, 'value': aspect_value.value_field.get_value(obj)}) for aspect_value in self.aspect_values.all()])
+
+class VariantContextAspectValue(models.Model):
+    variant_context = models.ForeignKey('VariantContext', related_name="aspect_values")
+    aspect = models.ForeignKey('Aspect')
+    value_field = models.ForeignKey('Field')
+    lookup = models.CharField(max_length=255, verbose_name="Lookup")
+
+
+#class ObjectDetailContext(models.Model):
+#    verbose_name = models.CharField(max_length=255, verbose_name="Verbose name")
+#    object_detail = models.ForeignKey('prospects.ObjectDetail')
+#    context_operator = fields.CallableField(max_length=255, verbose_name="The callable to call on the context", blank=True)
     
 class ListRepresentation(models.Model):
     variant = models.OneToOneField('ProspectVariant')
