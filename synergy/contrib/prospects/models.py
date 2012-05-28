@@ -235,9 +235,21 @@ class ProspectVariant(models.Model):
 
         """ 
         data = self.prospect.filter(**query)
+
+        # User related lookup
+        q_obj = None
         for user_relation in self.user_relations.all():
             values = user_relation.content_type.model_class().objects.filter(**{user_relation.user_field: user}).values_list(user_relation.value_field, flat=True)
-            data = data.filter(**{"%s__in" % user_relation.related_by_field: values})
+            if q_obj:
+                q_obj |= Q(**{"%s__in" % user_relation.related_by_field: values})
+            else:
+                q_obj = Q(**{"%s__in" % user_relation.related_by_field: values})
+        if q_obj:
+            #data = data.filter(**{"%s__in" % user_relation.related_by_field: values})
+            data = data.filter(q_obj)
+        # ----------------------------------------------
+
+
         if self.prospect.operators.exists():
             for operator in self.prospect.operators.all():
                 data = operator.callable(data)
