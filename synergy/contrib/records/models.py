@@ -58,21 +58,21 @@ class RecordRelation(models.Model):
     def can_create_entry(self):
         return True
 
-class ModelSetup(models.Model):
-    model = models.OneToOneField(ContentType)
+#class ModelSetup(models.Model):
+#    model = models.OneToOneField(ContentType)
 
-class FieldSet(models.Model):
-    model = models.ForeignKey(ContentType, related_name="fieldsets")
-    name = models.SlugField(max_length=50)
-    verbose_name = models.CharField(max_length=255)
+#class FieldSet(models.Model):
+#    model = models.ForeignKey(ContentType, related_name="fieldsets")
+#    name = models.SlugField(max_length=50)
+#    verbose_name = models.CharField(max_length=255)
 
-    class Meta:
-        unique_together = (('model', 'name'),)
+#    class Meta:
+#        unique_together = (('model', 'name'),)
 
-class FieldSetup(models.Model):
-    setup = models.ForeignKey(ModelSetup, related_name="fields")
-    field = models.SlugField(max_length=50)
-    fieldset = models.ForeignKey(FieldSet, related_name="fields")
+#class FieldSetup(models.Model):
+#    setup = models.ForeignKey(ModelSetup, related_name="fields")
+#    field = models.SlugField(max_length=50)
+#    fieldset = models.ForeignKey(FieldSet, related_name="fields")
 
-    class Meta:
-        unique_together = (('setup', 'field'),)
+#    class Meta:
+#        unique_together = (('setup', 'field'),)

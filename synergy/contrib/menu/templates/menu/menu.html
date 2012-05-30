@@ -1,0 +1,7 @@
+<h3>{{ menu.verbose_name }}</h3>
+
+<ul>
+  {% for item, url in items.iteritems %}
+  <li>{{ item.prefix_text }} <a href="{{ url }}"><strong>{{ item.verbose_name }}</strong></a> {{ item.suffix_text }}</li>
+  {% endfor %}
+</ul>

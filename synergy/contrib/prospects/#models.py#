@@ -375,13 +375,13 @@ class ObjectDetail(models.Model):
         return ctx
 
 
-#class DetailMenu(models.Model):
-#    menu = models.ForeignKey('menu.Menu', related_name="details")
+class DetailMenu(models.Model):
+    menu = models.ForeignKey('menu.Menu', related_name="details")
 
-#class DetailMenuArgument(models.Model):
-#    detail_menu = models.ForeignKey('DetailMenu', related_name="arguments")
-#    argument = models.ForeignKey('Aspect')
-#    value_field = models.ForeignKey('Field')
+class DetailMenuArgument(models.Model):
+    detail_menu = models.ForeignKey('DetailMenu', related_name="arguments")
+    argument = models.ForeignKey('menu.MenuArgument')
+    value_field = models.ForeignKey('Field')
     
 
 class VariantContext(models.Model):

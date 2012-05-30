@@ -1,24 +1,13 @@
 {% load records_tags %}
 
-<div class="content-navigation" style="float: right;">
-{% if parent %}
-<a href="{% url detail parent.setup.object_detail.variant.name parent.object.id %}"> Powróć {{ parent.object }} </a></li>
-{% endif %}
-</div>
-
-<h3>Szczegóły dotyczące obiektu</h3>
-
-<div>
-  <div style="float:left; display:block; width: 60%;">
-    <div id="accordion">
-      <h3><a href="#"><strong>{{ object_name }}</strong></a></h3>
-      <div>
-	{{ object|as_table:object }}
-	<p class="object-link">
-	<a href="{% url update setup.name object.id %}">Edytuj</a>
-	</p>
-      </div>
-
+<div id="accordion">
+  <h3><a href="#"><strong>{{ object_name }}</strong></a></h3>
+  <div>
+    {{ object|as_table:object }}
+    <p class="object-link">
+      <a href="{% url update setup.name object.id %}">Edytuj</a>
+    </p>
+  </div>
   {% for record, objects in record_relations.iteritems %}
   <h3><a href="#"><strong>{{ record.get_model_verbose_name|title }}</strong></a></h3>
   <div>
@@ -27,41 +16,4 @@
   {% endfor %}
 </div>
 
-</div>
 
-<div  style="padding: 20px; float:left; width: 35%;">
-
-  <h3>Zarejestrowane skojarzone modele</h3>
-  <p>
-    Z przeglądanym wpisem w bazie danych znajdują się zarejestrowane modele
-    opisujące dane skojarzone z przeglądanymi. Możesz je przeglądać/uzupełniać.
-  </p>
-  <ul>
-  {% for rel, value_dict in tracked_model_relations.iteritems %}
-  <li style="padding: 5px;"><a style="font-weight: bold;" href="{% url create-related value_dict.setup.name object.id %}">Dodaj</a> <strong>{{ rel.opts.verbose_name|title }}</strong>
-    
-    <ul>
-    {% for entry in value_dict.related_object.all %}
-    <li style="padding-top: 5px;"><a href="{% url detail value_dict.setup.object_detail.variant.name entry.id %}"> {{ entry }} </a></li>
-    {% endfor %}
-    </ul>
-
-  </li>
-  {% empty %}
-  <li>Brak wpisów</li>
-  {% endfor %}
-  </ul>
-
-  {% if untracked_model_relations %}
-  <h3>Inne skojarzone modele</h3>
-  <ul>
-  {% for rel, value_dict in untracked_model_relations.iteritems %}
-  <li><strong>{{ rel.opts.verbose_name|title }}</strong> ({{ value_dict.queryset.all.count }} wpisów), {{ rel.var_name}}</li>
-  {% endfor %}
-  </ul>
-  {% endif %}
-
-
-</div>
-
-</div>
