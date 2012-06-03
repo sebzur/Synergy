@@ -1,0 +1,8 @@
+<table>
+  {% for field, value in fields.iteritems %}
+  <tr class="{% cycle "odd" "even" %}">
+    <td class="record-field">{{ field }}</td>
+    <td class="record-value">{{ value|default:"n/a" }}</td>
+  </tr>
+  {% endfor %}
+</table>

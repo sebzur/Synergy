@@ -219,7 +219,7 @@ class ProspectVariant(models.Model):
     name = models.SlugField(verbose_name="Machine name", unique=True)
     verbose_name = models.CharField(max_length=255, verbose_name="Verbose name")
     is_default = models.BooleanField(verbose_name="Is this state the default one?")
-    record = models.ForeignKey('records.RecordSetup', null=True)
+    record = models.ForeignKey('records.RecordSetup', null=True, blank=True)
     # The results will be cached with the timeout specified here.
     cache_timeout = models.PositiveSmallIntegerField(verbose_name="Cache timeout", null=True, blank=True)
 

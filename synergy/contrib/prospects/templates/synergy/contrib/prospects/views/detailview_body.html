@@ -1,26 +1,23 @@
 {% load synergy_region %}
 {% load prospects_rendering %}
 {% load menu_tags %}
-
+{% load records_tags %}
 
 {% region objectdetail %}
- {% if objectdetail.get_record %}
 <div style="float:left; display:block; width: 70%;">
-  {{ object|as_record }}
-  {# {{ object|model_relations }} #}
+   {% if objectdetail.get_record %}
+      {{ object|as_record }}
+      {# {{ object|model_relations }} #}
+ {% else %}
+    {{ object|fields:objectdetail }}
+   {% endif %}
 </div>
-
 <div  style="padding: 20px; float:left; width: 25%;">
 
   {% for menu in objectdetail.menus.all %}
   {% menu menu.menu.name object=object %} 
   {% endfor %}
-
 </div>
-
- {% else %}
-   {{ object }}
- {% endif %}
 {% endregion %}
 
 
