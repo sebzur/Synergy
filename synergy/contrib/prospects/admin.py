@@ -17,6 +17,10 @@ class ColumnAdmin(admin.ModelAdmin):
     search_fields = ('field__db_field',)
     list_filter = ('table',)
 
+class FieldAdmin(admin.ModelAdmin):
+    list_display = ('variant', 'verbose_name', 'db_field', 'lookup')
+    list_filter = ('variant',)
+
 class CellStyleAdmin(admin.ModelAdmin):
     list_display = ('column', 'get_table')
     search_fields = ('css',)
@@ -31,7 +35,7 @@ admin.site.register(ProspectVariant)
 admin.site.register(AspectValue)
 admin.site.register(UserRelation)
 
-admin.site.register(Field)
+admin.site.register(Field, FieldAdmin)
 admin.site.register(FieldURL)
 
 admin.site.register(Operator)
@@ -49,3 +53,4 @@ admin.site.register(CellStyle, CellStyleAdmin)
 
 
 
+admin.site.register(DetailMenu)

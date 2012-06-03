@@ -156,5 +156,5 @@ def model_relations(obj):
         except get_model('records', 'RecordSetup').DoesNotExist:
             context['untracked_model_relations'][rel] = {'related_object': related_object}
 
-    tpl = 'prospects/rendering/objectdetail/object.html'
+    tpl = 'prospects/rendering/objectdetail/model_relations.html'
     return render_to_string(tpl, context)

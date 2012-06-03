@@ -8,6 +8,8 @@ from django.template.base import VariableDoesNotExist
 from django.conf import settings
 from django.utils.encoding import smart_str 
 
+from django.core.exceptions import ValidationError
+
 def get_field(model, attribute):
     chain = attribute.split('__')
     for i, attribute in enumerate(chain):
@@ -145,7 +147,7 @@ class Aspect(models.Model):
     weight = models.IntegerField(verbose_name="Aspect weight", default=0)
 
     def __unicode__(self):
-        return self.attribute
+        return u"%s (%s)" % (self.attribute, self.source.prospect.name)
 
     def get_field(self):
         chain = self.attribute.split('__')
@@ -336,7 +338,7 @@ class Field(models.Model):
         return resolve_lookup(obj, lookup)
 
     def __unicode__(self):
-        return u"%s::%s" % (self.db_field, self.lookup)
+        return u"%s::%s (%s)" % (self.db_field, self.lookup, self.variant.name)
     
 class FieldURL(models.Model):
     field = models.OneToOneField('Field')
@@ -375,8 +377,9 @@ class ObjectDetail(models.Model):
         return ctx
 
 
-#class DetailMenu(models.Model):
-#    menu = models.ForeignKey('menu.Menu', related_name="details")
+class DetailMenu(models.Model):
+    object_detail = models.ForeignKey('ObjectDetail', related_name="menus")
+    menu = models.ForeignKey('menu.Menu', related_name="object_details")
 
 #class DetailMenuArgument(models.Model):
 #    detail_menu = models.ForeignKey('DetailMenu', related_name="arguments")
@@ -388,6 +391,9 @@ class VariantContext(models.Model):
     object_detail = models.ForeignKey('prospects.ObjectDetail', related_name="variant_contexts")
     variant = models.ForeignKey('ProspectVariant')
 
+    def __unicode__(self):
+        return u"%s <- %s" % (self.object_detail, self.variant)
+
     def get_query(self, obj):
         return dict([(str(aspect_value.aspect.id), {'lookup': aspect_value.lookup, 'value': aspect_value.value_field.get_value(obj)}) for aspect_value in self.aspect_values.all()])
 
@@ -397,6 +403,13 @@ class VariantContextAspectValue(models.Model):
     value_field = models.ForeignKey('Field')
     lookup = models.CharField(max_length=255, verbose_name="Lookup")
 
+    def __unicode__(self):
+        return u"%s %s %s" % (self.variant_context, self.aspect, self.value_field)
+
+    def clean(self):
+        if self.variant_context.variant.prospect != self.aspect.source.prospect:
+            raise ValidationError('Variant context and aspect prospects mismatch!')
+        
 
 #class ObjectDetailContext(models.Model):
 #    verbose_name = models.CharField(max_length=255, verbose_name="Verbose name")
@@ -437,6 +450,9 @@ class RepresentationModel(models.Model):
 
     def get_name(self):
         return self.variant.get().name
+
+    def get_verbose_name(self):
+        return self.variant.get().variant.verbose_name
 
     class Meta:
         abstract = True

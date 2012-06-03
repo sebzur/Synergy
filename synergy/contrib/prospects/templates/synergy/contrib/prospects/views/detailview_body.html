@@ -5,13 +5,16 @@
 
 {% region objectdetail %}
  {% if objectdetail.get_record %}
-<div style="float:left; display:block; width: 80%;">
-   {{ object|as_record }}
+<div style="float:left; display:block; width: 70%;">
+  {{ object|as_record }}
+  {# {{ object|model_relations }} #}
 </div>
 
-<div  style="padding: 20px; float:left; width: 15%;">
-  
-  {% menu objectdetail.variant.name object=object %} 
+<div  style="padding: 20px; float:left; width: 25%;">
+
+  {% for menu in objectdetail.menus.all %}
+  {% menu menu.menu.name object=object %} 
+  {% endfor %}
 
 </div>
 
@@ -19,8 +22,6 @@
    {{ object }}
  {% endif %}
 {% endregion %}
-
-
 
 
 
