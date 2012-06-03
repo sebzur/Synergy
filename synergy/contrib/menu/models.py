@@ -5,6 +5,9 @@ class Menu(models.Model):
     name = models.SlugField(unique=True)
     verbose_name = models.CharField(max_length=255)
 
+    def __unicode__(self):
+        return self.verbose_name
+
     class Meta:
         unique_together = (('name', 'verbose_name'),)
 

@@ -6,7 +6,8 @@ class MenuAdmin(admin.ModelAdmin):
     search_fields = ('name', 'verbose_name')
 
 class MenuItemAdmin(admin.ModelAdmin):
-    list_display = ('menu', 'name', 'verbose_name')
+    list_display = ('menu', 'name', 'verbose_name', 'url', 'reverse_url')
+    list_filter = ('menu',)
 
 class MenuArgumentAdmin(admin.ModelAdmin):
     list_display = ('name', 'menu')
