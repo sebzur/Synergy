@@ -295,6 +295,11 @@ class UserRelation(models.Model):
         unique_together = (('variant', 'content_type'),)
 
     
+class VariantMenu(models.Model):
+    variant = models.ForeignKey('ProspectVariant', related_name="menus")
+    menu = models.ForeignKey('menu.Menu', related_name="variants")
+
+
 #class VariantRelation(models.Model):
 #    variant = models.ForeignKey('ProspectVariant')
 #    related_variant = models.ForeignKey('ProspectVariant')

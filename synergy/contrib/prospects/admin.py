@@ -54,3 +54,4 @@ admin.site.register(CellStyle, CellStyleAdmin)
 
 
 admin.site.register(DetailMenu)
+admin.site.register(VariantMenu)
