@@ -236,7 +236,15 @@ class ProspectVariant(models.Model):
         {'aspect_id': {'lookup': gt|lt|exact|[...], 'value': [...]}}
 
         """ 
+
+        # if aspect has some values stored, override the query
+        c = {}
+        for aspect_value in self.aspect_values.filter(is_exposed=False):
+            c[str(aspect_value.aspect.id)] = {'lookup':aspect_value.lookup, 'value':  aspect_value.value}
+
+        query.update(c)
         data = self.prospect.filter(**query)
+
 
         # User related lookup
         q_obj = None
@@ -268,7 +276,7 @@ class ProspectVariant(models.Model):
 
 class AspectValue(models.Model):
     aspect = models.ForeignKey('Aspect', related_name="variant_values")
-    variant = models.ForeignKey('ProspectVariant')
+    variant = models.ForeignKey('ProspectVariant', related_name="aspect_values")
     value = models.CharField(max_length=255, verbose_name="A value entered")
     lookup = models.CharField(max_length=255, verbose_name="Lookup")
     is_exposed = models.BooleanField(verbose_name="Should this aspect settings be exposed to the user?", default=False)
