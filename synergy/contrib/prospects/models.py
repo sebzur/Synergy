@@ -249,7 +249,7 @@ class ProspectVariant(models.Model):
         # User related lookup
         q_obj = None
         for user_relation in self.user_relations.all():
-            values = user_relation.content_type.model_class().objects.filter(**{user_relation.user_field: user}).values_list(user_relation.value_field, flat=True)
+            values = user_relation.content_type.model_class().objects.filter(**{smart_str(user_relation.user_field): user}).values_list(user_relation.value_field, flat=True)
             if q_obj:
                 q_obj |= models.Q(**{"%s__in" % user_relation.related_by_field: values})
             else:
@@ -287,11 +287,11 @@ class AspectValue(models.Model):
 class UserRelation(models.Model):
     variant = models.ForeignKey('ProspectVariant', related_name="user_relations")
     # content type with user FK
-    content_type = models.ForeignKey('contenttypes.ContentType')
+    content_type = models.ForeignKey('contenttypes.ContentType', help_text="CT with user field that will be use")
     # db field related to user which will be used to query for the 
     # content_type objects related with authenticated user
-    user_field = models.SlugField(max_length=255, verbose_name="User field")
-    value_field = models.SlugField(max_length=255, verbose_name="Value field")
+    user_field = models.SlugField(max_length=255, verbose_name="User field", help_text="User field name used to filter out objects (of CT) related to the currently authenticated user" )
+    value_field = models.SlugField(max_length=255, verbose_name="Value field", help_text="The field of CT that will be used to feed the lookup")
     # relation field has to point to content_type 
     related_by_field = models.SlugField(max_length=255, verbose_name="Related by field")
     weight = models.IntegerField()
