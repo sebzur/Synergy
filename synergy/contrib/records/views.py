@@ -14,6 +14,8 @@ from django.contrib.auth.decorators import login_required
 from models import get_parent_field, get_parent_for_instance
 import re
 
+from django.utils.encoding import smart_str 
+
 class ProtectedView(object):
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
@@ -56,7 +58,8 @@ class CreateRecordView(ProtectedView, RegionViewMixin, ObjectViewMixin, CreateVi
         _kwargs = self.resolve(regex, path)
         if not _kwargs:
             raise Http404
-        kwargs.update(_kwargs)
+        str_converted = dict(((smart_str(k), v) for k, v in _kwargs.iteritems()))
+        kwargs.update(str_converted)
         return super(CreateRecordView, self).dispatch(request, *args, **kwargs)
 
     def resolve(self, regex, path):
