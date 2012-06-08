@@ -2,6 +2,8 @@
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
+from django.utils.encoding import smart_str 
+
 
 def get_parent_field(options):
     no_auto_fields = filter(lambda x: not isinstance(x, models.AutoField), options.fields)
@@ -120,7 +122,7 @@ class RecordField(models.Model):
         return u"%s:%s" % (self.setup, self.field)
 
     def get_initial(self, **kwargs):
-        query = dict( ((lookup.lookup, kwargs.get(lookup.value.name)) for lookup in  self.lookups.all()) )
+        query = dict( ((smart_str(lookup.lookup), kwargs.get(lookup.value.name)) for lookup in  self.lookups.all()) )
         if query:
             return self.setup.model.model_class()._meta.get_field(self.field).rel.to._default_manager.get(**query)
 
