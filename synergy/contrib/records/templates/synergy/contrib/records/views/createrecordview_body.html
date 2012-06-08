@@ -1,0 +1,11 @@
+{% include "synergy/contrib/records/views/parent_link.html" %}
+
+<div class="grains-form">
+<form action="." method="POST">
+  {% include 'synergy/contrib/records/views/form.html' %} 
+  <p>
+    <input class="button" type="submit" value="Zarejestruj" /> | <a href="{{ cancel_url }}">Anuluj</a>
+  </p>
+</form>
+</div>
+

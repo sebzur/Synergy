@@ -1,0 +1,10 @@
+<div class="grains-form">
+<form action="." method="POST">
+  {% csrf_token %}
+  <p>
+    <input class="button" type="submit" value="Potwierdzam usunięcie" /> | <a href="{{ cancel_url }}">Anuluj</a>
+  </p>
+</form>
+</div>
+
+

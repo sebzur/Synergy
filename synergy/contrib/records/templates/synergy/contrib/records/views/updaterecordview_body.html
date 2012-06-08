@@ -1,0 +1,15 @@
+
+<div class="grains-form">
+<form action="." method="POST">
+
+{% include 'synergy/contrib/records/views/form.html' %}
+
+<p>
+  <input class="button" type="submit" value="Zarejestruj" />
+  <input class="dangerous-button" type="submit" value="Usuń" name="_delete" />
+  | <a href="{{ cancel_url }}">Anuluj</a>
+</p>
+</form>
+</div>
+
+
