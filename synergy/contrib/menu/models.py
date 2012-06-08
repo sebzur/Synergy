@@ -49,10 +49,8 @@ class MenuItem(models.Model):
         from django.template import Context, Template
         if self.reverse_url:
             t = Template("{%% url %s %%}" % self.url)
-
             context = kwargs.copy()
             arguments = self.menu.arguments.all().order_by('weight')
-
             for i, arg in enumerate(args):
                 key = arguments[i].name
                 context[key] = arg

@@ -61,7 +61,6 @@ class MenuNode(template.Node):
             return ''
         else:
             tpl = 'menu/menu.html'
-            print 'Menu name', menu_name
             menu_obj = get_model('menu', 'Menu').objects.get(name=menu_name)
             context = {'menu': menu_obj, 'items': {}}
 

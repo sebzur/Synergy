@@ -318,6 +318,8 @@ class VariantMenu(models.Model):
 #        unique_together = (('variant', 'related_variant'),)
 
 class Field(models.Model):
+    LINK_CHOICES = (('o', 'Object detail view'), ('u', 'Record update'), ('d', 'Record delete'))
+
     variant = models.ForeignKey('ProspectVariant')
     verbose_name = models.CharField(max_length=255, verbose_name="Column header")
     # -----------------------------------------
@@ -329,21 +331,35 @@ class Field(models.Model):
     # -----------------------------------------
     weight = models.IntegerField()
     exclude_from_output = models.BooleanField(verbose_name="Exclude from display", default=False)
+    # === to do wywalenia ==
     as_object_link = models.BooleanField(verbose_name="Link this field to its node", default=False)
+    # ==
+    link_to = models.CharField(max_length=1, verbose_name="Link this field to...", choices=LINK_CHOICES, blank=True)
     default_text = models.CharField(max_length=255, verbose_name="If the field is empty, display this text instead", blank=True)
     default_if_none_text = models.CharField(max_length=255, verbose_name="If the field is empty, display this text instead", blank=True)
     # The field output can be rewriten. The synatx is: %(token)s where token is a valid replacement string.
     rewrite_as = models.CharField(max_length=255, verbose_name="Rewrite the output of this field", help_text="If checked, you can alter the output of this field by specifying a string of text with replacement tokens that can use any existing field output.", blank=True)
     
     def get_object_link(self, obj):
+        urls = {'o': 'detail', 'u': 'update', 'd': 'delete'}
+        return getattr(self, 'get_object_%s_link' % urls.get(self.link_to))(obj)
+
+    def get_object_detail_link(self, obj):
         return reverse('detail', args=[self.variant.name, obj.pk])
+
+    def get_object_update_link(self, obj):
+        return reverse('update', args=[self.variant.record.name, obj.pk])
+
+    def get_object_delete_link(self, obj):
+        return reverse('delete', args=[self.variant.record.name, obj.pk])
+
 
     def get_value(self, obj):
         # Should check if obj is instance of the variant source
         value =  get_related_value(obj, self.db_field)
         if self.lookup and not (value is None): # if value is None, leave the lookup
             value = self._resolve_lookup(value, self.lookup)
-        if self.as_object_link:
+        if self.link_to:
             return {'url': self.get_object_link(obj), 'value': value}
         return value
 

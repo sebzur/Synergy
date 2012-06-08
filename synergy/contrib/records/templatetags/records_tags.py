@@ -2,10 +2,14 @@ from django import template
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.db.models import get_model
+from django.core.urlresolvers import reverse
+
 import re
 
 from synergy.contrib.records.models import get_parent_field
 from django.utils.datastructures import SortedDict
+
+kwarg_re = re.compile(r"(?:(\w+)=)?(.+)")
 
 register = template.Library()
 
@@ -90,4 +94,62 @@ def rform(form, level):
     context = {'form': form, 'level': level}
     tpl = 'records/rform.html'
     return render_to_string(tpl, context)
+
+
+
+@register.tag
+def create(parser, token):
+    bits = token.split_contents()
+    if len(bits) < 2:
+        raise TemplateSyntaxError("'%s' takes at least one argument"
+                                  " (menu name)" % bits[0])
+    record_name = bits[1]
+    args = []
+    kwargs = {}
+    asvar = None
+    bits = bits[2:]
+    if len(bits) >= 2 and bits[-2] == 'as':
+        asvar = bits[-1]
+        bits = bits[:-2]
+
+    # process them as template vars
+    if len(bits):
+        for bit in bits:
+            match = kwarg_re.match(bit)
+            if not match:
+                raise TemplateSyntaxError("Malformed arguments to menu tag")
+            name, value = match.groups()
+            if name:
+                kwargs[name] = parser.compile_filter(value)
+            else:
+                args.append(parser.compile_filter(value))
+
+
+    return CreateNode(record_name, args, kwargs, asvar)
+
+class CreateNode(template.Node):
+    def __init__(self, record_name, args, kwargs, asvar):
+        self.record_name = template.Variable(record_name)
+        self.args = args
+        self.kwargs = kwargs
+        self.asvar = asvar
+
+    def render(self, context):
+        args = [arg.resolve(context) for arg in self.args]
+        kwargs = dict([(smart_str(k, 'ascii'), v.resolve(context))
+                       for k, v in self.kwargs.items()])
+
+        record_name = self.record_name.resolve(context)
+        #menu_name = self.menu_name#.resolve(context)
+
+        arguments = '/'.join(map(str, args))
+
+        url = reverse('create', args=[record_name, arguments])
+
+        if self.asvar:
+            context[self.asvar] = url
+            return ''
+        else:
+            return url
+
 
