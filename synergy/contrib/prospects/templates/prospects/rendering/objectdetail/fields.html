@@ -1,8 +1,28 @@
+
+{% if object_fields %}
+
 <table>
-  {% for field, value in fields.iteritems %}
+  {% for field, value in object_fields.iteritems %}
+  <tr class="{% cycle "odd" "even" %}">
+    <td class="record-field">{{ field.verbose_name }}</td>
+    <td class="record-value">
+    {% if field.link_to %}
+    <a href="{{ value.url }}">{{ value.value }}</a>
+    {% else %}
+    {{ value|default:"n/a" }}
+    {% endif %}
+  </tr>
+  {% endfor %}
+</table>
+
+
+{% else %}
+<table>
+  {% for field, value in model_fields.iteritems %}
   <tr class="{% cycle "odd" "even" %}">
     <td class="record-field">{{ field }}</td>
     <td class="record-value">{{ value|default:"n/a" }}</td>
   </tr>
   {% endfor %}
 </table>
+{% endif %}

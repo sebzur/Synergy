@@ -9,6 +9,7 @@ from django.conf import settings
 from django.utils.encoding import smart_str 
 
 from django.core.exceptions import ValidationError
+from django.template import Context, Template
 
 def get_field(model, attribute):
     chain = attribute.split('__')
@@ -387,6 +388,21 @@ class ObjectDetail(models.Model):
     use_posthead = models.BooleanField(default=False)
     context_operator = fields.CallableField(max_length=255, verbose_name="The callable to call on the context", blank=True)    
 
+    title = models.CharField(max_length=255, blank=True)
+    body = models.TextField(blank=True)
+
+    def get_title(self, obj):
+        if self.title:
+            t = Template(self.title)
+            return t.render(Context({'object': obj}))
+        return u"%s" % obj
+
+    def get_body(self, obj):
+        if self.body:
+            t = Template(self.body)
+            return t.render(Context({'object': obj}))
+        return ''
+
     def get_record(self):
         return self.variant.record
 
@@ -405,6 +421,30 @@ class ObjectDetail(models.Model):
             ctx.update({'region_postfixes': postfixes})
         return ctx
 
+
+class DetailField(models.Model):
+    object_detail = models.ForeignKey('ObjectDetail', related_name="fields")
+    field = models.ForeignKey('Field', related_name="detail_fields")
+    weight = models.IntegerField()
+
+    class Meta:
+        verbose_name = "Detail Field"
+        verbose_name_plural = "Detail Fields"
+        ordering = ('weight',)
+
+
+class DetailFieldStyle(models.Model):
+    MODES = (('c', 'class'), ('s', 'style'))
+    field = models.ForeignKey('DetailField', related_name="styles")
+    css_mode = models.CharField(max_length=1, choices=MODES)
+    css = models.CharField(max_length=128, verbose_name="CSS class name")
+    trigger_lookup = models.CharField(max_length=128, verbose_name="A lookup on the object that triggers the class name to be applied", blank=True)
+    weight = models.IntegerField()
+
+    class Meta:
+        verbose_name = "Detail field style"
+        verbose_name_plural = "Detail field styles"
+        ordering = ('weight',)
 
 class DetailMenu(models.Model):
     object_detail = models.ForeignKey('ObjectDetail', related_name="menus")

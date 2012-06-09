@@ -20,11 +20,17 @@
 </div>
 {% endregion %}
 
-
-
 {% region objectcontext %}
 <div class="clearfix">
 </div>
+
+
+{% if body %}
+<div style="margin-top: 10px;">
+{{ body }}
+</div>
+{% endif %}
+
 
 {% if variant_contexts %}
 <h3>Skojarzone dane</h3>

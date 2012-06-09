@@ -26,11 +26,13 @@ def teaser(obj):
 @register.filter(name='fields')
 def fields(obj, object_detail):
 
-    context = {'fields': SortedDict(), 'object': obj}
+    context = {'model_fields': SortedDict(), 'object_fields': SortedDict(), 'object': obj}
 
     for field in filter(lambda x: x.name != 'id', obj._meta.fields):
-        context['fields'][field.verbose_name] = getattr(obj, field.name)
+        context['model_fields'][field.verbose_name] = getattr(obj, field.name)
 
+    for field in object_detail.fields.all():
+        context['object_fields'][field.field] = field.field.get_value(obj)
 
     tpl = 'prospects/rendering/objectdetail/fields.html'
     return render_to_string(tpl, context)

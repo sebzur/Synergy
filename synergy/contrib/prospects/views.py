@@ -84,8 +84,9 @@ class DetailView(ProspectMixin, RegionViewMixin, generic.DetailView):
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(DetailView, self).get_context_data(*args, **kwargs)
-        ctx['title'] = u"%s" % self.get_object()
         ctx['objectdetail'] = self.get_prospect_variant().objectdetail
+        ctx['title'] = ctx['objectdetail'].get_title(self.get_object())
+        ctx['body'] = ctx['objectdetail'].get_body(self.get_object())
         ctx['name'] = self.get_prospect_variant().name
         ctx.update(self.get_prospect_variant().objectdetail.get_context_data(self.get_object(), *args, **kwargs))
         ctx_operator = self.get_prospect_variant().objectdetail.context_operator
