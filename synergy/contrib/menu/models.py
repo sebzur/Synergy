@@ -48,7 +48,13 @@ class MenuItem(models.Model):
     def get_url(self, *args, **kwargs):
         from django.template import Context, Template
         if self.reverse_url:
-            t = Template("{%% url %s %%}" % self.url)
+
+            bits = self.url.split()
+            if bits[0] == 'create':
+                t = Template("{%% load records_tags %%} {%% create %s %%}" % " ".join(bits[1:]))
+            else:
+                t = Template("{%% url %s %%}" % self.url)
+
             context = kwargs.copy()
             arguments = self.menu.arguments.all().order_by('weight')
             for i, arg in enumerate(args):
