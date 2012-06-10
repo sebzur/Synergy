@@ -128,7 +128,7 @@ def _createform_factory(created_model, related_models, excluded_fields=[]):
 
 
 
-def createform_factory(created_model, related_models, excluded_fields=[]):
+def createform_factory(created_model, related_models, excluded_fields=[], hidden_fields=[]):
 
     to_exclude = excluded_fields + map(lambda x: str(x.name), created_model._meta.many_to_many)
 
@@ -137,10 +137,9 @@ def createform_factory(created_model, related_models, excluded_fields=[]):
             super(CreateBaseForm, self).__init__(instance=instance, *args, **kwargs)
 
             self.external = SortedDict()
-            if parent:
-                parent_field = get_parent_field(self.instance._meta)
-                self.fields[parent_field.name].initial = parent.id
-                self.fields[parent_field.name].widget = forms.widgets.HiddenInput()
+
+            for hidden in hidden_fields:
+                self.fields[hidden].widget = forms.widgets.HiddenInput()
                 
             categorical_model = get_model('records', 'CategoricalValue')
 

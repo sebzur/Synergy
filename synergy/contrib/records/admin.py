@@ -10,9 +10,14 @@ class O2MRelationAdmin(admin.ModelAdmin):
 class CategoricalValueAdmin(admin.ModelAdmin):
     list_display = ('value', 'key', 'group', 'weight')
     list_filter = ('group',)
+
+class RecordFieldAdmin(admin.ModelAdmin):
+    list_display = ('setup', 'field', 'is_hidden', 'default_value')
+    list_filter = ('setup',)
+
     
 admin.site.register(RecordSetup, CreateAdmin)
-admin.site.register(RecordField)
+admin.site.register(RecordField, RecordFieldAdmin)
 admin.site.register(RecordArgument)
 admin.site.register(ObjectLookupSetup)
 admin.site.register(FieldValueSetup)
