@@ -98,7 +98,7 @@ class Prospect(models.Model):
         return self.get_source().filter(**subquery)
             
 class Operator(models.Model):
-    callable = fields.CallableField(max_length=255, verbose_name="The callable to call after the prospects returns the data", blank=True)    
+    callable = fields.CallableField(max_length=255, verbose_name="The callable to call after the prospects returns the data", blank=True) 
     description = models.TextField()
 
 class ProspectOperator(models.Model):
@@ -336,6 +336,7 @@ class Field(models.Model):
     as_object_link = models.BooleanField(verbose_name="Link this field to its node", default=False)
     # ==
     link_to = models.CharField(max_length=1, verbose_name="Link this field to...", choices=LINK_CHOICES, blank=True)
+
     default_text = models.CharField(max_length=255, verbose_name="If the field is empty, display this text instead", blank=True)
     default_if_none_text = models.CharField(max_length=255, verbose_name="If the field is empty, display this text instead", blank=True)
     # The field output can be rewriten. The synatx is: %(token)s where token is a valid replacement string.
@@ -353,7 +354,6 @@ class Field(models.Model):
 
     def get_object_delete_link(self, obj):
         return reverse('delete', args=[self.variant.record.name, obj.pk])
-
 
     def get_value(self, obj):
         # Should check if obj is instance of the variant source
@@ -426,6 +426,9 @@ class DetailField(models.Model):
     object_detail = models.ForeignKey('ObjectDetail', related_name="fields")
     field = models.ForeignKey('Field', related_name="detail_fields")
     weight = models.IntegerField()
+
+    def __unicode__(self):
+        return u"%s : %s" % (self.object_detail, self.field)
 
     class Meta:
         verbose_name = "Detail Field"
@@ -547,11 +550,20 @@ class Table(RepresentationModel):
 class Column(models.Model):
     table = models.ForeignKey('Table', related_name="columns")
     field = models.ForeignKey('Field', related_name="columns")
+    trigger_lookup = models.CharField(max_length=128, verbose_name="A lookup on the object that triggers if the column should be rendered", blank=True)
+    negate_trigger = models.BooleanField()
+
     sortable = models.BooleanField(verbose_name="Is this column sortable?")
     weight = models.IntegerField()
 
     def __unicode__(self):
         return u"%s %s" % (self.table, self.field)
+
+    def is_triggered(self, obj):
+        """ Obj is the objects that is the source of the field in column """
+        if self.trigger_lookup and not (obj is None):
+            return self.negate_trigger ^ bool(resolve_lookup(obj, self.trigger_lookup))
+        return True
 
     def get_styles(self, value):
         return {'class': ' '.join(self.get_triggered_styles('c', value)),

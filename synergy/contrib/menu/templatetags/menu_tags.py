@@ -7,6 +7,8 @@ from django.utils.encoding import smart_str, smart_unicode
 
 from django.utils.datastructures import SortedDict
 
+from synergy.contrib.prospects.models import resolve_lookup
+
 register = template.Library()
 kwarg_re = re.compile(r"(?:(\w+)=)?(.+)")
 
@@ -65,5 +67,8 @@ class MenuNode(template.Node):
             context = {'menu': menu_obj, 'items': {}}
 
             for item in menu_obj.items.all():
+                #if not all(trigger.callable(kwargs.get(trigger.argument_provided.name)) for trigger in item.triggers.all()):
+                if not all((resolve_lookup(kwargs.get(trigger.argument.name), trigger.trigger_lookup) for trigger in item.triggers.all())):
+                    continue
                 context['items'][item] = item.get_url(*args, **kwargs)
             return render_to_string(tpl, context)

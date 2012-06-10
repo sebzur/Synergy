@@ -1,5 +1,5 @@
 from django.db import models
-
+from synergy.contrib.prospects.models import fields
 
 class Menu(models.Model):
     name = models.SlugField(unique=True)
@@ -22,11 +22,19 @@ class MenuArgument(models.Model):
     default_value = models.CharField(max_length=255, blank=True)
     weight = models.IntegerField()
 
+    def __unicode__(self):
+        return u"%s : %s" % (self.menu, self.name)
+
     class Meta:
         unique_together = (('menu', 'weight'),)
         ordering = ('weight',)
 
-    
+class MenuItemTrigger(models.Model):
+    argument = models.ForeignKey('MenuArgument', related_name='items')
+    trigger_lookup = models.CharField(max_length=128, verbose_name="A lookup on the argument that triggers the item to be visible")
+    item = models.ForeignKey('MenuItem', related_name='triggers')
+    weight = models.IntegerField()
+
 class MenuItem(models.Model):
     menu = models.ForeignKey('Menu', related_name='items')
     name = models.SlugField(unique=True)
@@ -44,6 +52,8 @@ class MenuItem(models.Model):
     target = models.CharField(choices=(('_blank', '_blank'), ('_parent', '_parent')), max_length=32, blank=True)
     alt_text = models.CharField(max_length=200, blank=True)
 
+    def __unicode__(self):
+        return u"%s : %s" % (self.menu, self.verbose_name)
 
     def get_url(self, *args, **kwargs):
         from django.template import Context, Template

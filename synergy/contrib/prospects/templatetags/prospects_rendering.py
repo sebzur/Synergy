@@ -47,7 +47,9 @@ def table_row(obj, table):
 @register.filter(name='td')
 def table_column(obj, column):
     tpl = 'displays/tabledisplay/td.html'
-    value = column.field.get_value(obj)
+    value = None
+    if column.is_triggered(obj):
+        value = column.field.get_value(obj)
     return render_to_string(tpl, {'object': obj, 'value': value, 'column': column})
 
 

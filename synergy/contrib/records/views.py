@@ -32,12 +32,6 @@ class ObjectViewMixin(object):
     def get_queryset(self):
         return self.get_model()._default_manager.all()
 
-    def get_return_context(self, obj):
-        parent = {'object': obj, 'setup': None}
-        if parent.get('object'):
-            parent['setup'] = get_model('records', 'RecordSetup').objects.get(model__model=parent.get('object')._meta.object_name.lower())
-        return parent
-
     def get_excluded_fields(self):
         setup = self.get_model_setup()
         if setup.only_registered_fields:
@@ -107,6 +101,7 @@ class UpdateRecordView(ObjectViewMixin, ProtectedView, RegionViewMixin, UpdateVi
         ctx = super(UpdateRecordView, self).get_context_data(*args, **kwargs)
         ctx['title'] = u'%s' % self.object
         ctx['cancel_url'] = self.get_success_url()
+        ctx['setup'] = self.get_model_setup()
         return  ctx
 
     def form_valid(self, form):

@@ -6,7 +6,7 @@
 
 <p>
   <input class="button" type="submit" value="Zarejestruj" />
-  <input class="dangerous-button" type="submit" value="Usuń" name="_delete" />
+  | <a href="{% url delete setup.name object.id %}">Usuń</a>
   | <a href="{{ cancel_url }}">Anuluj</a>
 </p>
 </form>
