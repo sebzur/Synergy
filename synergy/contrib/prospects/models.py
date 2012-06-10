@@ -362,7 +362,14 @@ class Field(models.Model):
             value = self._resolve_lookup(value, self.lookup)
         if self.link_to:
             return {'url': self.get_object_link(obj), 'value': value}
+        return self._rewrite(value)
+
+    def _rewrite(self, value):
+        if self.rewrite_as:
+            t = Template(self.rewrite_as)
+            return t.render(Context({'value': value}))
         return value
+
 
     def _resolve_lookup(self, obj, lookup):
         return resolve_lookup(obj, lookup)
