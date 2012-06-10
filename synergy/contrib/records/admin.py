@@ -17,6 +17,7 @@ class RecordFieldAdmin(admin.ModelAdmin):
 
     
 admin.site.register(RecordSetup, CreateAdmin)
+admin.site.register(RecordActionSetup)
 admin.site.register(RecordField, RecordFieldAdmin)
 admin.site.register(RecordArgument)
 admin.site.register(ObjectLookupSetup)

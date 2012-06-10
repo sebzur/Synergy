@@ -84,8 +84,10 @@ class CreateRecordView(ProtectedView, RegionViewMixin, ObjectViewMixin, CreateVi
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(CreateRecordView, self).get_context_data(*args, **kwargs)
-        ctx['title'] = '%s - nowy wpis' % self.get_model()._meta.verbose_name
-        ctx['cancel_url'] = self.get_model_setup().get_cancel_url(**self.get_arguments())
+        setup = self.get_model_setup()
+        ctx['initial'] = self.get_initial()
+        ctx['cancel_url'] = setup.get_cancel_url(**self.get_arguments())
+        ctx.update(setup.get_context_elements(ctx, 'c'))
         return  ctx
 
     def get_success_url(self):
@@ -103,20 +105,13 @@ class UpdateRecordView(ObjectViewMixin, ProtectedView, RegionViewMixin, UpdateVi
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(UpdateRecordView, self).get_context_data(*args, **kwargs)
-        ctx['title'] = u'%s' % self.object
+        setup = self.get_model_setup()
         ctx['cancel_url'] = self.get_success_url()
-        ctx['setup'] = self.get_model_setup()
+        ctx['setup'] = setup
+        ctx.update(setup.get_context_elements(ctx, 'u'))
         return  ctx
 
     def form_valid(self, form):
-        if '_delete' in self.request.POST:
-            parent = get_parent_for_instance(self.object)
-            redirect_to = ('/')
-            if parent:
-                setup = get_model('records', 'RecordSetup').objects.get(model__model=parent._meta.object_name.lower())
-                redirect_to =  reverse('detail', args=[setup.object_detail.variant.name, parent.id])
-            self.get_object().delete()
-            return HttpResponseRedirect(redirect_to)
         return super(UpdateRecordView, self).form_valid(form)            
 
 
@@ -130,8 +125,9 @@ class DeleteRecordView(ObjectViewMixin, ProtectedView, RegionViewMixin, DeleteVi
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(DeleteRecordView, self).get_context_data(*args, **kwargs)
-        ctx['title'] = u'%s' % self.object
         ctx['cancel_url'] = self.get_model_setup().get_success_url(**{'object': self.object})
+        setup = self.get_model_setup()
+        ctx.update(setup.get_context_elements(ctx, 'd'))
         return  ctx
 
     def get_success_url(self):

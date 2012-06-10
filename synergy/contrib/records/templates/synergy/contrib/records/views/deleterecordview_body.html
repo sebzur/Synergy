@@ -1,8 +1,15 @@
+{% if body %}
+<div>
+  {{ body }}
+</div>
+{% endif %}
+
+
 <div class="grains-form">
 <form action="." method="POST">
   {% csrf_token %}
   <p>
-    <input class="button" type="submit" value="Potwierdzam usunięcie" /> | <a href="{{ cancel_url }}">Anuluj</a>
+    <input class="button" type="submit" value="{{ action_label|default:"Potwierdzam usunięcie" }}" /> | <a href="{{ cancel_url }}">Anuluj</a>
   </p>
 </form>
 </div>

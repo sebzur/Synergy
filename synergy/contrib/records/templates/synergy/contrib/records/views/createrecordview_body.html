@@ -1,10 +1,14 @@
-{% include "synergy/contrib/records/views/parent_link.html" %}
+{% if body %}
+<div>
+  {{ body }}
+</div>
+{% endif %}
 
 <div class="grains-form">
 <form action="." method="POST">
   {% include 'synergy/contrib/records/views/form.html' %} 
   <p>
-    <input class="button" type="submit" value="Zarejestruj" /> | <a href="{{ cancel_url }}">Anuluj</a>
+    <input class="button" type="submit" value="{{ action_label|default:"Zarejestruj" }}" /> | <a href="{{ cancel_url }}">Anuluj</a>
   </p>
 </form>
 </div>

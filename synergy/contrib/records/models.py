@@ -3,7 +3,7 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.utils.encoding import smart_str 
-
+from django.template import Context, Template
 
 def get_parent_field(options):
     no_auto_fields = filter(lambda x: not isinstance(x, models.AutoField), options.fields)
@@ -55,6 +55,17 @@ class CategoricalValue(models.Model):
 #     update_trigger_lookup = models.CharField(max_length=128, verbose_name="A lookup on the object that triggers the class name to be applied", blank=True)
 
 
+class RecordActionSetup(models.Model):
+    ACTIONS = (('c', 'Create'), ('u', 'Update'), ('d', 'Delete'))
+    setup = models.ForeignKey('RecordSetup', related_name="actions")
+    action = models.CharField(max_length=1, choices=ACTIONS)
+    title = models.CharField(max_length=255)
+    body = models.TextField(blank=True)
+    action_label = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        unique_together = (('setup', 'action'),)
+
 class RecordSetup(models.Model):
     name = models.SlugField(max_length=255, unique=True)
     model = models.ForeignKey(ContentType, related_name="record_setup")
@@ -74,6 +85,28 @@ class RecordSetup(models.Model):
     # this will be used when object was deleted
     generic_url = models.CharField(max_length=255)
     reverse_generic_url = models.BooleanField()
+
+    def get_context_elements(self, context, action):
+
+        model = self.model.model_class()
+        context.update({'model': model, 'meta': model._meta})
+
+        elements = {'title': self._default_title(action, context), 
+                    'body': None,
+                    'action_label': None}
+        try:
+            setup = self.actions.get(action=action)
+            for attr in elements:
+                if getattr(setup, attr):
+                    elements[attr] = Template(getattr(setup, attr)).render(Context(context))
+        except RecordActionSetup.DoesNotExist:
+            pass
+        return elements
+
+    def _default_title(self, action, context):
+        return {'c': lambda: '%s' % context['meta'].verbose_name,
+                'u': lambda: '%(object)s' % context,
+                'd': lambda: '%(object)s' % context,}.get(action)()
 
 
     def get_initial(self, **kwargs):
