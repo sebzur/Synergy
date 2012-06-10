@@ -360,9 +360,10 @@ class Field(models.Model):
         value =  get_related_value(obj, self.db_field)
         if self.lookup and not (value is None): # if value is None, leave the lookup
             value = self._resolve_lookup(value, self.lookup)
+        value = self._rewrite(value)
         if self.link_to:
             return {'url': self.get_object_link(obj), 'value': value}
-        return self._rewrite(value)
+        return value
 
     def _rewrite(self, value):
         if self.rewrite_as:
