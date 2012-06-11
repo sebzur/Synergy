@@ -47,10 +47,15 @@ def table_row(obj, table):
 @register.filter(name='td')
 def table_column(obj, column):
     tpl = 'displays/tabledisplay/td.html'
-    value = None
-    if column.is_triggered(obj):
+    triggered = column.is_triggered(obj)
+    link = column.field.link_to and triggered
+    if triggered or column.rewrite_disabled_as == 'b':
         value = column.field.get_value(obj)
-    return render_to_string(tpl, {'object': obj, 'value': value, 'column': column})
+    if not triggered and column.rewrite_disabled_as == 'b':
+        value = value.get('value')
+    if not triggered and column.rewrite_disabled_as == 'a':
+        value = None
+    return render_to_string(tpl, {'object': obj, 'value': value, 'column': column, 'link': link})
 
 
 @register.filter

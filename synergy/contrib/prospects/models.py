@@ -556,10 +556,14 @@ class Table(RepresentationModel):
         return {'region_postfixes': postfixes}
 
 class Column(models.Model):
+    ACTIONS = (('a', 'Field empty label'), ('b', 'Value without link (if link is provided'))
+
     table = models.ForeignKey('Table', related_name="columns")
     field = models.ForeignKey('Field', related_name="columns")
+
     trigger_lookup = models.CharField(max_length=128, verbose_name="A lookup on the object that triggers if the column should be rendered", blank=True)
     negate_trigger = models.BooleanField()
+    rewrite_disabled_as = models.CharField(max_length=1, choices=ACTIONS)
 
     sortable = models.BooleanField(verbose_name="Is this column sortable?")
     weight = models.IntegerField()
