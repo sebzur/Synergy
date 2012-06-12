@@ -22,6 +22,10 @@ admin.site.register(RecordField, RecordFieldAdmin)
 admin.site.register(RecordArgument)
 admin.site.register(ObjectLookupSetup)
 admin.site.register(FieldValueSetup)
+
+admin.site.register(M2MRelationSetup)
+admin.site.register(M2MChoicesSetup)
+
 admin.site.register(RecordRelation, O2MRelationAdmin)
 admin.site.register(CategoricalValue, CategoricalValueAdmin)
 admin.site.register(ValuesGroup)

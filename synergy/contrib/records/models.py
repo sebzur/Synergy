@@ -68,7 +68,7 @@ class RecordActionSetup(models.Model):
 
 class RecordSetup(models.Model):
     name = models.SlugField(max_length=255, unique=True)
-    model = models.ForeignKey(ContentType, related_name="record_setup")
+    model = models.ForeignKey(ContentType, related_name="record_setups")
 
     # triger = models.ForeignKey('RecordTriger', related_name="record_setups") 
 
@@ -79,7 +79,7 @@ class RecordSetup(models.Model):
     reverse_success_url = models.BooleanField()
 
     # where to redirect if creation is canceled
-    cancel_url = models.CharField(max_length=255)
+    cancel_url = models.CharField(max_length=255, verbose_name="Cancel creation action", help_text="Use arguments from the provided record arguments")
     reverse_cancel_url = models.BooleanField()
 
     # this will be used when object was deleted
@@ -176,6 +176,27 @@ class ObjectLookupSetup(models.Model):
     def clean(self):
         if 0:
             raise ValidationError('Test if field is db relation (FK, O2O, ...) field')
+
+class M2MRelationSetup(models.Model):
+    setup = models.ForeignKey(RecordSetup, related_name="related_m2m_models")
+    through = models.ForeignKey(ContentType)
+    from_field = models.SlugField()
+    to_field = models.SlugField()
+
+
+    def get_to_model(self):
+        return self.through.model_class()._meta.get_field(self.to_field).rel.to
+
+    def get_from_model(self):
+        return self.through.model_class()._meta.get_field(self.from_field).rel.to
+
+    def get_choices_manager(self):
+        return self.get_to_model()._default_manager
+
+class M2MChoicesSetup(models.Model):
+    setup = models.ForeignKey('M2MRelationSetup', related_name="lookups")
+    value = models.ForeignKey('RecordArgument')
+    lookup = models.SlugField()
 
 class RecordRelation(models.Model):
     setup = models.ForeignKey(RecordSetup, related_name="related_models")
