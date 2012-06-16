@@ -9,7 +9,7 @@ from django.conf import settings
 from django.utils.encoding import smart_str 
 
 from django.core.exceptions import ValidationError
-from django.template import Context, Template
+from django import template
 
 def get_field(model, attribute):
     chain = attribute.split('__')
@@ -388,8 +388,8 @@ class Field(models.Model):
 
     def _rewrite(self, value):
         if self.rewrite_as:
-            t = Template(self.rewrite_as)
-            return t.render(Context({'value': value}))
+            t = template.Template(self.rewrite_as)
+            return t.render(template.Context({'value': value}))
         return value
 
 
@@ -422,14 +422,14 @@ class ObjectDetail(models.Model):
 
     def get_title(self, obj):
         if self.title:
-            t = Template(self.title)
-            return t.render(Context({'object': obj}))
+            t = template.Template(self.title)
+            return t.render(template.Context({'object': obj}))
         return u"%s" % obj
 
     def get_body(self, obj):
         if self.body:
-            t = Template(self.body)
-            return t.render(Context({'object': obj}))
+            t = template.Template(self.body)
+            return t.render(template.Context({'object': obj}))
         return ''
 
     def get_record(self):
