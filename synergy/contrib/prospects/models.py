@@ -137,6 +137,12 @@ class Source(models.Model):
         for aspect_id in query:
             yield (smart_str("%s__%s" % (self.aspects.get(id=aspect_id).attribute, query.get(aspect_id).get('lookup'))), query.get(aspect_id).get('value'))
 
+class Context(models.Model):
+    source = models.ForeignKey('Source', related_name="contexts")
+    variant = models.ForeignKey('ProspectVariant')
+    value = models.SlugField()
+    lookup = models.SlugField()
+
 class Aspect(models.Model):
     # Attribute is stored as a string (slug) in native Django
     # format used for query building, i.e. the valid forms are
