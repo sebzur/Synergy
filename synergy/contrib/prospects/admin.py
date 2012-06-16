@@ -10,7 +10,7 @@ class SourceAdmin(admin.ModelAdmin):
 
 class AspectAdmin(admin.ModelAdmin):
     list_display = ('attribute', 'source')
-
+    list_filter = ('source', )
 
 class ColumnAdmin(admin.ModelAdmin):
     list_display = ('field', 'table')

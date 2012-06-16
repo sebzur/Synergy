@@ -147,7 +147,7 @@ class RecordArgument(models.Model):
 
 class RecordField(models.Model):
     setup = models.ForeignKey('RecordSetup', related_name="fields")
-    field = models.SlugField()
+    field = models.SlugField() # this shuld be renamed to `name`
     default_value = models.CharField(max_length=255, blank=True)
     is_hidden = models.BooleanField(default=False)
 
@@ -183,6 +183,12 @@ class M2MRelationSetup(models.Model):
     from_field = models.SlugField()
     to_field = models.SlugField()
 
+    min_count = models.IntegerField(null=True, blank=True)
+    max_count = models.IntegerField(null=True, blank=True)
+
+
+    def get_model_verbose_name(self):
+        return self.get_to_model()._meta.verbose_name
 
     def get_to_model(self):
         return self.through.model_class()._meta.get_field(self.to_field).rel.to
@@ -193,9 +199,13 @@ class M2MRelationSetup(models.Model):
     def get_choices_manager(self):
         return self.get_to_model()._default_manager
 
+    def get_choices(self, arguments):
+        query = dict(((lookup.lookup, arguments.get(lookup.field.field) ) for lookup in self.lookups.all()))
+        return self.get_choices_manager().filter(**query)
+
 class M2MChoicesSetup(models.Model):
     setup = models.ForeignKey('M2MRelationSetup', related_name="lookups")
-    value = models.ForeignKey('RecordArgument')
+    field = models.ForeignKey('RecordField')
     lookup = models.SlugField()
 
 class RecordRelation(models.Model):

@@ -96,11 +96,10 @@ def createform_factory(created_model, related_models, related_m2m_models, exclud
             for related_m2m_model in related_m2m_models:
                 self.external_m2m[related_m2m_model] = []
                 choice_manager  = related_m2m_model.get_choices_manager()
-                print 'Processingm2m', choice_manager
                 if choice_manager.model is categorical_model:
                     choices = choice_manager.filter(group__name=related_m2m_model.rel.through._meta.object_name.lower())
                 else:
-                    choices = choice_manager.all()
+                    choices = related_m2m_model.get_choices(self.initial or self.instance.__dict__)
                 for choice in choices:
                     ins = None
                     if not self.instance.pk is None:
@@ -146,6 +145,21 @@ def createform_factory(created_model, related_models, related_m2m_models, exclud
                                                                                                                                             *args, **kwargs))
                 
 
+
+        def clean(self):
+
+            m2m_count = 0
+            for m2m_model_setup, m2m_forms in self.external_m2m.iteritems():
+                for f in m2m_forms:
+                    if f.is_valid():
+                        m2m_count += f.cleaned_data["%s_%d" % (f.select._meta.object_name.lower(), f.select.id)]
+                if m2m_model_setup.min_count and m2m_count < m2m_model_setup.min_count:
+                    raise forms.ValidationError(u"Wybrano zbyt mało elementów w %s. Minimalna liczba dopuszczalna %d" % (m2m_model_setup.through.model_class()._meta.verbose_name, m2m_model_setup.min_count))
+                if m2m_model_setup.max_count and m2m_count > m2m_model_setup.max_count:
+                    raise forms.ValidationError(u"Wybrano zbyt dużo elementów w %s. Maksymalna liczba dopuszczalna %d" % (m2m_model_setup.through.model_class()._meta.verbose_name, m2m_model_setup.max_count))
+
+            return self.cleaned_data
+
         def is_valid(self):
             valid = [super(CreateBaseForm, self).is_valid()]
             for ex in itertools.chain(*self.external.values()):
@@ -168,7 +182,6 @@ def createform_factory(created_model, related_models, related_m2m_models, exclud
                     ins = f.save(commit=False)
                     #setattr(ins, self._meta.model._meta.object_name.lower(), self.instance)
                     setattr(ins, f.setup.from_field, self.instance)
-                    print 'After sett'
                     ins.save()
                 else:
                     if not f.instance.pk is None:

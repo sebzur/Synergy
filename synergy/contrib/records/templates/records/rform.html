@@ -1,7 +1,9 @@
 {% load records_tags %}
+
   {{ form.as_p }}
 
   <div id="accordion">  
+
   {% for k, v in form.external.iteritems %}
   <h3><a href="#"><strong>{{ k.get_model_verbose_name }}</strong></a></h3>
   <div>
@@ -17,13 +19,12 @@
 
   {% for k, v in form.external_m2m.iteritems %}
 
-  <h3><a href="#"><strong>{{ k.verbose_name }}</strong></a></h3>
+  <h3><a href="#"><strong>{{ k.get_model_verbose_name }}</strong></a></h3>
   <div>
     {% for r_form in v %}
-    <fieldset>
-      <legend>Wartość nr #{{ forloop.counter }} </legend>
+    <div class="{% cycle "odd" "even" %}">
       {{ r_form.as_p }}
-    </fieldset>
+    </div>
     {% endfor %}
   </div>
   {% endfor %}
