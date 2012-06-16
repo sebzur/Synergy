@@ -93,9 +93,13 @@ class Prospect(models.Model):
         return self._filter(**query)
 
     def _filter(self, **query):
+        return self.get_source().filter(**self.sanitize_query(**query))
+    
+    def sanitize_query(self, **query):
+        # the ids list of admissible aspects
         ids = self.get_source().aspects.values_list('id', flat=True)
-        subquery = dict([(smart_str(id), query.get(id)) for id in filter(lambda x: int(x) in ids, query.keys())])
-        return self.get_source().filter(**subquery)
+        return dict([(smart_str(id), query.get(id)) for id in filter(lambda x: int(x) in ids, query.keys())])
+
             
 class Operator(models.Model):
     callable = fields.CallableField(max_length=255, verbose_name="The callable to call after the prospects returns the data", blank=True) 
@@ -139,9 +143,13 @@ class Source(models.Model):
 
 class Context(models.Model):
     source = models.ForeignKey('Source', related_name="contexts")
-    variant = models.ForeignKey('ProspectVariant')
-    value = models.SlugField()
-    lookup = models.SlugField()
+    variant = models.ForeignKey('ProspectVariant', related_name="Variant")
+    value = models.SlugField(verbose_name="Value", help_text="Value to extract as flatted values_list")
+    lookup = models.SlugField(verbose_name="Relation lookup", help_text="__in operator is used, provide here the model field" )
+
+    class Meta:
+        verbose_name = "Context"
+        verbose_name_plular = "Contexts"
 
 class Aspect(models.Model):
     # Attribute is stored as a string (slug) in native Django
@@ -243,6 +251,8 @@ class ProspectVariant(models.Model):
         {'aspect_id': {'lookup': gt|lt|exact|[...], 'value': [...]}}
 
         """ 
+        # wartosci aspektow dla kontekstu leca po prostu w query
+
 
         # if aspect has some values stored, override the query
         c = {}
@@ -250,8 +260,13 @@ class ProspectVariant(models.Model):
             c[str(aspect_value.aspect.id)] = {'lookup':aspect_value.lookup, 'value':  aspect_value.value}
 
         query.update(c)
-        data = self.prospect.filter(**query)
 
+        data = self.prospect.filter(**query)        
+
+        for context in self.prospect.source.contexts.all():
+            if context.variant.prospect.sanitize_query(**query):
+                context_values = context.variant.filter(user, **query).values_list(context.value, flat=True)
+                data = data.filter(**{"%s__in" % context.lookup: context_values})
 
         # User related lookup
         q_obj = None

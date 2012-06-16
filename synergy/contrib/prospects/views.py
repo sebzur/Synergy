@@ -62,6 +62,8 @@ class ListView(ProspectMixin, RegionViewMixin, generic.FormView):
         results = []
         if kwargs['form'].is_valid():
             kwgs = dict((smart_str(key), value) for key, value in kwargs['form'].cleaned_data.iteritems())
+            for context in kwargs['form'].contexts.values():
+                kwgs.update(dict((smart_str(key), value) for key, value in context.cleaned_data.iteritems()))
             # some older python version require dict keys to be strings when passed as kwargs
             results = self.get_results(**kwgs)
         ctx['results'] = results

@@ -64,7 +64,18 @@ class ProspectBaseForm(forms.BaseForm):
     def __init__(self, request, instance=None, *args, **kwargs):
         super(ProspectBaseForm, self).__init__(*args, **kwargs)
         self.instance = instance
+        
+        for context in self.contexts:
+            self.contexts[context] = self.contexts[context](request, instance, *args, **kwargs)
+        
         signals.prospect_form_created.send(sender=instance, form=self, request=request)
+
+    def is_valid(self):
+        valid = [super(ProspectBaseForm, self).is_valid()]
+        for c, f in self.contexts.iteritems():
+            valid.append(f.is_valid())
+        return all(valid)
+
 
     def _as_table(self):
         """ Overriden as_table method """
@@ -97,5 +108,8 @@ def build_query(data):
 
 def prospectform_factory(prospect, variant):
     fields = get_fields(prospect, variant)
+    contexts = {}
+    for context in prospect.source.contexts.all():
+        contexts[context] = prospectform_factory(context.variant.prospect, context.variant.name)
     attributes = {}
-    return type('ProspectForm', (ProspectBaseForm,), {'base_fields': fields, 'attributes': attributes, 'prospect': prospect})
+    return type('ProspectForm', (ProspectBaseForm,), {'base_fields': fields, 'attributes': attributes, 'prospect': prospect, 'contexts': contexts})
