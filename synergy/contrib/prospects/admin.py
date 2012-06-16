@@ -57,3 +57,5 @@ admin.site.register(DetailMenu)
 admin.site.register(DetailField)
 admin.site.register(DetailFieldStyle)
 admin.site.register(VariantMenu)
+
+admin.site.register(Context)
