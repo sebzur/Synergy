@@ -149,7 +149,7 @@ class Context(models.Model):
 
     class Meta:
         verbose_name = "Context"
-        verbose_name_plular = "Contexts"
+        verbose_name_plural = "Contexts"
 
 class Aspect(models.Model):
     # Attribute is stored as a string (slug) in native Django
