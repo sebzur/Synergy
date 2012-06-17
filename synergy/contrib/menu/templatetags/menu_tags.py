@@ -72,3 +72,23 @@ class MenuNode(template.Node):
                     continue
                 context['items'][item] = item.get_url(*args, **kwargs)
             return render_to_string(tpl, context)
+
+
+@register.tag
+def secondary_menu(parser, token):
+    bits = token.split_contents()
+    if len(bits) < 2:
+        raise TemplateSyntaxError("'%s' takes at least one argument"
+                                  " (user)" % bits[0])
+    user = parser.compile_filter(bits[1])
+    return SecondaryMenuNode(user)
+
+class SecondaryMenuNode(template.Node):
+    def __init__(self, user):
+        self.user = user
+
+    def render(self, context):
+        menus = get_model('menu', 'Menu').objects.filter(category='s')
+        tpl = 'menu/secondary_menu.html'
+        context = {'menus': menus, 'user': self.user}
+        return render_to_string(tpl, context)

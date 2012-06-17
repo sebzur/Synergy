@@ -2,14 +2,20 @@ from django.db import models
 from synergy.contrib.prospects.models import fields
 
 class Menu(models.Model):
+    CATEGORY = (('p', 'Primary Menu'), ('s', 'Secondary Menu'), ('c', 'Context Menu'))
+
     name = models.SlugField(unique=True)
     verbose_name = models.CharField(max_length=255)
+    weight = models.IntegerField()
+
+    category = models.CharField(max_length=1, choices=CATEGORY)
 
     def __unicode__(self):
         return self.verbose_name
 
     class Meta:
         unique_together = (('name', 'verbose_name'),)
+        ordering = ('weight', 'name')
 
 
 # To wydaje sie byc niespecjalnie potrzebne
