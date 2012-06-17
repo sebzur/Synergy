@@ -376,6 +376,9 @@ class Field(models.Model):
     def get_object_delete_link(self, obj):
         return reverse('delete', args=[self.variant.record.name, obj.pk])
 
+    def as_link(self):
+        return self.link_to or models.get_model('prospects', 'FieldURL').objects.filter(field=self).exists()
+
     def get_value(self, obj):
         # Should check if obj is instance of the variant source
         value =  get_related_value(obj, self.db_field)
@@ -384,7 +387,25 @@ class Field(models.Model):
         value = self._rewrite(value)
         if self.link_to:
             return {'url': self.get_object_link(obj), 'value': value}
-        return value
+
+        try:
+           return {'url': self._render_url(obj, value), 'value': value} 
+        except models.get_model('prospects', 'FieldURL').DoesNotExist:
+            return value
+
+
+    def _render_url(self, obj, value):
+        url_setup = self.field_url
+        if url_setup.reverse_url:
+            bits = url_setup.url.split()
+            if bits[0] == 'create':
+                t = template.Template("{%% load records_tags %%} {%% create %s %%}" % " ".join(bits[1:]))
+            else:
+                t = template.Template("{%% url %s %%}" % url_setup.url)
+            context = {'value': value, 'object': obj}
+            return t.render(template.Context(context))
+        return url_setup.url
+
 
     def _rewrite(self, value):
         if self.rewrite_as:
@@ -400,7 +421,7 @@ class Field(models.Model):
         return u"%s::%s (%s)" % (self.db_field, self.lookup, self.variant.name)
     
 class FieldURL(models.Model):
-    field = models.OneToOneField('Field')
+    field = models.OneToOneField('Field', related_name='field_url')
     url = models.CharField(max_length=200)
     # if resolve_url is set, Django will try to
     # resolve the value to get the full URL

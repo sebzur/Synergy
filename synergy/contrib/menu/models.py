@@ -35,6 +35,9 @@ class MenuItemTrigger(models.Model):
     item = models.ForeignKey('MenuItem', related_name='triggers')
     weight = models.IntegerField()
 
+    class Meta:
+        ordering = ('weight', )
+
 class MenuItem(models.Model):
     menu = models.ForeignKey('Menu', related_name='items')
     name = models.SlugField(unique=True)

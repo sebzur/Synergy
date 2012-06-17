@@ -48,7 +48,7 @@ def table_row(obj, table):
 def table_column(obj, column):
     tpl = 'displays/tabledisplay/td.html'
     triggered = column.is_triggered(obj)
-    link = column.field.link_to and triggered
+    link = column.field.as_link() and triggered
     if triggered or column.rewrite_disabled_as == 'b':
         value = column.field.get_value(obj)
     if not triggered and column.rewrite_disabled_as == 'b':
