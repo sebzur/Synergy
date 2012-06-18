@@ -51,7 +51,7 @@ def get_fields(prospect, variant):
             fields[attribute_full_name].widget.is_localized = True
 
         #overrides = {'label': attribute.verbose_name, 'required': attribute.required and is_key_required, 'help_text': attribute.data_type.help_text}
-        overrides = {'required': False}
+        overrides = {'required': aspect.is_required}
         for k, v in overrides.iteritems():
             setattr(fields[aspect_field_name], k, v)
 

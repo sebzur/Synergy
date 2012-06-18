@@ -161,6 +161,8 @@ class Aspect(models.Model):
     source = models.ForeignKey('Source', related_name="aspects")
     weight = models.IntegerField(verbose_name="Aspect weight", default=0)
 
+    is_required = models.BooleanField()
+
     def __unicode__(self):
         return u"%s (%s)" % (self.attribute, self.source.prospect.name)
 
