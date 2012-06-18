@@ -190,6 +190,9 @@ class M2MRelationSetup(models.Model):
     def get_model_verbose_name(self):
         return self.get_to_model()._meta.verbose_name
 
+    def get_model_verbose_name_plural(self):
+        return self.get_to_model()._meta.verbose_name_plural
+
     def get_to_model(self):
         return self.through.model_class()._meta.get_field(self.to_field).rel.to
 
@@ -208,6 +211,26 @@ class M2MChoicesSetup(models.Model):
     field = models.ForeignKey('RecordField')
     lookup = models.SlugField()
 
+class O2MRelationSetup(models.Model):
+    setup = models.ForeignKey(RecordSetup, related_name="related_o2m_models")
+    model = models.ForeignKey(ContentType)
+
+    min_count = models.PositiveSmallIntegerField(null=True, blank=True)
+    max_count = models.PositiveSmallIntegerField(null=True, blank=True)
+
+    def get_max_count(self):
+        return self.max_count or 1
+
+    def get_model_verbose_name(self):
+        return self.model.model_class()._meta.verbose_name
+
+    def get_model_verbose_name_plural(self):
+        return self.model.model_class()._meta.verbose_name_plural
+
+    def can_create_entry(self):
+        return True
+
+
 class RecordRelation(models.Model):
     setup = models.ForeignKey(RecordSetup, related_name="related_models")
     model = models.ForeignKey(ContentType)
@@ -215,6 +238,9 @@ class RecordRelation(models.Model):
 
     def get_model_verbose_name(self):
         return self.model.model_class()._meta.verbose_name
+
+    def get_model_verbose_name_plural(self):
+        return self.model.model_class()._meta.verbose_name_plural
 
     def can_create_entry(self):
         return True

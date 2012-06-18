@@ -26,7 +26,9 @@ def teaser(obj):
 @register.filter(name='fields')
 def fields(obj, object_detail):
 
-    context = {'model_fields': SortedDict(), 'object_fields': SortedDict(), 'object': obj}
+    context = {'model_fields': SortedDict(), 'object_fields': SortedDict(), 'object': obj, 'object_detail': object_detail,
+               'object_name':obj._meta.verbose_name
+               }
 
     for field in filter(lambda x: x.name != 'id', obj._meta.fields):
         context['model_fields'][field.verbose_name] = getattr(obj, field.name)

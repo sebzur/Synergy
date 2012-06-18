@@ -5,7 +5,7 @@
   <div id="accordion">  
 
   {% for k, v in form.external.iteritems %}
-  <h3><a href="#"><strong>{{ k.get_model_verbose_name }}</strong></a></h3>
+  <h3><a href="#"><strong>{{ k.get_model_verbose_name_plural }}</strong></a></h3>
   <div>
     {% for r_form in v %}
     <fieldset>
@@ -19,7 +19,7 @@
 
   {% for k, v in form.external_m2m.iteritems %}
 
-  <h3><a href="#"><strong>{{ k.get_model_verbose_name }}</strong></a></h3>
+  <h3><a href="#"><strong>{{ k.get_model_verbose_name_plural }}</strong></a></h3>
   <div>
     {% for r_form in v %}
     <div class="{% cycle "odd" "even" %}">
@@ -28,4 +28,18 @@
     {% endfor %}
   </div>
   {% endfor %}
+
+  {% for k, v in form.internal_m2m.iteritems %}
+
+  <h3><a href="#"><strong>{{ k.verbose_name  }}</strong></a></h3>
+  <div>
+    {% for r_form in v %}
+    <div class="{% cycle "odd" "even" %}">
+      {{ r_form.as_p }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+
+
 </div>

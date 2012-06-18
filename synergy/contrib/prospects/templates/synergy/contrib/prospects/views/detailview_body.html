@@ -5,12 +5,7 @@
 
 {% region objectdetail %}
 <div style="float:left; display:block; width: 70%;">
-   {% if objectdetail.get_record %}
-      {{ object|as_record }}
-      {# {{ object|model_relations }} #}
- {% else %}
     {{ object|fields:objectdetail }}
-   {% endif %}
 </div>
 <div  style="padding: 20px; float:left; width: 25%;">
 

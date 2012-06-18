@@ -7,7 +7,7 @@ from django.db.models import get_model
 from django.utils.datastructures import SortedDict
 from models import get_parent_field
 
-def _create_m2m_form_factory(rel, from_model):
+def create_internal_m2m_form_factory(rel, from_model):
     to_exclude = [from_model._meta.object_name.lower()]
 
     class M2MBaseForm(forms.ModelForm):
@@ -75,10 +75,20 @@ def createform_factory(created_model, related_models, related_m2m_models, exclud
                     # muszą należeć do grupy o tej nazwie pola
                     self.fields[field.name].queryset = self.fields[field.name].queryset.filter(group__name=field.name)
 
+                if field.db_type() == 'boolean':
+                    # Specjalna obsługa dla boola, ze względu na potrzebę jasności wyboru, lepiej jeżeli
+                    # wyświetlimy RadioSelect, gdzie user *musi* wybrać coś, niż jeśli CheckBox będzie
+                    # dawałe defaultowego False przy braku wyboru
+                    self.fields[field.name] =  forms.TypedChoiceField(coerce=lambda choice: {'true': True, 'false': False, 'none': None}[choice],
+                                                                      choices=(('none', 'Niewybrane'), ('false', 'Nie'), ('true', 'Tak')),
+                                                                      initial='none',
+                                                                      widget=forms.RadioSelect
+                                                                      )
+
             for related_model in related_models:
                 self.external[related_model] = []
                 instances = related_model.model.model_class().objects.filter(**{related_model.setup.model.model: self.instance})
-                for i in range(related_model.elements_count):
+                for i in range(related_model.get_max_count()):
                     ins = None
                     if not self.instance.pk is None:
                         try:
@@ -86,13 +96,13 @@ def createform_factory(created_model, related_models, related_m2m_models, exclud
                         except IndexError:
                             ins = None
                     prefix="%s_%d" % (related_model.model.model, i)
-                    df = createform_factory(related_model.model.model_class(), [], excluded_fields=[self._meta.model._meta.object_name.lower()])(instance=ins, 
+                    df = createform_factory(related_model.model.model_class(), [], [], excluded_fields=[self._meta.model._meta.object_name.lower()])(instance=ins, 
                                                                                                                                                  prefix=prefix,
                                                                                                                                                  *args, **kwargs)
                     self.external[related_model].append(df)
 
 
-            self.external_m2m = {}
+            self.external_m2m = SortedDict()
             for related_m2m_model in related_m2m_models:
                 self.external_m2m[related_m2m_model] = []
                 choice_manager  = related_m2m_model.get_choices_manager()
@@ -118,31 +128,26 @@ def createform_factory(created_model, related_models, related_m2m_models, exclud
                     form = create_m2m_form_factory(related_m2m_model)(prefix=prefix, instance=ins, select=choice, *args, **kwargs)
                     self.external_m2m[related_m2m_model].append(form)
 
-            
-            #self.external_m2m = {}
-            if 0:
-                for related_m2m_model in created_model._meta.many_to_many:
-                    self.external_m2m[related_m2m_model] = []
-                    choice_manager  = related_m2m_model.rel.to._default_manager
-                    print 'Processingm2m', choice_manager
-                    if choice_manager.model is categorical_model:
-                        choices = choice_manager.filter(group__name=related_m2m_model.rel.through._meta.object_name.lower())
-                    else:
-                        choices = choice_manager.all()
-                    for choice in choices:
-                        ins = None
-                        if not self.instance.pk is None:
-                            try:
-                                ins = related_m2m_model.rel.through._default_manager.get(**{related_m2m_model.model._meta.object_name.lower(): self.instance,
-                                                                                            related_m2m_model.rel.through._meta.object_name.lower(): choice})
-                            except related_m2m_model.rel.through.DoesNotExist:
-                                ins = None
+            self.internal_m2m = SortedDict()
+            for related_m2m_model in created_model._meta.many_to_many:
+                self.internal_m2m[related_m2m_model] = []
+                choice_manager  = related_m2m_model.rel.to._default_manager
+                if choice_manager.model is categorical_model:
+                    choices = choice_manager.filter(group__name=related_m2m_model.rel.through._meta.object_name.lower())
+                else:
+                    choices = choice_manager.all()
+                for choice in choices:
+                    ins = None
+                    if not self.instance.pk is None:
+                        try:
+                            ins = related_m2m_model.rel.through._default_manager.get(**{related_m2m_model.model._meta.object_name.lower(): self.instance,
+                                                                                        related_m2m_model.rel.through._meta.object_name.lower(): choice})
+                        except related_m2m_model.rel.through.DoesNotExist:
+                            ins = None
 
-                        prefix="%s_%d" % (related_m2m_model.model._meta.object_name.lower(), choice.id)
-                        #cp_kwargs = kwargs.copy()
-                        #cp_kwargs['prefix'] = prefix
-                        self.external_m2m[related_m2m_model].append(create_m2m_form_factory(related_m2m_model.rel, related_m2m_model.model)(prefix=prefix, instance=ins, select=choice, 
-                                                                                                                                            *args, **kwargs))
+                    prefix="%s_%d" % (related_m2m_model.model._meta.object_name.lower(), choice.id)
+                    self.internal_m2m[related_m2m_model].append(create_internal_m2m_form_factory(related_m2m_model.rel, related_m2m_model.model)(prefix=prefix, instance=ins, select=choice, 
+                                                                                                                                        *args, **kwargs))
                 
 
 
@@ -167,6 +172,10 @@ def createform_factory(created_model, related_models, related_m2m_models, exclud
 
             for f in itertools.chain(*self.external_m2m.values()):
                 valid.append(f.is_valid())
+
+            for f in itertools.chain(*self.internal_m2m.values()):
+                valid.append(f.is_valid())
+
             return all(valid)
 
         def save(self, *args, **kwargs):
@@ -180,12 +189,22 @@ def createform_factory(created_model, related_models, related_m2m_models, exclud
             for f in itertools.chain(*self.external_m2m.values()):
                 if f.cleaned_data["%s_%d" % (f.select._meta.object_name.lower(), f.select.id)]:
                     ins = f.save(commit=False)
-                    #setattr(ins, self._meta.model._meta.object_name.lower(), self.instance)
                     setattr(ins, f.setup.from_field, self.instance)
                     ins.save()
                 else:
                     if not f.instance.pk is None:
                         f.instance.delete()
+
+            for f in itertools.chain(*self.internal_m2m.values()):
+                if f.cleaned_data["%s_%d" % (f.select._meta.object_name.lower(), f.select.id)]:
+                    ins = f.save(commit=False)
+                    setattr(ins, self._meta.model._meta.object_name.lower(), self.instance)
+                    ins.save()
+                else:
+                    if not f.instance.pk is None:
+                        f.instance.delete()
+
+
 
             return self.instance
 

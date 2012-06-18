@@ -68,7 +68,7 @@ class CreateRecordView(ProtectedView, RegionViewMixin, ObjectViewMixin, CreateVi
 
     def get_form_class(self, *args, **kwargs):
         setup = self.get_model_setup()
-        return forms.createform_factory(setup.model.model_class(), setup.related_models.all(), setup.related_m2m_models.all(), excluded_fields=self.get_excluded_fields(), hidden_fields=self.get_hidden_fields())
+        return forms.createform_factory(setup.model.model_class(), setup.related_o2m_models.all(), setup.related_m2m_models.all(), excluded_fields=self.get_excluded_fields(), hidden_fields=self.get_hidden_fields())
 
     def get_arguments(self):
         _kwargs = self.kwargs.copy()
@@ -101,7 +101,7 @@ class UpdateRecordView(ObjectViewMixin, ProtectedView, RegionViewMixin, UpdateVi
 
     def get_form_class(self, *args, **kwargs):
         setup = self.get_model_setup()
-        return forms.createform_factory(setup.model.model_class(), setup.related_models.all(), setup.related_m2m_models.all(), excluded_fields=self.get_excluded_fields(), hidden_fields=self.get_hidden_fields())
+        return forms.createform_factory(setup.model.model_class(), setup.related_o2m_models.all(), setup.related_m2m_models.all(), excluded_fields=self.get_excluded_fields(), hidden_fields=self.get_hidden_fields())
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(UpdateRecordView, self).get_context_data(*args, **kwargs)

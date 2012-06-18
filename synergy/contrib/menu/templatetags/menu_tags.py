@@ -64,7 +64,7 @@ class MenuNode(template.Node):
         else:
             tpl = 'menu/menu.html'
             menu_obj = get_model('menu', 'Menu').objects.get(name=menu_name)
-            context = {'menu': menu_obj, 'items': {}}
+            context = {'menu': menu_obj, 'items': SortedDict()}
 
             for item in menu_obj.items.all():
                 #if not all(trigger.callable(kwargs.get(trigger.argument_provided.name)) for trigger in item.triggers.all()):

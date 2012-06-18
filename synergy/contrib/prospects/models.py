@@ -363,6 +363,10 @@ class Field(models.Model):
     # The field output can be rewriten. The synatx is: %(token)s where token is a valid replacement string.
     rewrite_as = models.CharField(max_length=255, verbose_name="Rewrite the output of this field", help_text="If checked, you can alter the output of this field by specifying a string of text with replacement tokens that can use any existing field output.", blank=True)
     
+    class Meta:
+        ordering = ('variant', 'weight')
+        
+
     def get_object_link(self, obj):
         urls = {'o': 'detail', 'u': 'update', 'd': 'delete'}
         return getattr(self, 'get_object_%s_link' % urls.get(self.link_to))(obj)
@@ -453,6 +457,10 @@ class ObjectDetail(models.Model):
             return t.render(template.Context({'object': obj}))
         return ''
 
+
+    def has_record(self):
+        return bool(self.variant.record)
+
     def get_record(self):
         return self.variant.record
 
@@ -521,8 +529,8 @@ class VariantContext(models.Model):
 
 class VariantContextAspectValue(models.Model):
     variant_context = models.ForeignKey('VariantContext', related_name="aspect_values")
-    aspect = models.ForeignKey('Aspect')
     value_field = models.ForeignKey('Field')
+    aspect = models.ForeignKey('Aspect')
     lookup = models.CharField(max_length=255, verbose_name="Lookup")
 
     def __unicode__(self):
