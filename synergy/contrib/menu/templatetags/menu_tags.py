@@ -66,7 +66,7 @@ class MenuNode(template.Node):
             menu_obj = get_model('menu', 'Menu').objects.get(name=menu_name)
             context = {'menu': menu_obj, 'items': SortedDict()}
 
-            for item in menu_obj.items.all():
+            for item in menu_obj.items.filter(is_enabled=True):
                 #if not all(trigger.callable(kwargs.get(trigger.argument_provided.name)) for trigger in item.triggers.all()):
                 #if not all((resolve_lookup(kwargs.get(trigger.argument.name), trigger.trigger_lookup) for trigger in item.triggers.all())):
                 if not item.is_triggered(**kwargs):
@@ -89,7 +89,7 @@ class SecondaryMenuNode(template.Node):
         self.user = user
 
     def render(self, context):
-        menus = get_model('menu', 'Menu').objects.filter(category='s')
+        menus = get_model('menu', 'Menu').objects.filter(category='s', is_enabled=True)
         tpl = 'menu/secondary_menu.html'
         context = {'menus': menus, 'user': self.user}
         return render_to_string(tpl, context)

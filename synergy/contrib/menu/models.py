@@ -11,6 +11,8 @@ class Menu(models.Model):
 
     category = models.CharField(max_length=1, choices=CATEGORY)
 
+    is_enabled = models.BooleanField(default=True)
+
     def __unicode__(self):
         return self.verbose_name
 
@@ -63,6 +65,8 @@ class MenuItem(models.Model):
     suffix_text = models.CharField(max_length=255, blank=True)
     target = models.CharField(choices=(('_blank', '_blank'), ('_parent', '_parent')), max_length=32, blank=True)
     alt_text = models.CharField(max_length=200, blank=True)
+
+    is_enabled = models.BooleanField(default=True)
 
     def __unicode__(self):
         return u"%s : %s" % (self.menu, self.verbose_name)
