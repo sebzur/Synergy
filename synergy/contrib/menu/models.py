@@ -70,7 +70,7 @@ class MenuItem(models.Model):
     def is_triggered(self, **kwargs):
         triggers = self.triggers.all()
         if triggers.exists():
-            return all((trigger.negate_trigger ^ resolve_lookup(kwargs.get(trigger.argument.name), trigger.trigger_lookup) for trigger in triggers))
+            return all((trigger.negate_trigger ^ bool(resolve_lookup(kwargs.get(trigger.argument.name)), trigger.trigger_lookup) for trigger in triggers))
         return True
 
     def get_url(self, *args, **kwargs):
