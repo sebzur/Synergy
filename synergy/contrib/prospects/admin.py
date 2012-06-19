@@ -18,7 +18,7 @@ class ColumnAdmin(admin.ModelAdmin):
     list_filter = ('table',)
 
 class FieldAdmin(admin.ModelAdmin):
-    list_display = ('variant', 'verbose_name', 'db_field', 'lookup', 'link_to', 'as_object_link')
+    list_display = ('variant', 'verbose_name', 'db_field', 'lookup', 'link_to', 'as_object_link', 'get_db_type', 'has_choices')
     list_filter = ('variant',)
 
 class CellStyleAdmin(admin.ModelAdmin):

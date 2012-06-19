@@ -49,14 +49,8 @@ def table_row(obj, table):
 @register.filter(name='td')
 def table_column(obj, column):
     tpl = 'displays/tabledisplay/td.html'
-    triggered = column.is_triggered(obj)
-    link = column.field.as_link() and triggered
-    if triggered or column.rewrite_disabled_as == 'b':
-        value = column.field.get_value(obj)
-    if not triggered and column.rewrite_disabled_as == 'b':
-        value = value.get('value')
-    if not triggered and column.rewrite_disabled_as == 'a':
-        value = None
+    value = column.get_value(obj)
+    link = column.is_url(obj)
     return render_to_string(tpl, {'object': obj, 'value': value, 'column': column, 'link': link})
 
 

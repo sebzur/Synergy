@@ -79,10 +79,12 @@ def createform_factory(created_model, related_models, related_m2m_models, exclud
                     # Specjalna obsługa dla boola, ze względu na potrzebę jasności wyboru, lepiej jeżeli
                     # wyświetlimy RadioSelect, gdzie user *musi* wybrać coś, niż jeśli CheckBox będzie
                     # dawałe defaultowego False przy braku wyboru
-                    self.fields[field.name] =  forms.TypedChoiceField(coerce=lambda choice: {'true': True, 'false': False, 'none': None}[choice],
-                                                                      choices=(('none', 'Niewybrane'), ('false', 'Nie'), ('true', 'Tak')),
-                                                                      initial='none',
-                                                                      widget=forms.RadioSelect
+
+                    self.fields[field.name] =  forms.TypedChoiceField(coerce=lambda choice: {'True': True, 'False': False}[choice],
+                                                                      choices=(('False', 'Nie'), ('True', 'Tak')),
+                                                                      widget=forms.RadioSelect,
+                                                                      initial=self.fields[field.name].initial,
+                                                                      label=self.fields[field.name].label
                                                                       )
 
             for related_model in related_models:
@@ -152,7 +154,7 @@ def createform_factory(created_model, related_models, related_m2m_models, exclud
 
 
         def clean(self):
-
+            super(CreateBaseForm, self).clean()
             m2m_count = 0
             for m2m_model_setup, m2m_forms in self.external_m2m.iteritems():
                 for f in m2m_forms:

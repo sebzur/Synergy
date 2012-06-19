@@ -141,9 +141,11 @@ class CreateNode(template.Node):
         record_name = self.record_name.resolve(context)
         #menu_name = self.menu_name#.resolve(context)
 
-        arguments = '/'.join(map(str, args))
+        arguments = [record_name]
+        if args:
+            arguments.append('/'.join(map(str, args)))
 
-        url = reverse('create', args=[record_name, arguments])
+        url = reverse('create', args=arguments)
 
         if self.asvar:
             context[self.asvar] = url

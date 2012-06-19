@@ -244,3 +244,4 @@ class RecordRelation(models.Model):
 
     def can_create_entry(self):
         return True
+

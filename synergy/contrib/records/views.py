@@ -53,11 +53,14 @@ class CreateRecordView(ProtectedView, RegionViewMixin, ObjectViewMixin, CreateVi
             expressions.append("(?P<%s>%s)" % (argument.name, argument.regex))
         regex = "/".join(expressions)
         path = kwargs.get('arguments')
-        _kwargs = self.resolve(regex, path)
-        if not _kwargs:
-            raise Http404
-        str_converted = dict(((smart_str(k), v) for k, v in _kwargs.iteritems()))
-        kwargs.update(str_converted)
+
+        if path:
+            _kwargs = self.resolve(regex, path)
+            if not _kwargs:
+                raise Http404
+            str_converted = dict(((smart_str(k), v) for k, v in _kwargs.iteritems()))
+            kwargs.update(str_converted)
+
         return super(CreateRecordView, self).dispatch(request, *args, **kwargs)
 
     def resolve(self, regex, path):

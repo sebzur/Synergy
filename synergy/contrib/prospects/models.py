@@ -26,7 +26,11 @@ def get_related_value(obj, path):
         return obj
     chain = path.split('__')
     for i, attribute in enumerate(chain):
-        value = getattr(obj, attribute)
+        if obj._meta.get_field(attribute).choices:
+            # show display value rather then its identifier
+            value = getattr(obj, "get_%s_display" %attribute)
+        else:
+            value = getattr(obj, attribute)            
         if chain[i+1:]:
             if not value:
                 raise ValueError('Something went wrong. Field retrival for `%s` stoped at `%s` while it should represents relation' % (path, attribute))
@@ -230,6 +234,7 @@ class Aspect(models.Model):
 
     class Meta:
         ordering = ('weight', )
+        unique_together = (('attribute', 'source'),)
 
 class ProspectVariant(models.Model):
     prospect = models.ForeignKey('Prospect')
@@ -369,6 +374,29 @@ class Field(models.Model):
         ordering = ('variant', 'weight')
         
 
+    def get_field_object(self):
+        if not hasattr(self, '_field_obj'):
+            self._field_obj = None
+            if self.db_field != 'self':
+                try:
+                    self._field_obj = self.variant.prospect.source.content_type.model_class()._meta.get_field(self.db_field)
+                except Exception, error:
+                    raise 
+        return self._field_obj
+
+    def get_db_type(self):
+        try:
+            return self.get_field_object().db_type() if self.get_field_object() else None
+        except Exception, error:
+            return "ERROR: %s" % error
+
+    def has_choices(self):
+        try:
+            return bool(self.get_field_object().choices) if self.get_field_object() else False
+        except Exception, error:
+            return "ERROR: %s" % error
+    has_choices.boolean = True # for admin
+
     def get_object_link(self, obj):
         urls = {'o': 'detail', 'u': 'update', 'd': 'delete'}
         return getattr(self, 'get_object_%s_link' % urls.get(self.link_to))(obj)
@@ -387,13 +415,12 @@ class Field(models.Model):
 
     def get_value(self, obj):
         # Should check if obj is instance of the variant source
-        value =  get_related_value(obj, self.db_field)
+        value = get_related_value(obj, self.db_field)
         if self.lookup and not (value is None): # if value is None, leave the lookup
             value = self._resolve_lookup(value, self.lookup)
         value = self._rewrite(value)
         if self.link_to:
             return {'url': self.get_object_link(obj), 'value': value}
-
         try:
            return {'url': self._render_url(obj, value), 'value': value} 
         except models.get_model('prospects', 'FieldURL').DoesNotExist:
@@ -623,11 +650,29 @@ class Column(models.Model):
     def __unicode__(self):
         return u"%s %s" % (self.table, self.field)
 
+    def is_url(self, obj):
+        return self.field.as_link() and self.is_triggered(obj)
+
+    def get_value(self, obj):
+        triggered = self.is_triggered(obj)
+        link = self.is_url(obj)
+        if triggered or self.rewrite_disabled_as == 'b':
+            value = self.field.get_value(obj)
+        if not triggered and self.rewrite_disabled_as == 'b':
+            value = value.get('value')
+        if not triggered and self.rewrite_disabled_as == 'a':
+            value = None
+#        if type(value) == bool:
+#            return template.Template("""{{ value|yesno:"Tak,Nie" }}""").render(template.Context({'value': value}))
+        return value
+
     def is_triggered(self, obj):
         """ Obj is the objects that is the source of the field in column """
-        if self.trigger_lookup and not (obj is None):
-            return self.negate_trigger ^ bool(resolve_lookup(obj, self.trigger_lookup))
-        return True
+        if not hasattr(self, '_is_triggered'):
+            self._is_triggered = True
+            if self.trigger_lookup and not (obj is None):
+                self._is_triggered = self.negate_trigger ^ bool(resolve_lookup(obj, self.trigger_lookup))
+        return self._is_triggered
 
     def get_styles(self, value):
         return {'class': ' '.join(self.get_triggered_styles('c', value)),
