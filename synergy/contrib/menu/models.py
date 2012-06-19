@@ -1,5 +1,6 @@
 from django.db import models
-from synergy.contrib.prospects.models import fields
+from synergy.contrib.prospects.models import fields, resolve_lookup
+
 
 class Menu(models.Model):
     CATEGORY = (('p', 'Primary Menu'), ('s', 'Secondary Menu'), ('c', 'Context Menu'))
@@ -36,8 +37,10 @@ class MenuArgument(models.Model):
         ordering = ('weight',)
 
 class MenuItemTrigger(models.Model):
-    argument = models.ForeignKey('MenuArgument', related_name='items')
+    argument = models.ForeignKey('MenuArgument', related_name='triggers')
     trigger_lookup = models.CharField(max_length=128, verbose_name="A lookup on the argument that triggers the item to be visible")
+    negate_trigger = models.BooleanField()
+
     item = models.ForeignKey('MenuItem', related_name='triggers')
     weight = models.IntegerField()
 
@@ -64,10 +67,15 @@ class MenuItem(models.Model):
     def __unicode__(self):
         return u"%s : %s" % (self.menu, self.verbose_name)
 
+    def is_triggered(self, **kwargs):
+        triggers = self.triggers.all()
+        if triggers.exists():
+            return all((trigger.negate_trigger ^ resolve_lookup(kwargs.get(trigger.argument.name), trigger.trigger_lookup) for trigger in triggers))
+        return True
+
     def get_url(self, *args, **kwargs):
         from django.template import Context, Template
         if self.reverse_url:
-
             bits = self.url.split()
             if bits[0] == 'create':
                 t = Template("{%% load records_tags %%} {%% create %s %%}" % " ".join(bits[1:]))

@@ -68,7 +68,8 @@ class MenuNode(template.Node):
 
             for item in menu_obj.items.all():
                 #if not all(trigger.callable(kwargs.get(trigger.argument_provided.name)) for trigger in item.triggers.all()):
-                if not all((resolve_lookup(kwargs.get(trigger.argument.name), trigger.trigger_lookup) for trigger in item.triggers.all())):
+                #if not all((resolve_lookup(kwargs.get(trigger.argument.name), trigger.trigger_lookup) for trigger in item.triggers.all())):
+                if not item.is_triggered(**kwargs):
                     continue
                 context['items'][item] = item.get_url(*args, **kwargs)
             return render_to_string(tpl, context)
