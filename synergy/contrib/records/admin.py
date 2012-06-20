@@ -31,3 +31,6 @@ admin.site.register(RecordRelation, O2MRelationAdmin)
 admin.site.register(CategoricalValue, CategoricalValueAdmin)
 admin.site.register(ValuesGroup)
 
+
+
+

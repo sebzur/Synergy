@@ -1,6 +1,8 @@
 {% load records_tags %}
+{% load formstyle_tags %}
 
-  {{ form.as_p }}
+
+{{ form|layout }}
 
   <div id="accordion">  
 
@@ -10,7 +12,7 @@
     {% for r_form in v %}
     <fieldset>
       <legend>Wartość nr #{{ forloop.counter }} </legend>
-    {{ r_form|rform:level }}
+    {{ r_form|rform }}
     </fieldset>
     {% endfor %}
   </div>

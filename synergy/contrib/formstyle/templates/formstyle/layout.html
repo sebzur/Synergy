@@ -1,0 +1,7 @@
+{% load formstyle_tags %}
+
+{{ form|v_layout:items }}
+
+{% for content in fields %}
+   {% include 'formstyle/field.html' %}
+{% endfor %}

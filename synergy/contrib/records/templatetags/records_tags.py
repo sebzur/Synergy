@@ -89,11 +89,10 @@ def related_objects_table(objects, parent):
 
 
 @register.filter(name='rform')
-def rform(form, level):
-    context = {'form': form, 'level': level}
+def rform(form):
+    context = {'form': form}
     tpl = 'records/rform.html'
     return render_to_string(tpl, context)
-
 
 
 @register.tag

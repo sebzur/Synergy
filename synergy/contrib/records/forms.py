@@ -75,7 +75,9 @@ def createform_factory(created_model, related_models, related_m2m_models, exclud
                     # muszą należeć do grupy o tej nazwie pola
                     self.fields[field.name].queryset = self.fields[field.name].queryset.filter(group__name=field.name)
 
-                if field.db_type() == 'boolean':
+
+                db_type = field.db_type()
+                if db_type == 'boolean':
                     # Specjalna obsługa dla boola, ze względu na potrzebę jasności wyboru, lepiej jeżeli
                     # wyświetlimy RadioSelect, gdzie user *musi* wybrać coś, niż jeśli CheckBox będzie
                     # dawałe defaultowego False przy braku wyboru
@@ -86,6 +88,13 @@ def createform_factory(created_model, related_models, related_m2m_models, exclud
                                                                       initial=self.fields[field.name].initial,
                                                                       label=self.fields[field.name].label
                                                                       )
+
+
+                if db_type == 'text':
+                    print 'TEXT ATTRS:', self.fields[field.name].widget.attrs
+                    self.fields[field.name].widget.attrs.update({'rows': 2})
+
+
 
             for related_model in related_models:
                 self.external[related_model] = []

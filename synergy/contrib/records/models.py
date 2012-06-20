@@ -4,6 +4,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.utils.encoding import smart_str 
 from django.template import Context, Template
+from django.contrib.contenttypes import generic
+from django.utils.datastructures import SortedDict
 
 def get_parent_field(options):
     no_auto_fields = filter(lambda x: not isinstance(x, models.AutoField), options.fields)
@@ -245,3 +247,9 @@ class RecordRelation(models.Model):
     def can_create_entry(self):
         return True
 
+
+
+
+
+    
+    
