@@ -7,3 +7,11 @@
     color: #FF0303;
     font-weight: bold;
 }
+
+
+.odd{
+    background: none repeat scroll 0 0 #FFFFC4;
+}
+
+.even{
+}

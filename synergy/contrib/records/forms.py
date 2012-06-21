@@ -107,9 +107,11 @@ def createform_factory(created_model, related_models, related_m2m_models, exclud
                         except IndexError:
                             ins = None
                     prefix="%s_%d" % (related_model.model.model, i)
+                    empty_permitted = related_model.min_count is None or i >= related_model.min_count
                     df = createform_factory(related_model.model.model_class(), [], [], excluded_fields=[self._meta.model._meta.object_name.lower()])(instance=ins, 
-                                                                                                                                                 prefix=prefix,
-                                                                                                                                                 *args, **kwargs)
+                                                                                                                                                     prefix=prefix,
+                                                                                                                                                     empty_permitted=empty_permitted,
+                                                                                                                                                     *args, **kwargs)
                     self.external[related_model].append(df)
 
 
@@ -164,6 +166,11 @@ def createform_factory(created_model, related_models, related_m2m_models, exclud
 
         def clean(self):
             super(CreateBaseForm, self).clean()
+            
+            self._o2m_validated = {}
+
+
+
             m2m_count = 0
             for m2m_model_setup, m2m_forms in self.external_m2m.iteritems():
                 for f in m2m_forms:
@@ -178,6 +185,8 @@ def createform_factory(created_model, related_models, related_m2m_models, exclud
 
         def is_valid(self):
             valid = [super(CreateBaseForm, self).is_valid()]
+
+
             for ex in itertools.chain(*self.external.values()):
                 valid.append(ex.is_valid())
 

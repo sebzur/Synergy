@@ -220,6 +220,9 @@ class O2MRelationSetup(models.Model):
     min_count = models.PositiveSmallIntegerField(null=True, blank=True)
     max_count = models.PositiveSmallIntegerField(null=True, blank=True)
 
+    def __unicode__(self):
+        return u"%s <- %s" % (self.setup, self.model)
+
     def get_max_count(self):
         return self.max_count or 1
 

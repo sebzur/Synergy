@@ -7,9 +7,12 @@
 <div class="grains-form">
 <form action="." method="POST">
   {% include 'synergy/contrib/records/views/form.html' %} 
-  <p>
-    <input class="button" type="submit" value="{{ action_label|default:"Zarejestruj" }}" /> | <a href="{{ cancel_url }}">Anuluj</a>
+
+  <p class="clearfix">
+    <input class="button" style="width: 200px; float:right;" type="submit" value="{{ action_label|default:"Zapisz" }}" />
+    <a class="ref-btn" style="width: 200px; float:right;" href="{{ cancel_url }}">Anuluj</a>
   </p>
+
 </form>
 </div>
 

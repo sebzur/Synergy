@@ -8,9 +8,18 @@
 <div class="grains-form">
 <form action="." method="POST">
   {% csrf_token %}
+
+
   <p>
-    <input class="button" type="submit" value="{{ action_label|default:"Potwierdzam usunięcie" }}" /> | <a href="{{ cancel_url }}">Anuluj</a>
+    Czy na pewno chcesz usunąć z systemu wpis <strong>{{ object }}</strong>? Jeżeli tak, zatwierdź wybór -- przywrócenie danych
+    nie będzie możliwe!
   </p>
+ 
+  <p class="clearfix">
+    <input class="dangerous-button" style="width: 200px; float:right;" type="submit" value="{{ action_label|default:"Potwierdzam usunięcie" }}" />
+    <a class="ref-btn" style="width: 200px; float:right;" href="{{ cancel_url }}">Anuluj</a>
+  </p>
+
 </form>
 </div>
 

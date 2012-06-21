@@ -8,13 +8,13 @@
 
   {% for k, v in form.external.iteritems %}
   <h3><a href="#"><strong>{{ k.get_model_verbose_name_plural }}</strong></a></h3>
-  <div>
+  <div >
     {% for r_form in v %}
-    <fieldset>
-      <legend>Wartość nr #{{ forloop.counter }} </legend>
+    <div class="form {% cycle "odd" "even" %}">
     {{ r_form|rform }}
-    </fieldset>
+    </div>
     {% endfor %}
+
   </div>
   {% endfor %}
 

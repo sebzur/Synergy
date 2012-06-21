@@ -24,7 +24,7 @@ body{
 
 
 a:link, a:visited {
-    color:#0788C3;
+    color:#0788C3; 
     text-decoration:none;
     outline-color:-moz-use-text-color;
     outline-style:none;
@@ -200,10 +200,50 @@ img#logo-image{
 
 
 
+
 /* ---------------------------------------------------
     Form
 ----------------------------------------------------- */
+
+.ref-btn {
+    display: block;
+    border: 1px solid #B1ACAC;
+    text-align: center;
+    line-height: 38px;
+
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    text-shadow: 0 -1px 0 rgba(0,0,0,0.5);
+
+    color: #ffffff;
+    background: #434343;
+
+    margin: 5px 5px;
+
+    box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #474747;
+    -moz-box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #474747;
+    -webkit-box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #474747;
+
+}
+
+a.ref-btn:visited{
+    color: #ffffff;
+}
+
+.ref-btn-warn{
+    background: #FF2000;
+
+    box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #D83720;
+    -moz-box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #D83720;
+    -webkit-box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #D83720;
+
+}
+
+
 .grains-form form {
+    background-color: #F9F9F9;
+    padding: 10px;
     
 }
 
@@ -265,11 +305,12 @@ img#logo-image{
 
 
 .grains-form form input.button {
-    background: #434343;
-    border: 1px solid #474747;
-    box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #474747;
-    -moz-box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #474747;
-    -webkit-box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #474747;
+    background: #1D8330;
+    border: 1px solid #006713;
+
+    box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #006713;
+    -moz-box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #006713;
+    -webkit-box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #006713;
 
 }
 

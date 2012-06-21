@@ -5,16 +5,18 @@
 {% endif %}
 
 
-<div class="grains-form">
+<div class="grains-form clearfix">
 <form action="." method="POST">
 
 {% include 'synergy/contrib/records/views/form.html' %}
 
-<p>
-  <input class="button" type="submit" value="{{ action_label|default:"Aktualizuj" }}" />
-  | <a href="{% url delete setup.name object.id %}">Usuń</a>
-  | <a href="{{ cancel_url }}">Anuluj</a>
+<p class="clearfix">
+  <input class="button" style="width: 200px; float:right;" type="submit" value="{{ action_label|default:"Aktualizuj" }}" />
+  <a class="ref-btn" style="width: 200px; float:right;" href="{{ cancel_url }}">Anuluj</a>
+  <a class="ref-btn-warn ref-btn " style="width: 100px;" href="{% url delete setup.name object.id %}">Usuń</a>
 </p>
+
+
 </form>
 </div>
 

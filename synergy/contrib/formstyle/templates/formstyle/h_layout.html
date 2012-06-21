@@ -15,7 +15,7 @@
   <tbody>
     <tr>
       {% for item, content in items.iteritems %}
-      <td style="width: {% widthratio item.proportion norm_factor 100 %}%;">
+      <td style="width: {% widthratio item.proportion norm_factor 100 %}%; padding: 10px;">
 	{% if item.item_type.model == 'formfield' %}
 	{% include 'formstyle/field.html' %}
         {% else %}
