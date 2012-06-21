@@ -21,6 +21,11 @@ class Menu(models.Model):
         ordering = ('weight', 'name')
 
 
+class AccessPermission(models.Model):
+    menu = models.ForeignKey('Menu', related_name="permissions")
+    perm = models.CharField(max_length=100)
+    
+
 # To wydaje sie byc niespecjalnie potrzebne
 # bo teoretycznie mozna wygenerowac liste wszystkich
 # argumentw przegladajc itemsy, ale chcemy to znac z gory,

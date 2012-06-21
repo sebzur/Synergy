@@ -14,6 +14,7 @@ class MenuArgumentAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Menu, MenuAdmin)
+admin.site.register(AccessPermission)
 admin.site.register(MenuItem, MenuItemAdmin)
 admin.site.register(MenuArgument, MenuArgumentAdmin)
 admin.site.register(MenuItemTrigger)

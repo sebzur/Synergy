@@ -81,15 +81,24 @@ def secondary_menu(parser, token):
     if len(bits) < 2:
         raise TemplateSyntaxError("'%s' takes at least one argument"
                                   " (user)" % bits[0])
-    user = parser.compile_filter(bits[1])
-    return SecondaryMenuNode(user)
+    return SecondaryMenuNode(bits[1])
 
 class SecondaryMenuNode(template.Node):
     def __init__(self, user):
-        self.user = user
+        self.user = template.Variable(user)
 
     def render(self, context):
         menus = get_model('menu', 'Menu').objects.filter(category='s', is_enabled=True)
+
+        user = self.user.resolve(context)
+        excluded = []
+        for menu in menus:
+            for perm_name in menu.permissions.values_list('perm', flat=True):
+                print 'Testing perm', perm_name, user.has_perm(perm_name, menu)
+                if not user.has_perm(perm_name, menu):
+                    excluded.append(menu.id)
+        menus = menus.exclude(id__in=excluded)
+        
         tpl = 'menu/secondary_menu.html'
         context = {'menus': menus, 'user': self.user}
         return render_to_string(tpl, context)
