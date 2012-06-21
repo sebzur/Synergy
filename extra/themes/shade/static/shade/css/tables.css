@@ -3,9 +3,6 @@ table{
     margin: 5px 0px 5px 0px;
 }
 
-table tr.odd{
-    background: none repeat scroll 0 0 #FFFFC4;
-}
 
 table thead{
     background-color: #E2E2E2;
