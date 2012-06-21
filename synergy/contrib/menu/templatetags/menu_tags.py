@@ -94,8 +94,7 @@ class SecondaryMenuNode(template.Node):
         excluded = []
         for menu in menus:
             for perm_name in menu.permissions.values_list('perm', flat=True):
-                print 'Testing perm', perm_name, user.has_perm(perm_name, menu)
-                if not user.has_perm(perm_name, menu):
+                if not user.has_perm(perm_name):
                     excluded.append(menu.id)
         menus = menus.exclude(id__in=excluded)
         
