@@ -137,8 +137,8 @@ def createform_factory(created_model, related_models, related_m2m_models, exclud
 
                     prefix="%s_%d" % (related_m2m_model.get_from_model()._meta.object_name.lower(), choice.id)
 
-
-                    form = create_m2m_form_factory(related_m2m_model)(prefix=prefix, instance=ins, select=choice, *args, **kwargs)
+                    empty_permitted = True
+                    form = create_m2m_form_factory(related_m2m_model)(prefix=prefix, instance=ins, select=choice, empty_permitted=empty_permitted, *args, **kwargs)
                     self.external_m2m[related_m2m_model].append(form)
 
             self.internal_m2m = SortedDict()
@@ -159,8 +159,10 @@ def createform_factory(created_model, related_models, related_m2m_models, exclud
                             ins = None
 
                     prefix="%s_%d" % (related_m2m_model.model._meta.object_name.lower(), choice.id)
+                    empty_permitted = True
                     self.internal_m2m[related_m2m_model].append(create_internal_m2m_form_factory(related_m2m_model.rel, related_m2m_model.model)(prefix=prefix, instance=ins, select=choice, 
-                                                                                                                                        *args, **kwargs))
+                                                                                                                                                 empty_permitted=empty_permitted,
+                                                                                                                                                 *args, **kwargs))
                 
 
 
@@ -202,27 +204,30 @@ def createform_factory(created_model, related_models, related_m2m_models, exclud
             self.instance = super(CreateBaseForm, self).save(*args, **kwargs)
 
             for f in itertools.chain(*self.external.values()):
-                ins = f.save(commit=False)
-                setattr(ins, self._meta.model._meta.object_name.lower(), self.instance)
-                ins.save()
-
-            for f in itertools.chain(*self.external_m2m.values()):
-                if f.cleaned_data["%s_%d" % (f.select._meta.object_name.lower(), f.select.id)]:
-                    ins = f.save(commit=False)
-                    setattr(ins, f.setup.from_field, self.instance)
-                    ins.save()
-                else:
-                    if not f.instance.pk is None:
-                        f.instance.delete()
-
-            for f in itertools.chain(*self.internal_m2m.values()):
-                if f.cleaned_data["%s_%d" % (f.select._meta.object_name.lower(), f.select.id)]:
+                if f.has_changed():
                     ins = f.save(commit=False)
                     setattr(ins, self._meta.model._meta.object_name.lower(), self.instance)
                     ins.save()
-                else:
-                    if not f.instance.pk is None:
-                        f.instance.delete()
+
+            for f in itertools.chain(*self.external_m2m.values()):
+                if f.has_changed():
+                    if f.cleaned_data["%s_%d" % (f.select._meta.object_name.lower(), f.select.id)]:
+                        ins = f.save(commit=False)
+                        setattr(ins, f.setup.from_field, self.instance)
+                        ins.save()
+                    else:
+                        if not f.instance.pk is None:
+                            f.instance.delete()
+
+            for f in itertools.chain(*self.internal_m2m.values()):
+                if f.has_changed():
+                    if f.cleaned_data["%s_%d" % (f.select._meta.object_name.lower(), f.select.id)]:
+                        ins = f.save(commit=False)
+                        setattr(ins, self._meta.model._meta.object_name.lower(), self.instance)
+                        ins.save()
+                    else:
+                        if not f.instance.pk is None:
+                            f.instance.delete()
 
 
 
