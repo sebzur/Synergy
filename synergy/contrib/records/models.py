@@ -75,6 +75,7 @@ class RecordSetup(models.Model):
     # triger = models.ForeignKey('RecordTriger', related_name="record_setups") 
 
     only_registered_fields = models.BooleanField(default=False)
+    use_model_m2m_fields = models.BooleanField(default=True)
 
     # where to redirect after success when create or update
     success_url = models.CharField(max_length=255)
