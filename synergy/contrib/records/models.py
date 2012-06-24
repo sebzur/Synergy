@@ -206,7 +206,7 @@ class M2MRelationSetup(models.Model):
         return self.get_to_model()._default_manager
 
     def get_choices(self, arguments):
-        query = dict(((lookup.lookup, arguments.get(lookup.field.field) ) for lookup in self.lookups.all()))
+        query = dict(((smart_str(lookup.lookup), arguments.get(lookup.field.field) ) for lookup in self.lookups.all()))
         return self.get_choices_manager().filter(**query)
 
 class M2MChoicesSetup(models.Model):
