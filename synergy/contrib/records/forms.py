@@ -6,6 +6,7 @@ from django.forms import models as model_forms
 from django.db.models import get_model
 from django.utils.datastructures import SortedDict
 from models import get_parent_field
+from django.utils.encoding import smart_str 
 
 def create_internal_m2m_form_factory(rel, from_model):
     to_exclude = [from_model._meta.object_name.lower()]
@@ -122,7 +123,7 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                     ins = None
                     if not self.instance.pk is None:
                         try:
-                            ins = related_m2m_model.through.model_class()._default_manager.get(**{related_m2m_model.from_field: self.instance,
+                            ins = related_m2m_model.through.model_class()._default_manager.get(**{smart_str(related_m2m_model.from_field): self.instance,
                                                                                                   related_m2m_model.to_field: choice})
                         except related_m2m_model.through.model_class().DoesNotExist:
                             ins = None
