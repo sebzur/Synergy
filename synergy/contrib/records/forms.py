@@ -122,9 +122,6 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                     ins = None
                     if not self.instance.pk is None:
                         try:
-#                            ins = related_m2m_model.rel.through._default_manager.get(**{related_m2m_model.model._meta.object_name.lower(): self.instance,
-#                                                                                        related_m2m_model.rel.through._meta.object_name.lower(): choice})
-
                             ins = related_m2m_model.through.model_class()._default_manager.get(**{related_m2m_model.from_field: self.instance,
                                                                                                   related_m2m_model.to_field: choice})
                         except related_m2m_model.through.model_class().DoesNotExist:
@@ -165,15 +162,15 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
         def clean(self):
             super(CreateBaseForm, self).clean()
             
-            self._o2m_validated = {}
 
-
-
-            m2m_count = 0
             for m2m_model_setup, m2m_forms in self.external_m2m.iteritems():
+                m2m_count = 0
                 for f in m2m_forms:
                     if f.is_valid():
-                        m2m_count += f.cleaned_data["%s_%d" % (f.select._meta.object_name.lower(), f.select.id)]
+                        # m2m forms are empty_permitted, thus we can not be sure if the bool will be 
+                        # present in the cleaned data
+                        m2m_count += f.cleaned_data.get("%s_%d" % (f.select._meta.object_name.lower(), f.select.id), False)
+
                 if m2m_model_setup.min_count and m2m_count < m2m_model_setup.min_count:
                     raise forms.ValidationError(u"Wybrano zbyt mało elementów w %s. Minimalna liczba dopuszczalna %d" % (m2m_model_setup.through.model_class()._meta.verbose_name, m2m_model_setup.min_count))
                 if m2m_model_setup.max_count and m2m_count > m2m_model_setup.max_count:
