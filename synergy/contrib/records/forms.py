@@ -124,7 +124,7 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                     if not self.instance.pk is None:
                         try:
                             ins = related_m2m_model.through.model_class()._default_manager.get(**{smart_str(related_m2m_model.from_field): self.instance,
-                                                                                                  related_m2m_model.to_field: choice})
+                                                                                                  smart_str(related_m2m_model.to_field): choice})
                         except related_m2m_model.through.model_class().DoesNotExist:
                             ins = None
 
