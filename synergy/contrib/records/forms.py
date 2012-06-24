@@ -170,7 +170,11 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                     if f.is_valid():
                         # m2m forms are empty_permitted, thus we can not be sure if the bool will be 
                         # present in the cleaned data
-                        m2m_count += f.cleaned_data.get("%s_%d" % (f.select._meta.object_name.lower(), f.select.id), False)
+                        if f.has_changed():
+                            m2m_count += f.cleaned_data.get("%s_%d" % (f.select._meta.object_name.lower(), f.select.id), False)
+                        else:
+                            m2m_count += bool(f.initial)
+                            
 
                 if m2m_model_setup.min_count and m2m_count < m2m_model_setup.min_count:
                     raise forms.ValidationError(u"Wybrano zbyt mało elementów w %s. Minimalna liczba dopuszczalna %d" % (m2m_model_setup.through.model_class()._meta.verbose_name, m2m_model_setup.min_count))

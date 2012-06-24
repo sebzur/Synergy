@@ -1,8 +1,11 @@
 {% extends "grains2/body.html" %}
 {% load synergy_region %}
+{% load menu_tags %}
+
 {% block main %}
 <div id="sidebar">
   <div id="sidebar-inner">
+    {% secondary_menu user %}
     {% region sidebar %}{% endregion %}
   </div> <!-- end content -->
 </div> <!-- end outer3 -->
