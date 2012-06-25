@@ -173,8 +173,7 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                         if f.has_changed():
                             m2m_count += f.cleaned_data.get("%s_%d" % (f.select._meta.object_name.lower(), f.select.id), False)
                         else:
-                            m2m_count += bool(f.initial)
-                            
+                            m2m_count += bool(f.instance.pk)
 
                 if m2m_model_setup.min_count and m2m_count < m2m_model_setup.min_count:
                     raise forms.ValidationError(u"Wybrano zbyt mało elementów w %s. Minimalna liczba dopuszczalna %d" % (m2m_model_setup.through.model_class()._meta.verbose_name, m2m_model_setup.min_count))
