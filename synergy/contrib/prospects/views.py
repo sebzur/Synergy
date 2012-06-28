@@ -16,6 +16,8 @@ import signals
 
 from django.utils.encoding import smart_str 
 
+import re
+
 class ProspectMixin(object):
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
@@ -33,7 +35,31 @@ class ProspectMixin(object):
         return results
 
 
+
+
 class ListView(ProspectMixin, RegionViewMixin, generic.FormView):
+
+    def dispatch(self, request, *args, **kwargs):
+        variant = get_model('prospects', 'ProspectVariant').objects.get(name=kwargs.get('variant'))
+        expressions = []
+        for argument in variant.arguments.all():
+            expressions.append("(?P<%s>%s)" % (argument.name, argument.regex))
+        regex = "/".join(expressions)
+        path = kwargs.get('arguments')
+        if path:
+            _kwargs = self.resolve(regex, path)
+            if not _kwargs:
+                raise Http404
+            str_converted = dict(((smart_str(k), v) for k, v in _kwargs.iteritems()))
+            kwargs.update(str_converted)
+
+        return super(ListView, self).dispatch(request, *args, **kwargs)
+
+    def resolve(self, regex, path):
+        _regex = re.compile(regex, re.UNICODE)
+        match = _regex.search(path)
+        if match:
+            return match.groupdict()
 
     def get_representation(self):
         return self.get_prospect_variant().listrepresentation.representation
@@ -53,6 +79,7 @@ class ListView(ProspectMixin, RegionViewMixin, generic.FormView):
         ctx['title'] = u"%s" % self.get_prospect().verbose_name
         ctx['prospect'] = self.get_prospect()
         ctx['variant'] = self.get_prospect_variant()
+        ctx['arguments'] = self.kwargs
 
         repr_obj = self.get_representation()
         ctx[repr_obj._meta.object_name.lower()] = repr_obj

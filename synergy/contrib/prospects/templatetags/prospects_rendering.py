@@ -42,16 +42,52 @@ def fields(obj, object_detail):
 
 
 @register.filter(name='tr')
-def table_row(obj, table):
+def _table_row(obj, table):
     tpl = 'displays/tabledisplay/tr.html'
     return render_to_string(tpl, {'obj': obj, 'table': table})
 
 @register.filter(name='td')
-def table_column(obj, column):
+def _table_column(obj, column):
     tpl = 'displays/tabledisplay/td.html'
     value = column.get_value(obj)
     link = column.is_url(obj)
     return render_to_string(tpl, {'object': obj, 'value': value, 'column': column, 'link': link})
+
+
+class TableRowNode(template.Node):
+    def __init__(self, obj, table, kwargs):
+        self.obj = template.Variable(obj)
+        self.table = template.Variable(table)
+        self.kwargs = template.Variable(kwargs)
+
+    def render(self, context):
+        obj = self.obj.resolve(context)
+        table = self.table.resolve(context)
+        kwargs = self.kwargs.resolve(context)
+        c = []
+        tpl = 'displays/tabledisplay/td.html'
+        for column in table.columns.all():
+            link = column.is_url(obj)
+            value = column.get_value(obj, **kwargs)
+            c.append(render_to_string(tpl, {'object': obj, 'value': value, 'column': column, 'link': link}))
+        tpl = 'displays/tabledisplay/tr.html'
+        return render_to_string(tpl, {'obj': obj, 'table': table, 'columns': c})
+
+
+@register.tag('table_row')
+def table_row(parser, token):
+    # This version uses a regular expression to parse tag contents.
+    try:
+        # Splitting by None == splitting by spaces.
+        tag_name, obj, table, kwargs = token.contents.split(None, 3)
+    except ValueError:
+        raise template.TemplateSyntaxError("%r tag requires arguments" % token.contents.split()[0])
+    return TableRowNode(obj, table, kwargs)
+
+
+
+
+
 
 
 @register.filter
