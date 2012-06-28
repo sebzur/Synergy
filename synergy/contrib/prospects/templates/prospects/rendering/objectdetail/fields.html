@@ -1,0 +1,38 @@
+
+{% if object_fields %}
+<div id="accordion">
+  <h3><a href="#"><strong>{{ object_name }}</strong></a></h3>
+  <div>
+    <table>
+      {% for field, value in object_fields.iteritems %}
+      <tr class="{% cycle "odd" "even" %}">
+	<td class="record-field">{{ field.verbose_name }}</td>
+	<td class="record-value">
+	  {% if field.link_to %}
+	  <a href="{{ value.url }}">{{ value.value }}</a>
+	  {% else %}
+	  {{ value|default:"n/a" }}
+	  {% endif %}
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+{% else %}
+<table>
+  {% for field, value in model_fields.iteritems %}
+  <tr class="{% cycle "odd" "even" %}">
+    <td class="record-field">{{ field }}</td>
+    <td class="record-value">{{ value|default:"n/a" }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+{% if object_detail.has_record %}
+<p class="object-link">
+  <a href="{% url update object_detail.get_record.name object.id %}">Edytuj</a>
+</p>
+{% endif %}
+
+

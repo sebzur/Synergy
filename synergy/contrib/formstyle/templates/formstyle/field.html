@@ -1,0 +1,7 @@
+<div class="fieldWrapper clearfix">
+  {% if not content.is_hidden %}
+  {{ content.errors }}
+  {{ content.label_tag }} 
+  {% endif %}
+  {{ content }}
+</div>

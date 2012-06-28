@@ -1,8 +1,8 @@
 {% load prospects_rendering %}
 <td {{ column|css_styles:object }}>
-  {% if column.field.as_object_link %}
+  {% if link %}
   <a href="{{ value.url }}">{{ value.value }}</a>
   {% else %}
-  {{ value }}
+  {{ value|default_if_none:"n/a" }}
   {% endif %}
 </td>

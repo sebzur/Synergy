@@ -1,0 +1,7 @@
+{% load menu_tags %}
+
+{% for s_menu in menus %}
+
+{% menu s_menu.name user=user %}
+
+{% endfor %}

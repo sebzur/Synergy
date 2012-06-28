@@ -1,0 +1,15 @@
+{% load records_tags %}
+
+{% for item, content in items.iteritems %}
+  {% if item.object_type.model == 'formfield' %}
+       {% include 'records/field.html' %}
+  {% else %} {# this is sizer then #}
+       {% if item.item.orientation == 'v' %}
+       {{ form|v_layout:content }}
+       {% else %}
+       {{ form|h_layout:content }}
+       {% endif %}
+  {% endif %}
+{% endfor %}
+
+

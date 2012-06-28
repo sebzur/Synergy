@@ -28,7 +28,7 @@ class ProspectMixin(object):
         return self.get_prospect_variant().prospect
 
     def get_results(self, *args, **kwargs):
-        results = self.get_prospect_variant().filter(**build_query(kwargs))
+        results = self.get_prospect_variant().filter(self.request.user, **build_query(kwargs))
         signals.prospect_results_created.send(sender=self.get_prospect_variant(), results=results, request=self.request)
         return results
 
@@ -62,6 +62,8 @@ class ListView(ProspectMixin, RegionViewMixin, generic.FormView):
         results = []
         if kwargs['form'].is_valid():
             kwgs = dict((smart_str(key), value) for key, value in kwargs['form'].cleaned_data.iteritems())
+            for context in kwargs['form'].contexts.values():
+                kwgs.update(dict((smart_str(key), value) for key, value in context.cleaned_data.iteritems()))
             # some older python version require dict keys to be strings when passed as kwargs
             results = self.get_results(**kwgs)
         ctx['results'] = results
@@ -84,8 +86,11 @@ class DetailView(ProspectMixin, RegionViewMixin, generic.DetailView):
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(DetailView, self).get_context_data(*args, **kwargs)
-        ctx['title'] = u"%s" % self.get_object()
-        ctx.update(self.get_prospect_variant().objectdetail.get_context_data(*args, **kwargs))
+        ctx['objectdetail'] = self.get_prospect_variant().objectdetail
+        ctx['title'] = ctx['objectdetail'].get_title(self.get_object())
+        ctx['body'] = ctx['objectdetail'].get_body(self.get_object())
+        ctx['name'] = self.get_prospect_variant().name
+        ctx.update(self.get_prospect_variant().objectdetail.get_context_data(self.get_object(), *args, **kwargs))
         ctx_operator = self.get_prospect_variant().objectdetail.context_operator
         if ctx_operator:
             ctx_operator(self.request, self.get_object(), ctx, *args, **kwargs)

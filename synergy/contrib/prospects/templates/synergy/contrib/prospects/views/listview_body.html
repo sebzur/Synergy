@@ -2,10 +2,11 @@
 {% load synergy_region %}
 
 <p>
-  {{ variant.header|default:"The get the results fill in the form fields and submit the query. The results will be listed below the form." }}
+  {{ variant.header|linebreaks|default:"The get the results fill in the form fields and submit the query. The results will be listed below the form." }}
 </p>
 
 <form action="." method="POST">
+
   <table id="prospect-form-table">
     <thead>
       {% for field in form.get_aspect_fields %}
@@ -28,8 +29,42 @@
   <td>{{ field }}</td>
   {% endfor %}
   </tr>    
-
   </table>
+
+
+{% for context, context_form in form.contexts.iteritems %}
+
+<fieldset>
+  <legend>{{ context.variant.verbose_name }}</legend>
+
+  <table id="prospect-form-table">
+    <thead>
+      {% for field in context_form.get_aspect_fields %}
+      <th class="ui-state-default">{{ field.label_tag }}</th>
+      {% endfor %}
+    </thead>
+  <tr>
+    {% for field in context_form.get_aspect_fields %}
+    <td>{{ field.errors }}</td>
+    {% endfor %}
+  </tr>
+  <tr>
+    {% for field in context_form.get_aspect_fields %}
+  <td>{{ field }}</td>
+  {% endfor %}
+  </tr>    
+
+  <tr>
+    {% for field in context_form.get_lookup_fields %}
+  <td>{{ field }}</td>
+  {% endfor %}
+  </tr>    
+  </table>
+</fieldset>
+
+{% endfor %}
+
+
 
 {% csrf_token %}
 <p>
@@ -49,14 +84,11 @@
   {% else %}
     Dla zapytania nie zwrócono żadnych wyników. Użyto albo zbyt ostrych kryteriów wyszukiwania, albo zapytanie wyszukujące nie zostało zgłoszone.
   {% endif %}
-
-{#  {% render display %} #}
-
   {% endregion %}
 </div>
 
 {% if variant.footer %}
 <p>
-  {{ variant.footer }}
+  {{ variant.footer|linebreaks }}
 </p>
 {% endif %}

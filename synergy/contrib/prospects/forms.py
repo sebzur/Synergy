@@ -51,7 +51,7 @@ def get_fields(prospect, variant):
             fields[attribute_full_name].widget.is_localized = True
 
         #overrides = {'label': attribute.verbose_name, 'required': attribute.required and is_key_required, 'help_text': attribute.data_type.help_text}
-        overrides = {'required': False}
+        overrides = {'required': aspect.is_required}
         for k, v in overrides.iteritems():
             setattr(fields[aspect_field_name], k, v)
 
@@ -64,7 +64,18 @@ class ProspectBaseForm(forms.BaseForm):
     def __init__(self, request, instance=None, *args, **kwargs):
         super(ProspectBaseForm, self).__init__(*args, **kwargs)
         self.instance = instance
+        
+        for context in self.contexts:
+            self.contexts[context] = self.contexts[context](request, instance, *args, **kwargs)
+        
         signals.prospect_form_created.send(sender=instance, form=self, request=request)
+
+    def is_valid(self):
+        valid = [super(ProspectBaseForm, self).is_valid()]
+        for c, f in self.contexts.iteritems():
+            valid.append(f.is_valid())
+        return all(valid)
+
 
     def _as_table(self):
         """ Overriden as_table method """
@@ -92,10 +103,13 @@ class ProspectBaseForm(forms.BaseForm):
 def build_query(data):
     aspects = (key for key in filter(lambda x: x.startswith('aspect'), data.keys()))
     aspect_hashes = map(lambda x: split_field_name(x)[1], aspects)
-    query = dict([(get_hash_property(hash, 'id'),  {'operator': data.get(build_field_name("lookup", hash)), 'value': data.get(build_field_name("aspect", hash))}) for hash in aspect_hashes])
+    query = dict([(get_hash_property(hash, 'id'),  {'lookup': data.get(build_field_name("lookup", hash)), 'value': data.get(build_field_name("aspect", hash))}) for hash in aspect_hashes])
     return query
 
 def prospectform_factory(prospect, variant):
     fields = get_fields(prospect, variant)
+    contexts = {}
+    for context in prospect.source.contexts.all():
+        contexts[context] = prospectform_factory(context.variant.prospect, context.variant.name)
     attributes = {}
-    return type('ProspectForm', (ProspectBaseForm,), {'base_fields': fields, 'attributes': attributes, 'prospect': prospect})
+    return type('ProspectForm', (ProspectBaseForm,), {'base_fields': fields, 'attributes': attributes, 'prospect': prospect, 'contexts': contexts})

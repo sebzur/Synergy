@@ -1,0 +1,5 @@
+{% load menu_tags %}
+
+{% for menu in variant.menus.all %}
+{% menu menu.menu.name user=user %} 
+{% endfor %}

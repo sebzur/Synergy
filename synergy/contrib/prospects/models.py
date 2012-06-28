@@ -8,6 +8,9 @@ from django.template.base import VariableDoesNotExist
 from django.conf import settings
 from django.utils.encoding import smart_str 
 
+from django.core.exceptions import ValidationError
+from django import template
+
 def get_field(model, attribute):
     chain = attribute.split('__')
     for i, attribute in enumerate(chain):
@@ -23,7 +26,11 @@ def get_related_value(obj, path):
         return obj
     chain = path.split('__')
     for i, attribute in enumerate(chain):
-        value = getattr(obj, attribute)
+        if obj._meta.get_field(attribute).choices:
+            # show display value rather then its identifier
+            value = getattr(obj, "get_%s_display" %attribute)
+        else:
+            value = getattr(obj, attribute)            
         if chain[i+1:]:
             if not value:
                 raise ValueError('Something went wrong. Field retrival for `%s` stoped at `%s` while it should represents relation' % (path, attribute))
@@ -90,12 +97,16 @@ class Prospect(models.Model):
         return self._filter(**query)
 
     def _filter(self, **query):
+        return self.get_source().filter(**self.sanitize_query(**query))
+    
+    def sanitize_query(self, **query):
+        # the ids list of admissible aspects
         ids = self.get_source().aspects.values_list('id', flat=True)
-        subquery = dict([(smart_str(id), query.get(id)) for id in filter(lambda x: int(x) in ids, query.keys())])
-        return self.get_source().filter(**subquery)
+        return dict([(smart_str(id), query.get(id)) for id in filter(lambda x: int(x) in ids, query.keys())])
+
             
 class Operator(models.Model):
-    callable = fields.CallableField(max_length=255, verbose_name="The callable to call after the prospects returns the data", blank=True)    
+    callable = fields.CallableField(max_length=255, verbose_name="The callable to call after the prospects returns the data", blank=True) 
     description = models.TextField()
 
 class ProspectOperator(models.Model):
@@ -132,7 +143,17 @@ class Source(models.Model):
 
     def build_query(self, query):
         for aspect_id in query:
-            yield (smart_str("%s__%s" % (self.aspects.get(id=aspect_id).attribute, query.get(aspect_id).get('operator'))), query.get(aspect_id).get('value'))
+            yield (smart_str("%s__%s" % (self.aspects.get(id=aspect_id).attribute, query.get(aspect_id).get('lookup'))), query.get(aspect_id).get('value'))
+
+class Context(models.Model):
+    source = models.ForeignKey('Source', related_name="contexts")
+    variant = models.ForeignKey('ProspectVariant', related_name="Variant")
+    value = models.SlugField(verbose_name="Value", help_text="Value to extract as flatted values_list")
+    lookup = models.SlugField(verbose_name="Relation lookup", help_text="__in operator is used, provide here the model field" )
+
+    class Meta:
+        verbose_name = "Context"
+        verbose_name_plural = "Contexts"
 
 class Aspect(models.Model):
     # Attribute is stored as a string (slug) in native Django
@@ -144,8 +165,10 @@ class Aspect(models.Model):
     source = models.ForeignKey('Source', related_name="aspects")
     weight = models.IntegerField(verbose_name="Aspect weight", default=0)
 
+    is_required = models.BooleanField()
+
     def __unicode__(self):
-        return self.attribute
+        return u"%s (%s)" % (self.attribute, self.source.prospect.name)
 
     def get_field(self):
         chain = self.attribute.split('__')
@@ -211,12 +234,14 @@ class Aspect(models.Model):
 
     class Meta:
         ordering = ('weight', )
+        unique_together = (('attribute', 'source'),)
 
 class ProspectVariant(models.Model):
     prospect = models.ForeignKey('Prospect')
     name = models.SlugField(verbose_name="Machine name", unique=True)
     verbose_name = models.CharField(max_length=255, verbose_name="Verbose name")
     is_default = models.BooleanField(verbose_name="Is this state the default one?")
+    record = models.ForeignKey('records.RecordSetup', null=True, blank=True)
     # The results will be cached with the timeout specified here.
     cache_timeout = models.PositiveSmallIntegerField(verbose_name="Cache timeout", null=True, blank=True)
 
@@ -226,8 +251,44 @@ class ProspectVariant(models.Model):
     css_classes = models.CharField(max_length=255, help_text="The CSS class names will be added to the prospect variant. This enables you to use specific CSS code for each variant. You may define multiples classes separated by spaces.", blank=True)
     submit_label = models.CharField(max_length=255, verbose_name="Sumbmit button label", default="Submit")
 
-    def filter(self, **query):
-        data = self.prospect.filter(**query)
+    def filter(self, user, **query):
+        """ Returns variant results.
+
+        Query is a dictionary with a structure:
+        {'aspect_id': {'lookup': gt|lt|exact|[...], 'value': [...]}}
+
+        """ 
+        # wartosci aspektow dla kontekstu leca po prostu w query
+
+
+        # if aspect has some values stored, override the query
+        c = {}
+        for aspect_value in self.aspect_values.filter(is_exposed=False):
+            c[str(aspect_value.aspect.id)] = {'lookup':aspect_value.lookup, 'value':  aspect_value.value}
+
+        query.update(c)
+
+        data = self.prospect.filter(**query)        
+
+        for context in self.prospect.source.contexts.all():
+            if context.variant.prospect.sanitize_query(**query):
+                context_values = context.variant.filter(user, **query).values_list(context.value, flat=True)
+                data = data.filter(**{"%s__in" % context.lookup: context_values})
+
+        # User related lookup
+        q_obj = None
+        for user_relation in self.user_relations.all():
+            values = user_relation.content_type.model_class().objects.filter(**{smart_str(user_relation.user_field): user}).values_list(user_relation.value_field, flat=True)
+            if q_obj:
+                q_obj |= models.Q(**{smart_str("%s__in" % user_relation.related_by_field): values})
+            else:
+                q_obj = models.Q(**{smart_str("%s__in" % user_relation.related_by_field): values})
+        if q_obj:
+            #data = data.filter(**{"%s__in" % user_relation.related_by_field: values})
+            data = data.filter(q_obj)
+        # ----------------------------------------------
+
+
         if self.prospect.operators.exists():
             for operator in self.prospect.operators.all():
                 data = operator.callable(data)
@@ -244,7 +305,7 @@ class ProspectVariant(models.Model):
 
 class AspectValue(models.Model):
     aspect = models.ForeignKey('Aspect', related_name="variant_values")
-    variant = models.ForeignKey('ProspectVariant')
+    variant = models.ForeignKey('ProspectVariant', related_name="aspect_values")
     value = models.CharField(max_length=255, verbose_name="A value entered")
     lookup = models.CharField(max_length=255, verbose_name="Lookup")
     is_exposed = models.BooleanField(verbose_name="Should this aspect settings be exposed to the user?", default=False)
@@ -252,8 +313,42 @@ class AspectValue(models.Model):
     class Meta:
         unique_together = (('variant', 'aspect'),)
 
+class UserRelation(models.Model):
+    variant = models.ForeignKey('ProspectVariant', related_name="user_relations")
+    # content type with user FK
+    content_type = models.ForeignKey('contenttypes.ContentType', help_text="CT with user field that will be use")
+    # db field related to user which will be used to query for the 
+    # content_type objects related with authenticated user
+    user_field = models.SlugField(max_length=255, verbose_name="User field", help_text="User field name used to filter out objects (of CT) related to the currently authenticated user" )
+    value_field = models.SlugField(max_length=255, verbose_name="Value field", help_text="The field of CT that will be used to feed the lookup")
+    # relation field has to point to content_type 
+    related_by_field = models.SlugField(max_length=255, verbose_name="Related by field")
+    weight = models.IntegerField()
+    
+    class Meta:
+        ordering = ('weight', )
+        verbose_name = "User relation"
+        verbose_name_plural = "User relations"
+        unique_together = (('variant', 'content_type'),)
+
+    
+class VariantMenu(models.Model):
+    variant = models.ForeignKey('ProspectVariant', related_name="menus")
+    menu = models.ForeignKey('menu.Menu', related_name="variants")
+
+
+#class VariantRelation(models.Model):
+#    variant = models.ForeignKey('ProspectVariant')
+#    related_variant = models.ForeignKey('ProspectVariant')
+#    db_field = models.SlugField(max_length=255, verbose_name="Database field")
+#    relation_field = models.CharField(max_length=255, verbose_name="Lookup")
+
+#    class Meta:
+#        unique_together = (('variant', 'related_variant'),)
 
 class Field(models.Model):
+    LINK_CHOICES = (('o', 'Object detail view'), ('u', 'Record update'), ('d', 'Record delete'))
+
     variant = models.ForeignKey('ProspectVariant')
     verbose_name = models.CharField(max_length=255, verbose_name="Column header")
     # -----------------------------------------
@@ -265,32 +360,101 @@ class Field(models.Model):
     # -----------------------------------------
     weight = models.IntegerField()
     exclude_from_output = models.BooleanField(verbose_name="Exclude from display", default=False)
+    # === to do wywalenia ==
     as_object_link = models.BooleanField(verbose_name="Link this field to its node", default=False)
+    # ==
+    link_to = models.CharField(max_length=1, verbose_name="Link this field to...", choices=LINK_CHOICES, blank=True)
+
     default_text = models.CharField(max_length=255, verbose_name="If the field is empty, display this text instead", blank=True)
     default_if_none_text = models.CharField(max_length=255, verbose_name="If the field is empty, display this text instead", blank=True)
     # The field output can be rewriten. The synatx is: %(token)s where token is a valid replacement string.
     rewrite_as = models.CharField(max_length=255, verbose_name="Rewrite the output of this field", help_text="If checked, you can alter the output of this field by specifying a string of text with replacement tokens that can use any existing field output.", blank=True)
     
+    class Meta:
+        ordering = ('variant', 'weight')
+        
+
+    def get_field_object(self):
+        if not hasattr(self, '_field_obj'):
+            self._field_obj = None
+            if self.db_field != 'self':
+                try:
+                    self._field_obj = self.variant.prospect.source.content_type.model_class()._meta.get_field(self.db_field)
+                except Exception, error:
+                    raise 
+        return self._field_obj
+
+    def get_db_type(self):
+        try:
+            return self.get_field_object().db_type() if self.get_field_object() else None
+        except Exception, error:
+            return "ERROR: %s" % error
+
+    def has_choices(self):
+        try:
+            return bool(self.get_field_object().choices) if self.get_field_object() else False
+        except Exception, error:
+            return "ERROR: %s" % error
+    has_choices.boolean = True # for admin
+
     def get_object_link(self, obj):
+        urls = {'o': 'detail', 'u': 'update', 'd': 'delete'}
+        return getattr(self, 'get_object_%s_link' % urls.get(self.link_to))(obj)
+
+    def get_object_detail_link(self, obj):
         return reverse('detail', args=[self.variant.name, obj.pk])
+
+    def get_object_update_link(self, obj):
+        return reverse('update', args=[self.variant.record.name, obj.pk])
+
+    def get_object_delete_link(self, obj):
+        return reverse('delete', args=[self.variant.record.name, obj.pk])
+
+    def as_link(self):
+        return self.link_to or models.get_model('prospects', 'FieldURL').objects.filter(field=self).exists()
 
     def get_value(self, obj):
         # Should check if obj is instance of the variant source
-        value =  get_related_value(obj, self.db_field)
+        value = get_related_value(obj, self.db_field)
         if self.lookup and not (value is None): # if value is None, leave the lookup
             value = self._resolve_lookup(value, self.lookup)
-        if self.as_object_link:
+        value = self._rewrite(value)
+        if self.link_to:
             return {'url': self.get_object_link(obj), 'value': value}
+        try:
+           return {'url': self._render_url(obj, value), 'value': value} 
+        except models.get_model('prospects', 'FieldURL').DoesNotExist:
+            return value
+
+
+    def _render_url(self, obj, value):
+        url_setup = self.field_url
+        if url_setup.reverse_url:
+            bits = url_setup.url.split()
+            if bits[0] == 'create':
+                t = template.Template("{%% load records_tags %%} {%% create %s %%}" % " ".join(bits[1:]))
+            else:
+                t = template.Template("{%% url %s %%}" % url_setup.url)
+            context = {'value': value, 'object': obj}
+            return t.render(template.Context(context))
+        return url_setup.url
+
+
+    def _rewrite(self, value):
+        if self.rewrite_as:
+            t = template.Template(self.rewrite_as)
+            return t.render(template.Context({'value': value}))
         return value
+
 
     def _resolve_lookup(self, obj, lookup):
         return resolve_lookup(obj, lookup)
 
     def __unicode__(self):
-        return u"%s::%s" % (self.db_field, self.lookup)
+        return u"%s::%s (%s)" % (self.db_field, self.lookup, self.variant.name)
     
 class FieldURL(models.Model):
-    field = models.OneToOneField('Field')
+    field = models.OneToOneField('Field', related_name='field_url')
     url = models.CharField(max_length=200)
     # if resolve_url is set, Django will try to
     # resolve the value to get the full URL
@@ -298,7 +462,7 @@ class FieldURL(models.Model):
     css_class = models.CharField(max_length=255, blank=True)
     prefix_text = models.CharField(max_length=255, blank=True)
     suffix_text = models.CharField(max_length=255, blank=True)
-    target= models.CharField(choices=(('_blank', '_blank'), ('_parent', '_parent')), max_length=32, blank=True)
+    target = models.CharField(choices=(('_blank', '_blank'), ('_parent', '_parent')), max_length=32, blank=True)
     alt_text = models.CharField(max_length=200, blank=True)
 
 class ObjectDetail(models.Model):
@@ -307,18 +471,109 @@ class ObjectDetail(models.Model):
     use_posthead = models.BooleanField(default=False)
     context_operator = fields.CallableField(max_length=255, verbose_name="The callable to call on the context", blank=True)    
 
+    title = models.CharField(max_length=255, blank=True)
+    body = models.TextField(blank=True)
+
+    def get_title(self, obj):
+        if self.title:
+            t = template.Template(self.title)
+            return t.render(template.Context({'object': obj}))
+        return u"%s" % obj
+
+    def get_body(self, obj):
+        if self.body:
+            t = template.Template(self.body)
+            return t.render(template.Context({'object': obj}))
+        return ''
+
+
+    def has_record(self):
+        return bool(self.variant.record)
+
+    def get_record(self):
+        return self.variant.record
+
     def __unicode__(self):
         return self.variant.name
 
-    def get_context_data(self, *args, **kwargs):
+    def get_context_data(self, obj, *args, **kwargs):
+        
+        ctx = {'variant_contexts': dict((v_c, v_c.get_query(obj)) for v_c in self.variant_contexts.all())}
+
         if self.postfix:
             postfix_value = "%s" % self.variant.name
             postfixes = {'objectdetail': postfix_value}
             if self.use_posthead:
                 postfixes['posthead'] = postfix_value
-            return {'region_postfixes': postfixes}
-        return {}
+            ctx.update({'region_postfixes': postfixes})
+        return ctx
 
+
+class DetailField(models.Model):
+    object_detail = models.ForeignKey('ObjectDetail', related_name="fields")
+    field = models.ForeignKey('Field', related_name="detail_fields")
+    weight = models.IntegerField()
+
+    def __unicode__(self):
+        return u"%s : %s" % (self.object_detail, self.field)
+
+    class Meta:
+        verbose_name = "Detail Field"
+        verbose_name_plural = "Detail Fields"
+        ordering = ('weight',)
+
+
+class DetailFieldStyle(models.Model):
+    MODES = (('c', 'class'), ('s', 'style'))
+    field = models.ForeignKey('DetailField', related_name="styles")
+    css_mode = models.CharField(max_length=1, choices=MODES)
+    css = models.CharField(max_length=128, verbose_name="CSS class name")
+    trigger_lookup = models.CharField(max_length=128, verbose_name="A lookup on the object that triggers the class name to be applied", blank=True)
+    weight = models.IntegerField()
+
+    class Meta:
+        verbose_name = "Detail field style"
+        verbose_name_plural = "Detail field styles"
+        ordering = ('weight',)
+
+class DetailMenu(models.Model):
+    object_detail = models.ForeignKey('ObjectDetail', related_name="menus")
+    menu = models.ForeignKey('menu.Menu', related_name="object_details")
+
+#class DetailMenuArgument(models.Model):
+#    detail_menu = models.ForeignKey('DetailMenu', related_name="arguments")
+#    argument = models.ForeignKey('Aspect')
+#    value_field = models.ForeignKey('Field')
+    
+
+class VariantContext(models.Model):
+    object_detail = models.ForeignKey('prospects.ObjectDetail', related_name="variant_contexts")
+    variant = models.ForeignKey('ProspectVariant')
+
+    def __unicode__(self):
+        return u"%s <- %s" % (self.object_detail, self.variant)
+
+    def get_query(self, obj):
+        return dict([(str(aspect_value.aspect.id), {'lookup': aspect_value.lookup, 'value': aspect_value.value_field.get_value(obj)}) for aspect_value in self.aspect_values.all()])
+
+class VariantContextAspectValue(models.Model):
+    variant_context = models.ForeignKey('VariantContext', related_name="aspect_values")
+    value_field = models.ForeignKey('Field')
+    aspect = models.ForeignKey('Aspect')
+    lookup = models.CharField(max_length=255, verbose_name="Lookup")
+
+    def __unicode__(self):
+        return u"%s %s %s" % (self.variant_context, self.aspect, self.value_field)
+
+    def clean(self):
+        if self.variant_context.variant.prospect != self.aspect.source.prospect:
+            raise ValidationError('Variant context and aspect prospects mismatch!')
+        
+
+#class ObjectDetailContext(models.Model):
+#    verbose_name = models.CharField(max_length=255, verbose_name="Verbose name")
+#    object_detail = models.ForeignKey('prospects.ObjectDetail')
+#    context_operator = fields.CallableField(max_length=255, verbose_name="The callable to call on the context", blank=True)
     
 class ListRepresentation(models.Model):
     variant = models.OneToOneField('ProspectVariant')
@@ -355,6 +610,9 @@ class RepresentationModel(models.Model):
     def get_name(self):
         return self.variant.get().name
 
+    def get_verbose_name(self):
+        return self.variant.get().variant.verbose_name
+
     class Meta:
         abstract = True
 
@@ -377,13 +635,44 @@ class Table(RepresentationModel):
         return {'region_postfixes': postfixes}
 
 class Column(models.Model):
+    ACTIONS = (('a', 'Field empty label'), ('b', 'Value without link (if link is provided'))
+
     table = models.ForeignKey('Table', related_name="columns")
     field = models.ForeignKey('Field', related_name="columns")
+
+    trigger_lookup = models.CharField(max_length=128, verbose_name="A lookup on the object that triggers if the column should be rendered", blank=True)
+    negate_trigger = models.BooleanField()
+    rewrite_disabled_as = models.CharField(max_length=1, choices=ACTIONS)
+
     sortable = models.BooleanField(verbose_name="Is this column sortable?")
     weight = models.IntegerField()
 
     def __unicode__(self):
         return u"%s %s" % (self.table, self.field)
+
+    def is_url(self, obj):
+        return self.field.as_link() and self.is_triggered(obj)
+
+    def get_value(self, obj):
+        triggered = self.is_triggered(obj)
+        link = self.is_url(obj)
+        if triggered or self.rewrite_disabled_as == 'b':
+            value = self.field.get_value(obj)
+        if not triggered and self.rewrite_disabled_as == 'b':
+            value = value.get('value')
+        if not triggered and self.rewrite_disabled_as == 'a':
+            value = None
+#        if type(value) == bool:
+#            return template.Template("""{{ value|yesno:"Tak,Nie" }}""").render(template.Context({'value': value}))
+        return value
+
+    def is_triggered(self, obj):
+        """ Obj is the objects that is the source of the field in column """
+        if not hasattr(self, '_is_triggered'):
+            self._is_triggered = True
+            if self.trigger_lookup and not (obj is None):
+                self._is_triggered = self.negate_trigger ^ bool(resolve_lookup(obj, self.trigger_lookup))
+        return self._is_triggered
 
     def get_styles(self, value):
         return {'class': ' '.join(self.get_triggered_styles('c', value)),

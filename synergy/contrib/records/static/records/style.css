@@ -16,3 +16,19 @@
 .object-link a{
     color: red;
 }
+
+
+/* choicy wybory */
+.fieldWrapper  ul{
+    list-style: none;
+    padding: 0;
+}
+
+.fieldWrapper li /* A simple method to get navbar links to appear in one line. */
+{
+  float: left; /* LTR */
+  padding: 0 ; /* LTR */
+  margin-left: 0;
+}
+
+
