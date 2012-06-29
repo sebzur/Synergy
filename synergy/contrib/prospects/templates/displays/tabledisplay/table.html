@@ -12,7 +12,13 @@
   </thead>
   <tbody>
     {% for obj in results %}
-    {{ obj|tr:table }}
+
+
+    {# {{ obj|tr:table }} #}
+
+    {% table_row obj table arguments %}
+
+
     {% endfor %}
   </tbody>
 </table>

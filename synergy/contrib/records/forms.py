@@ -6,12 +6,14 @@ from django.forms import models as model_forms
 from django.db.models import get_model
 from django.utils.datastructures import SortedDict
 from models import get_parent_field
+from django.utils.encoding import smart_str 
 
 def create_internal_m2m_form_factory(rel, from_model):
     to_exclude = [from_model._meta.object_name.lower()]
 
     class M2MBaseForm(forms.ModelForm):
         def __init__(self, select, instance=None, *args, **kwargs):
+
             super(M2MBaseForm, self).__init__(instance=instance, *args, **kwargs)
 
             r_name = rel.through._meta.object_name.lower()
@@ -54,7 +56,7 @@ def create_m2m_form_factory(m2m_relation_setup):
     return M2MBaseForm
 
 
-def createform_factory(created_model, related_models, related_m2m_models, excluded_fields=[], hidden_fields=[]):
+def createform_factory(created_model, related_models, related_m2m_models, use_model_m2m_fields, excluded_fields=[], hidden_fields=[]):
 
     to_exclude = excluded_fields + map(lambda x: str(x.name), created_model._meta.many_to_many)
 
@@ -90,12 +92,6 @@ def createform_factory(created_model, related_models, related_m2m_models, exclud
                                                                       )
 
 
-                if db_type == 'text':
-                    print 'TEXT ATTRS:', self.fields[field.name].widget.attrs
-                    self.fields[field.name].widget.attrs.update({'rows': 2})
-
-
-
             for related_model in related_models:
                 self.external[related_model] = []
                 instances = related_model.model.model_class().objects.filter(**{related_model.setup.model.model: self.instance})
@@ -127,11 +123,8 @@ def createform_factory(created_model, related_models, related_m2m_models, exclud
                     ins = None
                     if not self.instance.pk is None:
                         try:
-#                            ins = related_m2m_model.rel.through._default_manager.get(**{related_m2m_model.model._meta.object_name.lower(): self.instance,
-#                                                                                        related_m2m_model.rel.through._meta.object_name.lower(): choice})
-
-                            ins = related_m2m_model.through.model_class()._default_manager.get(**{related_m2m_model.from_field: self.instance,
-                                                                                                  related_m2m_model.to_field: choice})
+                            ins = related_m2m_model.through.model_class()._default_manager.get(**{smart_str(related_m2m_model.from_field): self.instance,
+                                                                                                  smart_str(related_m2m_model.to_field): choice})
                         except related_m2m_model.through.model_class().DoesNotExist:
                             ins = None
 
@@ -142,42 +135,46 @@ def createform_factory(created_model, related_models, related_m2m_models, exclud
                     self.external_m2m[related_m2m_model].append(form)
 
             self.internal_m2m = SortedDict()
-            for related_m2m_model in created_model._meta.many_to_many:
-                self.internal_m2m[related_m2m_model] = []
-                choice_manager  = related_m2m_model.rel.to._default_manager
-                if choice_manager.model is categorical_model:
-                    choices = choice_manager.filter(group__name=related_m2m_model.rel.through._meta.object_name.lower())
-                else:
-                    choices = choice_manager.all()
-                for choice in choices:
-                    ins = None
-                    if not self.instance.pk is None:
-                        try:
-                            ins = related_m2m_model.rel.through._default_manager.get(**{related_m2m_model.model._meta.object_name.lower(): self.instance,
-                                                                                        related_m2m_model.rel.through._meta.object_name.lower(): choice})
-                        except related_m2m_model.rel.through.DoesNotExist:
-                            ins = None
+            if use_model_m2m_fields:
+                for related_m2m_model in created_model._meta.many_to_many:
+                    self.internal_m2m[related_m2m_model] = []
+                    choice_manager  = related_m2m_model.rel.to._default_manager
+                    if choice_manager.model is categorical_model:
+                        choices = choice_manager.filter(group__name=related_m2m_model.rel.through._meta.object_name.lower())
+                    else:
+                        choices = choice_manager.all()
+                    for choice in choices:
+                        ins = None
+                        if not self.instance.pk is None:
+                            try:
+                                ins = related_m2m_model.rel.through._default_manager.get(**{related_m2m_model.model._meta.object_name.lower(): self.instance,
+                                                                                            related_m2m_model.rel.through._meta.object_name.lower(): choice})
+                            except related_m2m_model.rel.through.DoesNotExist:
+                                ins = None
 
-                    prefix="%s_%d" % (related_m2m_model.model._meta.object_name.lower(), choice.id)
-                    empty_permitted = True
-                    self.internal_m2m[related_m2m_model].append(create_internal_m2m_form_factory(related_m2m_model.rel, related_m2m_model.model)(prefix=prefix, instance=ins, select=choice, 
-                                                                                                                                                 empty_permitted=empty_permitted,
-                                                                                                                                                 *args, **kwargs))
+                        prefix="%s_%d" % (related_m2m_model.model._meta.object_name.lower(), choice.id)
+                        empty_permitted = True
+                        self.internal_m2m[related_m2m_model].append(create_internal_m2m_form_factory(related_m2m_model.rel, related_m2m_model.model)(prefix=prefix, instance=ins, select=choice, 
+                                                                                                                                                     empty_permitted=empty_permitted,
+                                                                                                                                                     *args, **kwargs))
                 
 
 
         def clean(self):
             super(CreateBaseForm, self).clean()
             
-            self._o2m_validated = {}
 
-
-
-            m2m_count = 0
             for m2m_model_setup, m2m_forms in self.external_m2m.iteritems():
+                m2m_count = 0
                 for f in m2m_forms:
                     if f.is_valid():
-                        m2m_count += f.cleaned_data["%s_%d" % (f.select._meta.object_name.lower(), f.select.id)]
+                        # m2m forms are empty_permitted, thus we can not be sure if the bool will be 
+                        # present in the cleaned data
+                        if f.has_changed():
+                            m2m_count += f.cleaned_data.get("%s_%d" % (f.select._meta.object_name.lower(), f.select.id), False)
+                        else:
+                            m2m_count += bool(f.instance.pk)
+
                 if m2m_model_setup.min_count and m2m_count < m2m_model_setup.min_count:
                     raise forms.ValidationError(u"Wybrano zbyt mało elementów w %s. Minimalna liczba dopuszczalna %d" % (m2m_model_setup.through.model_class()._meta.verbose_name, m2m_model_setup.min_count))
                 if m2m_model_setup.max_count and m2m_count > m2m_model_setup.max_count:

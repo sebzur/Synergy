@@ -236,6 +236,7 @@ class Aspect(models.Model):
         ordering = ('weight', )
         unique_together = (('attribute', 'source'),)
 
+
 class ProspectVariant(models.Model):
     prospect = models.ForeignKey('Prospect')
     name = models.SlugField(verbose_name="Machine name", unique=True)
@@ -313,6 +314,21 @@ class AspectValue(models.Model):
     class Meta:
         unique_together = (('variant', 'aspect'),)
 
+
+class VariantArgument(models.Model):
+    variant = models.ForeignKey('ProspectVariant', related_name="arguments")
+    name = models.SlugField()
+    regex = models.CharField(max_length=255)
+    weight = models.IntegerField()
+
+    def __unicode__(self):
+        return u"%s:%s" % (self.variant, self.name)
+
+    class Meta:
+        unique_together = (('variant', 'name'), ('variant', 'weight'))
+        ordering = ('weight',)
+
+
 class UserRelation(models.Model):
     variant = models.ForeignKey('ProspectVariant', related_name="user_relations")
     # content type with user FK
@@ -335,6 +351,9 @@ class UserRelation(models.Model):
 class VariantMenu(models.Model):
     variant = models.ForeignKey('ProspectVariant', related_name="menus")
     menu = models.ForeignKey('menu.Menu', related_name="variants")
+
+    def __unicode__(self):
+        return u"%s | %s" % (self.variant, self.menu)
 
 
 #class VariantRelation(models.Model):
@@ -413,22 +432,27 @@ class Field(models.Model):
     def as_link(self):
         return self.link_to or models.get_model('prospects', 'FieldURL').objects.filter(field=self).exists()
 
-    def get_value(self, obj):
+    def get_value(self, obj, **kwargs):
         # Should check if obj is instance of the variant source
         value = get_related_value(obj, self.db_field)
         if self.lookup and not (value is None): # if value is None, leave the lookup
             value = self._resolve_lookup(value, self.lookup)
+
+
         if value is None:
-            return self._rewrite(value)
+            return self._rewrite(value, **kwargs)
+
+        value = self._rewrite(value, **kwargs)
+
         if self.link_to:
-            return {'url': self.get_object_link(obj), 'value': self._rewrite(value)}
+            return {'url': self.get_object_link(obj), 'value': self._rewrite(value, **kwargs)}
         try:
-           return {'url': self._render_url(obj, value), 'value': self._rewrite(value)} 
+            return {'url': self._render_url(obj, value, **kwargs), 'value': self._rewrite(value, **kwargs)} 
         except models.get_model('prospects', 'FieldURL').DoesNotExist:
-            return self._rewrite(value)
+            return self._rewrite(value, **kwargs)
 
 
-    def _render_url(self, obj, value):
+    def _render_url(self, obj, value, **kwargs):
         url_setup = self.field_url
         if url_setup.reverse_url:
             bits = url_setup.url.split()
@@ -437,18 +461,21 @@ class Field(models.Model):
             else:
                 t = template.Template("{%% url %s %%}" % url_setup.url)
             context = {'value': value, 'object': obj}
+            context.update(kwargs)
             return t.render(template.Context(context))
         return url_setup.url
 
 
-    def _rewrite(self, value):
+    def _rewrite(self, value, **kwargs):
         if (value is None) and self.default_if_none_text:
             return self.default_if_none_text
         elif not value and self.default_text:
             return self.default_text
         elif self.rewrite_as:
             t = template.Template(self.rewrite_as)
-            return t.render(template.Context({'value': value}))
+            ctx = kwargs.copy()
+            ctx.update({'value': value})
+            return t.render(template.Context(ctx))
         return value
 
 
@@ -658,11 +685,11 @@ class Column(models.Model):
     def is_url(self, obj):
         return self.field.as_link() and self.is_triggered(obj)
 
-    def get_value(self, obj):
+    def get_value(self, obj, **kwargs):
         triggered = self.is_triggered(obj)
         link = self.is_url(obj)
         if triggered or self.rewrite_disabled_as == 'b':
-            value = self.field.get_value(obj)
+            value = self.field.get_value(obj, **kwargs)
         if not triggered and self.rewrite_disabled_as == 'b':
             value = value.get('value')
         if not triggered and self.rewrite_disabled_as == 'a':
