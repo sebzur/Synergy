@@ -438,11 +438,8 @@ class Field(models.Model):
         if self.lookup and not (value is None): # if value is None, leave the lookup
             value = self._resolve_lookup(value, self.lookup)
 
-
         if value is None:
             return self._rewrite(value, **kwargs)
-
-        value = self._rewrite(value, **kwargs)
 
         if self.link_to:
             return {'url': self.get_object_link(obj), 'value': self._rewrite(value, **kwargs)}
