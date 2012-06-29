@@ -135,9 +135,9 @@ class VariantResultsNode(template.Node):
         
         tpl = 'displays/tabledisplay/table.html'
 
-        print 'Gave query:', query
         context = {'table': variant.listrepresentation.representation,
-                   'results': variant.filter(user, **query)
+                   'results': variant.filter(user, **query),
+                   'arguments':  {}
                    }
         return render_to_string(tpl, context)
 
