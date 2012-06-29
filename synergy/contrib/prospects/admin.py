@@ -59,3 +59,4 @@ admin.site.register(DetailFieldStyle)
 admin.site.register(VariantMenu)
 
 admin.site.register(Context)
+admin.site.register(VariantArgument)

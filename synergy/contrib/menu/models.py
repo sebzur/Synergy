@@ -86,8 +86,8 @@ class MenuItem(models.Model):
         from django.template import Context, Template
         if self.reverse_url:
             bits = self.url.split()
-            if bits[0] == 'create':
-                t = Template("{%% load records_tags %%} {%% create %s %%}" % " ".join(bits[1:]))
+            if bits[0] in ('create', 'list'):
+                t = Template("{%% load records_tags %%} {%% %s %s %%}" % (bits[0], " ".join(bits[1:])))
             else:
                 t = Template("{%% url %s %%}" % self.url)
 

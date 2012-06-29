@@ -97,10 +97,19 @@ def rform(form):
 
 @register.tag
 def create(parser, token):
+    return _create(parser, token)
+
+@register.tag
+def list(parser, token):
+    return _create(parser, token)
+
+def _create(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
         raise TemplateSyntaxError("'%s' takes at least one argument"
                                   " (menu name)" % bits[0])
+
+    action_name = bits[0]
     record_name = bits[1]
     args = []
     kwargs = {}
@@ -123,14 +132,15 @@ def create(parser, token):
                 args.append(parser.compile_filter(value))
 
 
-    return CreateNode(record_name, args, kwargs, asvar)
+    return CreateNode(action_name, record_name, args, kwargs, asvar)
 
 class CreateNode(template.Node):
-    def __init__(self, record_name, args, kwargs, asvar):
+    def __init__(self, action_name, record_name, args, kwargs, asvar):
         self.record_name = template.Variable(record_name)
         self.args = args
         self.kwargs = kwargs
         self.asvar = asvar
+        self.action_name = action_name
 
     def render(self, context):
         args = [arg.resolve(context) for arg in self.args]
@@ -144,7 +154,7 @@ class CreateNode(template.Node):
         if args:
             arguments.append('/'.join(map(str, args)))
 
-        url = reverse('create', args=arguments)
+        url = reverse(self.action_name, args=arguments)
 
         if self.asvar:
             context[self.asvar] = url
