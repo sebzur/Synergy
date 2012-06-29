@@ -442,8 +442,6 @@ class Field(models.Model):
         if value is None:
             return self._rewrite(value, **kwargs)
 
-        value = self._rewrite(value, **kwargs)
-
         if self.link_to:
             return {'url': self.get_object_link(obj), 'value': self._rewrite(value, **kwargs)}
         try:

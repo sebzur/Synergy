@@ -104,7 +104,7 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                             ins = None
                     prefix="%s_%d" % (related_model.model.model, i)
                     empty_permitted = related_model.min_count is None or i >= related_model.min_count
-                    df = createform_factory(related_model.model.model_class(), [], [], excluded_fields=[self._meta.model._meta.object_name.lower()])(instance=ins, 
+                    df = createform_factory(related_model.model.model_class(), [], [], use_model_m2m_fields, excluded_fields=[self._meta.model._meta.object_name.lower()])(instance=ins, 
                                                                                                                                                      prefix=prefix,
                                                                                                                                                      empty_permitted=empty_permitted,
                                                                                                                                                      *args, **kwargs)
