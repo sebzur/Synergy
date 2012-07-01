@@ -384,8 +384,8 @@ class Field(models.Model):
     # ==
     link_to = models.CharField(max_length=1, verbose_name="Link this field to...", choices=LINK_CHOICES, blank=True)
 
-    default_text = models.CharField(max_length=255, verbose_name="If the field is empty, display this text instead", blank=True)
-    default_if_none_text = models.CharField(max_length=255, verbose_name="If the field is empty, display this text instead", blank=True)
+    default_text = models.CharField(max_length=255, verbose_name="If value evaluates to False, display this text instead", blank=True)
+    default_if_none_text = models.CharField(max_length=255, verbose_name="If the field is None, display this text instead", blank=True)
     # The field output can be rewriten. The synatx is: %(token)s where token is a valid replacement string.
     rewrite_as = models.CharField(max_length=255, verbose_name="Rewrite the output of this field", help_text="If checked, you can alter the output of this field by specifying a string of text with replacement tokens that can use any existing field output.", blank=True)
     
@@ -437,13 +437,17 @@ class Field(models.Model):
         value = get_related_value(obj, self.db_field)
         if self.lookup and not (value is None): # if value is None, leave the lookup
             value = self._resolve_lookup(value, self.lookup)
-        value = self._rewrite(value, **kwargs)
+
+
+        if value is None:
+            return self._rewrite(value, **kwargs)
+
         if self.link_to:
-            return {'url': self.get_object_link(obj), 'value': value}
+            return {'url': self.get_object_link(obj), 'value': self._rewrite(value, **kwargs)}
         try:
-           return {'url': self._render_url(obj, value, **kwargs), 'value': value} 
+            return {'url': self._render_url(obj, value, **kwargs), 'value': self._rewrite(value, **kwargs)} 
         except models.get_model('prospects', 'FieldURL').DoesNotExist:
-            return value
+            return self._rewrite(value, **kwargs)
 
 
     def _render_url(self, obj, value, **kwargs):
@@ -461,7 +465,11 @@ class Field(models.Model):
 
 
     def _rewrite(self, value, **kwargs):
-        if self.rewrite_as:
+        if (value is None) and self.default_if_none_text:
+            return self.default_if_none_text
+        elif not value and self.default_text:
+            return self.default_text
+        elif self.rewrite_as:
             t = template.Template(self.rewrite_as)
             ctx = kwargs.copy()
             ctx.update({'value': value})
