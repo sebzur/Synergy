@@ -61,7 +61,9 @@ class RecordActionSetup(models.Model):
     ACTIONS = (('c', 'Create'), ('u', 'Update'), ('d', 'Delete'))
     setup = models.ForeignKey('RecordSetup', related_name="actions")
     action = models.CharField(max_length=1, choices=ACTIONS)
-    title = models.CharField(max_length=255)
+    is_enabled = models.BooleanField(verbose_name="Is this action enabled", default=False)
+
+    title = models.CharField(max_length=255, blank=True)
     body = models.TextField(blank=True)
     action_label = models.CharField(max_length=255, blank=True)
 
@@ -88,6 +90,9 @@ class RecordSetup(models.Model):
     # this will be used when object was deleted
     generic_url = models.CharField(max_length=255)
     reverse_generic_url = models.BooleanField()
+
+    def is_delete_enabled(self):
+        return not self.actions.filter(action='d', is_enabled=False).exists()
 
     def get_context_elements(self, context, action):
 
