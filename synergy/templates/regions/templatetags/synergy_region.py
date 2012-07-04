@@ -23,6 +23,7 @@ class RegionNode(template.Node):
         self.region_name = region_name
 
     def render(self, context):
+       
          region_postfixes = context.get('region_postfixes', {})
          if region_postfixes.has_key(self.region_name):
               postfix = region_postfixes[self.region_name]
