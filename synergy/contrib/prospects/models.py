@@ -451,16 +451,17 @@ class Field(models.Model):
 
     def _render_url(self, obj, value, **kwargs):
         url_setup = self.field_url
+        context = {'value': value, 'object': obj}
+        context.update(kwargs)
         if url_setup.reverse_url:
             bits = url_setup.url.split()
             if bits[0] == 'create':
                 t = template.Template("{%% load records_tags %%} {%% create %s %%}" % " ".join(bits[1:]))
             else:
                 t = template.Template("{%% url %s %%}" % url_setup.url)
-            context = {'value': value, 'object': obj}
-            context.update(kwargs)
-            return t.render(template.Context(context))
-        return url_setup.url
+        else:
+            t = template.Template(url_setup.url)
+        return t.render(template.Context(context))
 
 
     def _rewrite(self, value, **kwargs):
