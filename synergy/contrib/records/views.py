@@ -111,6 +111,9 @@ class UpdateRecordView(ObjectViewMixin, ProtectedView, RegionViewMixin, UpdateVi
         setup = self.get_model_setup()
         ctx['cancel_url'] = self.get_success_url()
         ctx['setup'] = setup
+
+        ctx['delete_enabled'] = setup.is_delete_enabled()
+
         ctx.update(setup.get_context_elements(ctx, 'u'))
         return  ctx
 
