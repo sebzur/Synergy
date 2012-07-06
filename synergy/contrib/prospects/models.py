@@ -274,7 +274,7 @@ class ProspectVariant(models.Model):
         for context in self.prospect.source.contexts.all():
             if context.variant.prospect.sanitize_query(**query):
                 context_values = context.variant.filter(user, **query).values_list(context.value, flat=True)
-                data = data.filter(**{"%s__in" % context.lookup: context_values})
+                data = data.filter(**{smart_str("%s__in" % context.lookup): context_values})
 
         # User related lookup
         q_obj = None
