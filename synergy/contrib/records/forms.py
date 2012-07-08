@@ -186,6 +186,7 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
 
 
             for ex in itertools.chain(*self.external.values()):
+                setattr(ex.instance, self._meta.model._meta.object_name.lower(), self.instance)
                 valid.append(ex.is_valid())
 
             for f in itertools.chain(*self.external_m2m.values()):
@@ -202,6 +203,8 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
 
             for f in itertools.chain(*self.external.values()):
                 if f.has_changed():
+                    # probably we shuld assign self.instance here and then simply
+                    # save with commit = True
                     ins = f.save(commit=False)
                     setattr(ins, self._meta.model._meta.object_name.lower(), self.instance)
                     ins.save()
