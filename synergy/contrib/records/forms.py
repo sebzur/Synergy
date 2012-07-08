@@ -94,7 +94,7 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
 
             for related_model in related_models:
                 self.external[related_model] = []
-                instances = related_model.model.model_class().objects.filter(**{related_model.setup.model.model: self.instance})
+                instances = related_model.model.model_class().objects.filter(**{smart_str(related_model.setup.model.model): self.instance})
                 for i in range(related_model.get_max_count()):
                     ins = None
                     if not self.instance.pk is None:
