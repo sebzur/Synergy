@@ -130,7 +130,6 @@ class RecordSetup(models.Model):
         return self.get_url(self.cancel_url, self.reverse_cancel_url, **kwargs)
 
     def get_url(self, url, reverse, **kwargs):
-        from django.template import Context, Template
         if reverse:
             t = Template("{%% url %s %%}" % url)
             return t.render(Context(kwargs))
@@ -163,14 +162,14 @@ class RecordField(models.Model):
         return u"%s:%s" % (self.setup, self.field)
 
     def get_initial(self, **kwargs):
-        query = dict( ((smart_str(lookup.lookup), kwargs.get(lookup.value.name)) for lookup in  self.lookups.all()) )
+        query = dict(((smart_str(lookup.lookup), kwargs.get(lookup.value.name)) for lookup in self.lookups.all()))
         if query:
             return self.setup.model.model_class()._meta.get_field(self.field).rel.to._default_manager.get(**query)
-
         try:
             return kwargs.get(self.value.value.name)
         except FieldValueSetup.DoesNotExist:
-            return self.default_value or None
+            return Template(self.default_value).render(Context(kwargs)) or None
+
             
 class FieldValueSetup(models.Model):
     field = models.OneToOneField('RecordField', related_name="value")

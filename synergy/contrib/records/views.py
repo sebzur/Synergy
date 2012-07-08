@@ -75,7 +75,8 @@ class CreateRecordView(ProtectedView, RegionViewMixin, ObjectViewMixin, CreateVi
 
     def get_arguments(self):
         _kwargs = self.kwargs.copy()
-        _kwargs.pop('name')
+        _kwargs.pop('name') # remove record name
+        _kwargs.update({'request': self.request})
         return _kwargs
 
     def get_initial(self):
@@ -117,9 +118,19 @@ class UpdateRecordView(ObjectViewMixin, ProtectedView, RegionViewMixin, UpdateVi
         ctx.update(setup.get_context_elements(ctx, 'u'))
         return  ctx
 
+
+    def get_arguments(self):
+        _kwargs = self.kwargs.copy()
+        _kwargs.pop('name') # remove record name
+        _kwargs.update({'request': self.request})
+        return _kwargs
+
+    def get_initial(self):
+        return self.get_model_setup().get_initial(**self.get_arguments())
+
+
     def form_valid(self, form):
         return super(UpdateRecordView, self).form_valid(form)            
-
 
     def get_success_url(self):
         return self.get_model_setup().get_success_url(**{'object': self.get_object()})

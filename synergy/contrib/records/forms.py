@@ -162,7 +162,6 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
 
         def clean(self):
             super(CreateBaseForm, self).clean()
-            
 
             for m2m_model_setup, m2m_forms in self.external_m2m.iteritems():
                 m2m_count = 0
@@ -226,7 +225,6 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                     else:
                         if not f.instance.pk is None:
                             f.instance.delete()
-
 
 
             return self.instance
