@@ -128,7 +128,6 @@ class UpdateRecordView(ObjectViewMixin, ProtectedView, RegionViewMixin, UpdateVi
     def get_initial(self):
         return self.get_model_setup().get_initial(**self.get_arguments())
 
-
     def form_valid(self, form):
         return super(UpdateRecordView, self).form_valid(form)            
 

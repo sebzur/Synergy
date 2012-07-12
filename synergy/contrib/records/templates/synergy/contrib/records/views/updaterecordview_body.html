@@ -14,7 +14,7 @@
   <input class="button" style="width: 200px; float:right;" type="submit" value="{{ action_label|default:"Aktualizuj" }}" />
   <a class="ref-btn" style="width: 200px; float:right;" href="{{ cancel_url }}">Anuluj</a>
   {% if delete_enabled %}
-  <a class="ref-btn-warn ref-btn " style="width: 100px;" href="{% url delete setup.name object.id %}">Usuń</a>
+  <a class="ref-btn-warn" style="width: 100px;" href="{% url delete setup.name object.id %}">Usuń</a>
   {% endif %}
 </p>
 

@@ -118,7 +118,9 @@ class RecordSetup(models.Model):
 
 
     def get_initial(self, **kwargs):
-        return dict(((field.field, field.get_initial(**kwargs)) for field in self.fields.all()))
+        initial = ((field.field, field.get_initial(**kwargs)) for field in self.fields.all())
+        # now we remove none elements to avoid zeroing in updates
+        return dict(filter(lambda x: not x[1] is None, initial))
 
     def get_success_url(self, **kwargs):
         return self.get_url(self.success_url, self.reverse_success_url, **kwargs)

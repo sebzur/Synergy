@@ -205,7 +205,7 @@ img#logo-image{
     Form
 ----------------------------------------------------- */
 
-.ref-btn {
+.ref-btn, .ref-btn-warn {
     display: block;
     border: 1px solid #B1ACAC;
     text-align: center;
@@ -227,7 +227,7 @@ img#logo-image{
 
 }
 
-a.ref-btn:visited{
+a.ref-btn:visited, a.ref-btn-warn:visited{
     color: #ffffff;
 }
 
