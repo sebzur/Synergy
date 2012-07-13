@@ -27,6 +27,12 @@ class CellStyleAdmin(admin.ModelAdmin):
     list_filter = ('column__table',)
 
 
+class ListRepresentationAdmin(admin.ModelAdmin):
+    list_display = ('variant', 'name', 'representation_type', 'representation_id', )
+    search_fields = ('name',)
+    list_filter = ('representation_type',)
+
+
 admin.site.register(Prospect, ProspectAdmin)
 admin.site.register(Source, SourceAdmin)
 admin.site.register(Aspect, AspectAdmin)
@@ -41,7 +47,7 @@ admin.site.register(FieldURL)
 admin.site.register(Operator)
 admin.site.register(ProspectOperator)
 
-admin.site.register(ListRepresentation)
+admin.site.register(ListRepresentation, ListRepresentationAdmin)
 admin.site.register(ObjectDetail)
 admin.site.register(VariantContext)
 admin.site.register(VariantContextAspectValue)
@@ -51,6 +57,7 @@ admin.site.register(Table)
 admin.site.register(Column, ColumnAdmin)
 admin.site.register(CellStyle, CellStyleAdmin)
 
+admin.site.register(Calendar)
 
 
 admin.site.register(DetailMenu)

@@ -102,6 +102,7 @@ class ProspectBaseForm(forms.BaseForm):
 
 def build_query(data):
     aspects = (key for key in filter(lambda x: x.startswith('aspect'), data.keys()))
+    # uwga na generator powyzej, zeby sobie printa nie zrobic
     aspect_hashes = map(lambda x: split_field_name(x)[1], aspects)
     query = dict([(get_hash_property(hash, 'id'),  {'lookup': data.get(build_field_name("lookup", hash)), 'value': data.get(build_field_name("aspect", hash))}) for hash in aspect_hashes])
     return query

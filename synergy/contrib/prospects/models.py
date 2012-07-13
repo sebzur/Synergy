@@ -609,7 +609,7 @@ class ListRepresentation(models.Model):
     variant = models.OneToOneField('ProspectVariant')
     name = models.SlugField(max_length=255, verbose_name="Display name", unique=True, db_index=True)
 
-    representation_type = models.ForeignKey(ContentType, limit_choices_to={'model__in': ('custompostfix', 'table')})
+    representation_type = models.ForeignKey(ContentType, limit_choices_to={'model__in': ('custompostfix', 'table', 'calendar')})
     representation_id = models.PositiveIntegerField()
     representation = generic.GenericForeignKey('representation_type', 'representation_id')
 
@@ -734,6 +734,47 @@ class CellStyle(models.Model):
 
     class Meta:
         ordering = ('weight',)
+
+
+class Calendar(models.Model):
+    start_date_field = models.ForeignKey('Field', help_text="Event start, this should be date or datetime field", related_name="calendar_start_dates")
+    start_time_field = models.ForeignKey('Field', help_text="Event start, this should be date or datetime field", related_name="calendar_start_times", null=True, blank=True)
+    stop_date_field = models.ForeignKey('Field', null=True, blank=True, help_text="Event stop, this should be date or datetime field", related_name="calendar_stop_dates")
+    stop_time_field = models.ForeignKey('Field', null=True, blank=True, help_text="Event stop, this should be date or datetime field", related_name="calendar_stops_times")
+    all_day = models.BooleanField(default=True)
+
+    title = models.ForeignKey('Field', help_text="Title field", related_name="calendar_titles")
+    body = models.CharField(max_length=255, blank=True)
+    
+    # if url is required the start field should have an URLField instance connected
+    
+    def get_title(self, obj, **kwargs):
+        return self.title.get_value(obj, **kwargs)
+
+    def get_content(self, obj, **kwargs):
+        title = self.get_title(obj, **kwargs)
+        if self.title.as_link():
+            main = title.get('value')
+        if self.body:
+            context = {'object': obj, 'kwargs': kwargs}
+            extra = template.Template(self.body).render(template.Context(context))
+            return u"%s\n%s" % (main, extra)
+        return main
+
+    def get_url(self, obj, **kwargs):
+        if self.title.as_link():
+            return self.get_title(obj).get('url')
+        return None
+
+    def get_context_data(self, *args, **kwargs):
+        postfixes = {'prospect': 'calendardisplay'}
+        postfixes['posthead'] = 'calendardisplay'
+        return {'region_postfixes': postfixes}
+
+    class Meta:
+        verbose_name = "Calendar"
+        verbose_name_plural = "Calendars"
+    
 
 
 # --------------------------------------------

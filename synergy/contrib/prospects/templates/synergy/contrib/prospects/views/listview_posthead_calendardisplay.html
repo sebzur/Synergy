@@ -1,0 +1,29 @@
+{% include 'synergy/contrib/prospects/views/listview_posthead.html' %}
+
+{% load ui_loaders %}
+{% load datatables_scripts %}
+
+{% load_plugin jquery %}
+{% load_plugin jqueryui %}
+{% load_plugin fullcalendar %}
+
+<script type='text/javascript'>
+
+  $(document).ready(function() {
+
+  $('#calendar').fullCalendar({theme: true,
+  header: {
+  left: 'prev,next today',
+  center: 'title',
+  right: 'month',
+  firstDay: 1
+  },
+
+  eventSources: [{url: '{% url rest-calendar variant.name %}?{{ encoded }}'}],
+  loading: function(bool) {
+         if (bool) $('#loading').show();
+         else $('#loading').hide();}
+  })});
+
+</script>
+
