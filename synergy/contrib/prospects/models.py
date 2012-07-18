@@ -277,16 +277,19 @@ class ProspectVariant(models.Model):
                 data = data.filter(**{smart_str("%s__in" % context.lookup): context_values})
 
         # User related lookup
-        q_obj = None
-        for user_relation in self.user_relations.all():
-            values = user_relation.content_type.model_class().objects.filter(**{smart_str(user_relation.user_field): user}).values_list(user_relation.value_field, flat=True)
-            if q_obj:
-                q_obj |= models.Q(**{smart_str("%s__in" % user_relation.related_by_field): values})
-            else:
-                q_obj = models.Q(**{smart_str("%s__in" % user_relation.related_by_field): values})
-        if q_obj:
-            #data = data.filter(**{"%s__in" % user_relation.related_by_field: values})
-            data = data.filter(q_obj)
+        q_obj = {False: None, True: None}
+        for as_exclude in q_obj:
+            for user_relation in self.user_relations.filter(as_exclude=as_exclude):
+                values = user_relation.content_type.model_class().objects.filter(**{smart_str(user_relation.user_field): user}).values_list(user_relation.value_field, flat=True)
+                if q_obj[as_exclude]:
+                    q_obj[as_exclude] |= models.Q(**{smart_str("%s__in" % user_relation.related_by_field): values})
+                else:
+                    q_obj[as_exclude] = models.Q(**{smart_str("%s__in" % user_relation.related_by_field): values})
+
+        if q_obj[False]:
+            data = data.filter(q_obj[False])
+        if q_obj[True]:
+            data = data.exclude(q_obj[True])
         # ----------------------------------------------
 
 
@@ -341,6 +344,8 @@ class UserRelation(models.Model):
     related_by_field = models.SlugField(max_length=255, verbose_name="Related by field")
     weight = models.IntegerField()
     
+    as_exclude = models.BooleanField(default=False, verbose_name="Act as exclusion?")
+
     class Meta:
         ordering = ('weight', )
         verbose_name = "User relation"
