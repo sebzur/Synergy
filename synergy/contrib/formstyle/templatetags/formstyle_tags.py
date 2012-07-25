@@ -31,7 +31,13 @@ def get_content(form, items):
 @register.filter(name='layout')
 def layout(form):
     items = SortedDict()
+
     fields = form
+
+    external_m2ms = form.external_m2m
+    internal_m2ms = form.internal_m2m
+    o2ms = form.external
+
     try:
         ct = get_model('contenttypes', 'contenttype').objects.get_for_model(form._meta.model)
         _layout = ct.formlayout
@@ -46,7 +52,6 @@ def layout(form):
         internal_m2ms = dict([(relation, form.internal_m2m[relation]) for relation in form.internal_m2m if _get(relation.rel.through) not in _handled])
 
         _handled_o2ms = _layout.o2m_relations.values_list('relation__model', flat=True)
-        print _handled_o2ms
         o2ms = dict([(relation, form.external[relation]) for relation in form.external if relation.model.id not in _handled_o2ms])
 
     except Exception, error:
