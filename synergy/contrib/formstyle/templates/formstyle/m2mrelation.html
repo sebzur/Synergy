@@ -1,0 +1,10 @@
+<div class="accordion">  
+  <h3><a href="#"><strong>{{ item.item.relation.get_model_verbose_name_plural }}</strong></a></h3>
+  <div>
+    {% for r_form in content %}
+    <div class="{% cycle "odd" "even" %}">
+      {{ r_form.as_p }}
+    </div>
+    {% endfor %}
+  </div>
+</div>

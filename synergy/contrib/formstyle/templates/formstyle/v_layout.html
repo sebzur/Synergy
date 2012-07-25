@@ -3,13 +3,23 @@
 {% for item, content in items.iteritems %}
   {% if item.item_type.model == 'formfield' %}
        {% include 'formstyle/field.html' %}
-  {% else %} {# this is sizer then #}
-       {% if item.item.orientation == 'v' %}
-       {{ form|v_layout:content }}
-       {% else %}
-       {{ form|h_layout:content }}
-       {% endif %}
+  {% endif %} 
+
+  {% if item.item_type.model == 'm2mrelation'%}
+       {% include 'formstyle/m2mrelation.html' %}
   {% endif %}
-{% endfor %}
+
+  {% if item.item_type.model == 'o2mrelation'%}
+       {% include 'formstyle/o2mrelation.html' %}
+  {% endif %}
+
+  {% if item.item_type.model == 'sizer'%}
+     {% if item.item.orientation == 'v' %}
+         {{ form|v_layout:content }}
+     {% else %}
+         {{ form|h_layout:content }}
+     {% endif %}
+  {% endif %}
+ {% endfor %}
 
 

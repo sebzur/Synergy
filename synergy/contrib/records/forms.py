@@ -116,7 +116,7 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                 self.external_m2m[related_m2m_model] = []
                 choice_manager  = related_m2m_model.get_choices_manager()
                 if choice_manager.model is categorical_model:
-                    choices = choice_manager.filter(group__name=related_m2m_model.rel.through._meta.object_name.lower())
+                    choices = choice_manager.filter(group__name=related_m2m_model.to_field)
                 else:
                     choices = related_m2m_model.get_choices(self.initial or self.instance.__dict__)
                 for choice in choices:
@@ -136,7 +136,12 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
 
             self.internal_m2m = SortedDict()
             if use_model_m2m_fields:
-                for related_m2m_model in created_model._meta.many_to_many:
+
+
+                _handled = [m2m_relation.through for m2m_relation in related_m2m_models]
+                _get = get_model('contenttypes','contenttype').objects.get_for_model
+                internal_m2ms = (relation for relation in created_model._meta.many_to_many if _get(relation.rel.through) not in _handled)
+                for related_m2m_model in internal_m2ms:
                     self.internal_m2m[related_m2m_model] = []
                     choice_manager  = related_m2m_model.rel.to._default_manager
                     if choice_manager.model is categorical_model:

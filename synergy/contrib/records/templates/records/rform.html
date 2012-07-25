@@ -4,48 +4,7 @@
 {{ form.non_field_errors }}
 
 <div style="margin-bottom: 10px;">
-{{ form|layout }}
+  {{ form|layout }}
 </div>
 
 
-  <div id="accordion">  
-
-  {% for k, v in form.external.iteritems %}
-  <h3><a href="#"><strong>{{ k.get_model_verbose_name_plural }}</strong></a></h3>
-  <div >
-    {% for r_form in v %}
-    <div class="form {% cycle "odd" "even" %}">
-    {{ r_form|rform }}
-    </div>
-    {% endfor %}
-
-  </div>
-  {% endfor %}
-
-
-  {% for k, v in form.external_m2m.iteritems %}
-
-  <h3><a href="#"><strong>{{ k.get_model_verbose_name_plural }}</strong></a></h3>
-  <div>
-    {% for r_form in v %}
-    <div class="{% cycle "odd" "even" %}">
-      {{ r_form.as_p }}
-    </div>
-    {% endfor %}
-  </div>
-  {% endfor %}
-
-  {% for k, v in form.internal_m2m.iteritems %}
-
-  <h3><a href="#"><strong>{{ k.verbose_name  }}</strong></a></h3>
-  <div>
-    {% for r_form in v %}
-    <div class="{% cycle "odd" "even" %}">
-      {{ r_form.as_p }}
-    </div>
-    {% endfor %}
-  </div>
-  {% endfor %}
-
-
-</div>
