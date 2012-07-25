@@ -759,12 +759,14 @@ class Calendar(models.Model):
     def get_content(self, obj, **kwargs):
         title = self.get_title(obj, **kwargs)
         if self.title.as_link():
-            main = title.get('value')
+            title = title.get('value')
+        else:
+            title = "%s" % title
         if self.body:
             context = {'object': obj, 'kwargs': kwargs}
             extra = template.Template(self.body).render(template.Context(context))
             return u"%s\n%s" % (main, extra)
-        return main
+        return title
 
     def get_url(self, obj, **kwargs):
         if self.title.as_link():
