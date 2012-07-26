@@ -3,6 +3,7 @@
   <div>
     {% for r_form in content %}
     <div class="{% cycle "odd" "even" %}">
+      <strong>{{ r_form.select }}</strong>
       {{ r_form.as_p }}
     </div>
     {% endfor %}
