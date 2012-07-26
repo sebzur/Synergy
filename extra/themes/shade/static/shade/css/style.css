@@ -23,7 +23,8 @@ body{
 }
 
 
-a:link, a:visited {
+
+a:link, a:visited, .ui-widget-content a:link, .ui-widget-content a:visited {
     color:#0788C3; 
     text-decoration:none;
     outline-color:-moz-use-text-color;

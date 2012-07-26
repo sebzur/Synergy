@@ -32,6 +32,11 @@ def get_fields(prospect, variant):
         lookup_field_name = build_field_name("lookup", aspect_hash)
         fields[aspect_field_name] = aspect.get_formfield()
         fields[lookup_field_name] = forms.ChoiceField(choices=aspect.get_lookups())
+
+        fields[lookup_field_name].initial = aspect.initial_lookup
+        if not aspect.is_lookup_switchable:
+            fields[lookup_field_name].widget = forms.widgets.HiddenInput()
+
         try:
             stored_variant = aspect.variant_values.get(variant__name=variant)
             fields[aspect_field_name].initial = stored_variant.value
