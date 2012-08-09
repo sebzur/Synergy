@@ -105,9 +105,14 @@ class ListView(ProspectMixin, RegionViewMixin, generic.FormView):
             for k, v in c_kwgs.iteritems():
                 if hasattr(v, 'id'):
                     c_kwgs[k] = v.id
-
-            # urlencode recuire encoded data
-            c_kwgs = dict([(k, v.encode('utf-8')) for k, v in c_kwgs.items()])
+                else:
+                    try:
+                        # urlencode recuire encoded data
+                        c_kwgs[k] = v.encode('utf-8')
+                    except:
+                        # sometimes v is not unicode instance
+                        pass
+            #c_kwgs = dict([(k, v.encode('utf-8')) for k, v in c_kwgs.items()])
             ctx['encoded'] = urllib.urlencode(c_kwgs)
 
         ctx['results'] = results
