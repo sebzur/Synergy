@@ -179,13 +179,13 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
             return False
 
 
-        def full_clean(self):
-            # We override full_clean method to correctly handle the relations
-            # full_clean fires _post_clean defined on ModelForm that sets instance attributes taken from 
+        def _post_clean(self):
+            # We override _post_clean method to correctly handle the relations.
+            # _post_clean is defined in ModelForm and sets self.instance attributes taken from 
             # self.initial -- we need this behaviour to get the fully polulated instances
             # in the child objects
 
-            super(CreateBaseForm, self).full_clean() # this gives us the self.instance update
+            super(CreateBaseForm, self)._post_clean() # this gives us the self.instance update
 
             for ex in itertools.chain(*self.external.values()): # loops over fk related forms
                 setattr(ex.instance, self._meta.model._meta.object_name.lower(), self.instance)
