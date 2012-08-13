@@ -7,6 +7,7 @@ from django.db.models import get_model
 from django.utils.datastructures import SortedDict
 from models import get_parent_field
 from django.utils.encoding import smart_str 
+NON_FIELD_ERRORS = '__all__'
 
 def m2m_form_factory(to_exclude, r_name, through_model, m2m_relation_setup=None):
     class M2MBaseForm(forms.ModelForm):
@@ -178,25 +179,35 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
             return False
 
 
-        def clean(self):
-            super(CreateBaseForm, self).clean()
+        def full_clean(self):
+            # We override full_clean method to correctly handle the relations
+            # full_clean fires _post_clean defined on ModelForm that sets instance attributes taken from 
+            # self.initial -- we need this behaviour to get the fully polulated instances
+            # in the child objects
 
-            for m2m_model_setup, m2m_forms in itertools.chain(self.external_m2m.iteritems(), self.external.iteritems()):
-                m2m_count = 0
-                for f in m2m_forms:
-                    if f.is_valid():
-                        m2m_count += f.to_insert() or f.to_update() or (f.has_data() and not f.to_delete())#-get("%s_%d" % (f.select._meta.object_name.lower(), f.select.id), False)
+            super(CreateBaseForm, self).full_clean() # this gives us the self.instance update
 
-                if m2m_model_setup.min_count and m2m_count < m2m_model_setup.min_count:
-                    raise forms.ValidationError(u"Wybrano zbyt mało elementów w %s. Minimalna liczba dopuszczalna %d" % (m2m_model_setup.get_model_verbose_name(), m2m_model_setup.min_count))
-                if m2m_model_setup.max_count and m2m_count > m2m_model_setup.max_count:
-                    raise forms.ValidationError(u"Wybrano zbyt dużo elementów w %s. Maksymalna liczba dopuszczalna %d" % (m2m_model_setup.get_model_verbose_name(), m2m_model_setup.max_count))
+            for ex in itertools.chain(*self.external.values()): # loops over fk related forms
+                setattr(ex.instance, self._meta.model._meta.object_name.lower(), self.instance)
 
-            return self.cleaned_data
+            try:
+                # Check if the proper number of forms is filled 
+                for m2m_model_setup, m2m_forms in itertools.chain(self.external_m2m.iteritems(), self.external.iteritems()):
+                    m2m_count = 0
+                    for f in m2m_forms:
+                        if f.is_valid():
+                            m2m_count += f.to_insert() or f.to_update() or (f.has_data() and not f.to_delete())
+
+                    if m2m_model_setup.min_count and m2m_count < m2m_model_setup.min_count:
+                        raise forms.ValidationError(u"Wybrano zbyt mało elementów w %s. Minimalna liczba dopuszczalna %d" % (m2m_model_setup.get_model_verbose_name(), m2m_model_setup.min_count))
+                    if m2m_model_setup.max_count and m2m_count > m2m_model_setup.max_count:
+                        raise forms.ValidationError(u"Wybrano zbyt dużo elementów w %s. Maksymalna liczba dopuszczalna %d" % (m2m_model_setup.get_model_verbose_name(), m2m_model_setup.max_count))
+            except forms.ValidationError, e:
+                self._errors[NON_FIELD_ERRORS] = self.error_class(e.messages)
+
 
         def is_valid(self):
             valid = [super(CreateBaseForm, self).is_valid()]
-
 
             for ex in itertools.chain(*self.external.values()):
                 setattr(ex.instance, self._meta.model._meta.object_name.lower(), self.instance)
@@ -217,7 +228,8 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
             for f in itertools.chain(*self.external.values()):
                 if f.to_update() or f.to_insert():
                     # probably we shuld assign self.instance here and then simply
-                    # save with commit = True
+                    # save with commit = True, or an option is to 
+                    # use _post_clean internal ModelForm method hook
                     ins = f.save(commit=False)
                     setattr(ins, self._meta.model._meta.object_name.lower(), self.instance)
                     ins.save()
@@ -248,3 +260,7 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
             exclude = to_exclude
 
     return CreateBaseForm
+
+        
+    
+    
