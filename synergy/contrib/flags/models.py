@@ -65,4 +65,3 @@ class UserStateFlag(models.Model):
         unique_together = (("is_anonymous", "is_authenticated", "flag"),)
 
 
-#class ContentStateFlag()
