@@ -14,8 +14,19 @@ class LayoutItemInline(GenericStackedInline):
     ct_field = 'item_type'
     ct_fk_field = 'item_id'
 
+
+class LayoutItemAdmin(admin.ModelAdmin):
+    list_display = ('layout', 'item_type', 'item_id', 'item', 'weight', 'proportion')
+    list_filter = ('layout',)
+
 class FormFieldAdmin(admin.ModelAdmin):
     list_display = ('layout', 'field')
+    list_filter = ('layout',)
+    inlines = [SizerItemInline, LayoutItemInline]
+
+
+class RelationAdmin(admin.ModelAdmin):
+    list_display = ('layout', 'relation')
     list_filter = ('layout',)
     inlines = [SizerItemInline, LayoutItemInline]
 
@@ -31,7 +42,9 @@ class SizerItemAdmin(admin.ModelAdmin):
 admin.site.register(FormLayout)
 admin.site.register(Sizer, SizerAdmin)
 admin.site.register(FormField, FormFieldAdmin)
-admin.site.register(LayoutItem)
+admin.site.register(O2MRelation, RelationAdmin)
+admin.site.register(M2MRelation, RelationAdmin)
+admin.site.register(LayoutItem, LayoutItemAdmin)
 admin.site.register(SizerItem, SizerItemAdmin)
 
 

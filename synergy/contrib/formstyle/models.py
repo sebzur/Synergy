@@ -41,10 +41,26 @@ class FormField(models.Model):
 
     class Meta:
         unique_together = (('field', 'layout'),)
+
+
+class O2MRelation(models.Model):
+    layout = models.ForeignKey(FormLayout, related_name="o2m_relations")
+    relation = models.ForeignKey('records.O2MRelationSetup')
+
+    class Meta:
+        unique_together = (('relation', 'layout'),)
+
+
+class M2MRelation(models.Model):
+    layout = models.ForeignKey(FormLayout, related_name="m2m_relations")
+    relation = models.ForeignKey('records.M2MRelationSetup')
+
+    class Meta:
+        unique_together = (('relation', 'layout'),)
     
 class LayoutItem(models.Model):
     layout = models.ForeignKey(FormLayout, related_name="items")
-    item_type = models.ForeignKey(ContentType, related_name="layout_items", limit_choices_to={'model__in': ('sizer', 'formfield')})
+    item_type = models.ForeignKey(ContentType, related_name="layout_items", limit_choices_to={'model__in': ('sizer', 'formfield', 'o2mrelation', 'm2mrelation')})
     item_id = models.PositiveIntegerField()
     item = generic.GenericForeignKey('item_type', 'item_id')
     weight = models.IntegerField()
@@ -52,7 +68,6 @@ class LayoutItem(models.Model):
 
 
     def _clean(self):
-        print self.item_type, self.item_id
         if models.get_model('formstyle', 'SizerItem').objects.filter(item_id=self.item_id, item_type=self.item_type).exists():
             raise ValidationError("Already assinged to sizer!")
 
@@ -61,7 +76,7 @@ class LayoutItem(models.Model):
 
 class SizerItem(models.Model):
     sizer = models.ForeignKey(Sizer, related_name="items", verbose_name="Master sizer")
-    item_type = models.ForeignKey(ContentType, related_name="sizer_items", limit_choices_to={'model__in': ('sizer', 'formfield')})
+    item_type = models.ForeignKey(ContentType, related_name="sizer_items", limit_choices_to={'model__in': ('sizer', 'formfield', 'o2mrelation', 'm2mrelation')})
     item_id = models.PositiveIntegerField()
     item = generic.GenericForeignKey('item_type', 'item_id')
     proportion = models.PositiveIntegerField()

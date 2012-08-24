@@ -189,8 +189,8 @@ class ObjectLookupSetup(models.Model):
 class M2MRelationSetup(models.Model):
     setup = models.ForeignKey(RecordSetup, related_name="related_m2m_models")
     through = models.ForeignKey(ContentType)
-    from_field = models.SlugField()
-    to_field = models.SlugField()
+    from_field = models.SlugField(help_text="Field name pointing to the source model")
+    to_field = models.SlugField(help_text="Field name pointing to the dst model")
 
     min_count = models.IntegerField(null=True, blank=True)
     max_count = models.IntegerField(null=True, blank=True)
@@ -200,7 +200,8 @@ class M2MRelationSetup(models.Model):
         return self.get_to_model()._meta.verbose_name
 
     def get_model_verbose_name_plural(self):
-        return self.get_to_model()._meta.verbose_name_plural
+        #return self.get_to_model()._meta.verbose_name_plural
+        return self.through.model_class()._meta.verbose_name_plural
 
     def get_to_model(self):
         return self.through.model_class()._meta.get_field(self.to_field).rel.to
@@ -222,7 +223,7 @@ class M2MChoicesSetup(models.Model):
 
 class O2MRelationSetup(models.Model):
     setup = models.ForeignKey(RecordSetup, related_name="related_o2m_models")
-    model = models.ForeignKey(ContentType)
+    model = models.ForeignKey(ContentType, related_name="o2m_setups")
 
     min_count = models.PositiveSmallIntegerField(null=True, blank=True)
     max_count = models.PositiveSmallIntegerField(null=True, blank=True)

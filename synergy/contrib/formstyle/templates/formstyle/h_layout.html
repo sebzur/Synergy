@@ -4,11 +4,23 @@
   {% comment %}
   <thead>
     {% for item, content in items.iteritems %}
+
     {% if item.item_type.model == 'formfield' %}
-    <th>{{ content.label_tag }}</th>
-    {% else %}
-    <th>Sizer</th>
+       <th>{{ content.label_tag }}</th>
     {% endif %}
+
+     {% if item.item_type.model == 'm2mrelation'%}
+       <th>M2M Relation</th>
+     {% endif %}
+
+     {% if item.item_type.model == 'o2mrelation'%}
+       <th>O2M Relation</th>
+     {% endif %}
+
+     {% if item.item_type.model == 'sizer'%}
+       <th>Sizer</th>
+     {% endif %}
+
     {% endfor %}
   </thead>
   {% endcomment %}
@@ -18,7 +30,17 @@
       <td style="width: {% widthratio item.proportion norm_factor 100 %}%; padding: 10px;">
 	{% if item.item_type.model == 'formfield' %}
 	{% include 'formstyle/field.html' %}
-        {% else %}
+        {% endif %}
+
+        {% if item.item_type.model == 'm2mrelation'%}
+          {% include 'formstyle/m2mrelation.html' %}
+        {% endif %}
+
+        {% if item.item_type.model == 'o2mrelation'%}
+          {% include 'formstyle/o2mrelation.html' %}
+        {% endif %}
+
+  {% if item.item_type.model == 'sizer'%}
        {% if item.item.orientation == 'v' %}
        {{ form|v_layout:content }}
        {% else %}

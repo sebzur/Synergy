@@ -156,12 +156,22 @@ class Context(models.Model):
         verbose_name_plural = "Contexts"
 
 class Aspect(models.Model):
+    LOOKUPS = (('exact', 'Exact'), ('iexact', 'Case-insensitive exact'), 
+               ('contains', 'Contains'), ('icontains', 'Case-insensitive contains'), 
+               ('startswith', 'Starts with'), ('istartswith', 'Case-insensitive starts with'), 
+               ('endswith', 'Ends with'),('iendswith', 'Case-insensitve ends with'),
+               ('gt', 'Greater then'), ('gte', 'Greater then or exact'), ('lt', 'Lower then'), ('lte', 'Lower then or exact'))
+
+
     # Attribute is stored as a string (slug) in native Django
     # format used for query building, i.e. the valid forms are
     # 'first_name', 'personal_data__first_name', 'contact_data__personal_data__last_name'
     # The field type and related aspect features are then extracted with
     # models introspecting
     attribute = models.SlugField(max_length=255, verbose_name="Machine name")
+    initial_lookup = models.CharField(max_length=15, verbose_name="Initial lookup", choices=LOOKUPS)
+    is_lookup_switchable = models.BooleanField(default=True, verbose_name="Is lookup switchable")
+
     source = models.ForeignKey('Source', related_name="aspects")
     weight = models.IntegerField(verbose_name="Aspect weight", default=0)
 
@@ -231,6 +241,12 @@ class Aspect(models.Model):
 
     def to_python(self, value):
         return self.get_field().to_python(value)
+
+    
+    def clean(self):
+        proper = map(lambda x: x[0], self.get_lookups())
+        if self.initial_lookup not in proper:
+            raise ValidationError('Invalid initial lookup! Proper choices: %s' % proper)
 
     class Meta:
         ordering = ('weight', )

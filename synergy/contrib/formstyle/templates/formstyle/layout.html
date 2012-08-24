@@ -1,7 +1,44 @@
 {% load formstyle_tags %}
+{% load records_tags %}
 
 {{ form|v_layout:items }}
-
 {% for content in fields %}
-   {% include 'formstyle/field.html' %}
+{% include 'formstyle/field.html' %}
 {% endfor %}
+
+<div class="accordion">  
+  {% for k, v in o2ms.iteritems %}
+  <h3><a href="#"><strong>{{ k.get_model_verbose_name_plural }}</strong></a></h3>
+  <div>
+    {% for r_form in v %}
+    <div class="form {% cycle "odd" "even" %}">
+      {{ r_form|rform }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+
+  {% for k, v in external_m2ms.iteritems %}
+  <h3><a href="#"><strong>{{ k.get_model_verbose_name_plural }}</strong></a></h3>
+  <div>
+    {% for r_form in v %}
+    <div class="{% cycle "odd" "even" %}">
+      <strong>{{ r_form.select }}</strong>
+      {{ r_form.as_p }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+
+  {% for k, v in internal_m2ms.iteritems %}
+  <h3><a href="#"><strong>{{ k.verbose_name  }}</strong></a></h3>
+  <div>
+    {% for r_form in v %}
+    <div class="{% cycle "odd" "even" %}">
+      <strong>{{ r_form.select }}</strong>
+      {{ r_form.as_p }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
