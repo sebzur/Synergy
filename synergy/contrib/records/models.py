@@ -174,17 +174,15 @@ class RecordField(models.Model):
 
             
 class FieldValueSetup(models.Model):
-    field = models.OneToOneField('RecordField', related_name="value")
     value = models.ForeignKey('RecordArgument')
+    field = models.OneToOneField('RecordField', related_name="value")
+
 
 class ObjectLookupSetup(models.Model):
-    field = models.ForeignKey('RecordField', related_name="lookups")
     value = models.ForeignKey('RecordArgument')
+    field = models.ForeignKey('RecordField', related_name="lookups")
     lookup = models.SlugField()
 
-    def clean(self):
-        if 0:
-            raise ValidationError('Test if field is db relation (FK, O2O, ...) field')
 
 class M2MRelationSetup(models.Model):
     setup = models.ForeignKey(RecordSetup, related_name="related_m2m_models")

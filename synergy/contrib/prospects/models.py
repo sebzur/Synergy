@@ -168,14 +168,15 @@ class Aspect(models.Model):
     # 'first_name', 'personal_data__first_name', 'contact_data__personal_data__last_name'
     # The field type and related aspect features are then extracted with
     # models introspecting
-    attribute = models.SlugField(max_length=255, verbose_name="Machine name")
+    attribute = models.SlugField(max_length=255, verbose_name="Field lookup")
+    source = models.ForeignKey('Source', related_name="aspects")
+
     initial_lookup = models.CharField(max_length=15, verbose_name="Initial lookup", choices=LOOKUPS)
     is_lookup_switchable = models.BooleanField(default=True, verbose_name="Is lookup switchable")
-
-    source = models.ForeignKey('Source', related_name="aspects")
-    weight = models.IntegerField(verbose_name="Aspect weight", default=0)
-
     is_required = models.BooleanField()
+    is_exposed = models.BooleanField(verbose_name="Should this aspect settings be exposed to the user?", default=True)
+
+    weight = models.IntegerField(verbose_name="Aspect weight", default=0)
 
     def __unicode__(self):
         return u"%s (%s)" % (self.attribute, self.source.prospect.name)
