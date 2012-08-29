@@ -32,9 +32,9 @@ class FlagsBackend(object):
             
         #sprawdz anonimowego 
         if not user.is_authenticated():
-            model = get_model('flags', 'UserStateFlag').objects.filter(is_anonymous__exact=True, flag__in=model_perm_query).exists()
+            model = get_model('flags', 'AuthContentFlag').objects.filter(is_anonymous__exact=True, content_flag__in=model_perm_query).exists()
             if object_flag:
-                obj = get_model('flags', 'UserStateFlag').objects.filter(is_anonymous__exact=True, flag__exact=object_flag).exists()
+                obj = get_model('flags', 'AuthContentFlag').objects.filter(is_anonymous__exact=True, content_flag__exact=object_flag).exists()
             else:
                 obj = False
             return model ^ obj
@@ -43,9 +43,9 @@ class FlagsBackend(object):
         #Jesli user ma dowolone lub user ma zabronione to zadne inne (grupa, authenticated) nie moga tego zmienic
         
         #sprawdz usera
-        model = get_model('flags', 'UserFlag').objects.filter(user__exact=user, flag__in=model_perm_query).exists()
+        model = get_model('flags', 'UserContentFlag').objects.filter(user__exact=user, content_flag__in=model_perm_query).exists()
         if object_flag:
-            obj = get_model('flags', 'UserFlag').objects.filter(user__exact=user, flag__exact=object_flag).exists()
+            obj = get_model('flags', 'UserContentFlag').objects.filter(user__exact=user, content_flag__exact=object_flag).exists()
         else:
             obj = False
         #czy jest wpis 
@@ -56,9 +56,9 @@ class FlagsBackend(object):
         #jedna negujaca - nie ma uprawnienia, jedna pozytywne i brak negujacych - pozytywne
         positive = False
         for group in get_model('flags', 'Group').objects.filter(members__exact=user):
-            model = get_model('flags', 'GroupFlag').objects.filter(group__exact=group, flag__in=model_perm_query).exists()
+            model = get_model('flags', 'GroupContentFlag').objects.filter(group__exact=group, content_flag__in=model_perm_query).exists()
             if object_flag:
-                obj = get_model('flags', 'GroupFlag').objects.filter(group__exact=group, flag__exact=object_flag).exists()
+                obj = get_model('flags', 'GroupContentFlag').objects.filter(group__exact=group, content_flag__exact=object_flag).exists()
             else:
                 obj = False
             #czy jest wpis
@@ -74,9 +74,9 @@ class FlagsBackend(object):
             return positive
      
         #Ostatni test - zalogowany user
-        model = get_model('flags', 'UserStateFlag').objects.filter(is_authenticated__exact=True, flag__in=model_perm_query).exists()
+        model = get_model('flags', 'AuthContentFlag').objects.filter(is_authenticated__exact=True, content_flag__in=model_perm_query).exists()
         if object_flag:
-            obj = get_model('flags', 'UserStateFlag').objects.filter(is_authenticated__exact=True, flag__exact=object_flag).exists()
+            obj = get_model('flags', 'AuthContentFlag').objects.filter(is_authenticated__exact=True, content_flag__exact=object_flag).exists()
         else:
             obj = False
         #jesli brak informacji to tak jakby ne bylo permissiona !!!!! 
