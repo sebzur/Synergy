@@ -66,7 +66,7 @@ class ProspectMixin(object):
         return results
 
     def get_query_dict(self):
-        kwgs = dict([(k, v.encode('utf8')) for k, v in self.request.GET.iteritems() if k.split('__')[0] in ('aspect', 'lookup') ])
+        kwgs = dict([(smart_str(k), v.encode('utf8')) for k, v in self.request.GET.iteritems() if k.split('__')[0] in ('aspect', 'lookup') ])
         return kwgs
 
 
