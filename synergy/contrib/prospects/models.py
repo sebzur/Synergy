@@ -104,6 +104,12 @@ class Prospect(models.Model):
         ids = self.get_source().aspects.values_list('id', flat=True)
         return dict([(smart_str(id), query.get(id)) for id in filter(lambda x: int(x) in ids, query.keys())])
 
+    def get_required_aspects(self):
+        return self.get_source().aspects.filter(is_required=True)
+
+    def get_optional_aspects(self):
+        return self.get_source().aspects.exclude(id__in=self.get_required_aspects().values_list('id', flat=True))
+
             
 class Operator(models.Model):
     callable = fields.CallableField(max_length=255, verbose_name="The callable to call after the prospects returns the data", blank=True) 
@@ -269,6 +275,15 @@ class ProspectVariant(models.Model):
     css_classes = models.CharField(max_length=255, help_text="The CSS class names will be added to the prospect variant. This enables you to use specific CSS code for each variant. You may define multiples classes separated by spaces.", blank=True)
     submit_label = models.CharField(max_length=255, verbose_name="Sumbmit button label", default="Submit")
 
+    def validate_query(self, user, **query):
+        provided = self.aspect_values.filter(is_exposed=False).values_list('aspect', flat=True)
+        required = self.prospect.get_required_aspects().exclude(id__in=provided)
+
+        _left = required.exclude(id__in=query.keys())
+        if _left.exists():
+            
+            raise ValueError("Some required query arguments are missing: %s" % _left.values_list('attribute', flat=True))
+
     def filter(self, user, **query):
         """ Returns variant results.
 
@@ -280,6 +295,9 @@ class ProspectVariant(models.Model):
 
 
         # if aspect has some values stored, override the query
+
+        self.validate_query(user, **query)
+
         c = {}
         for aspect_value in self.aspect_values.filter(is_exposed=False):
             c[str(aspect_value.aspect.id)] = {'lookup':aspect_value.lookup, 'value':  aspect_value.value}

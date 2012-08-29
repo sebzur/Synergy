@@ -61,9 +61,13 @@ class ProspectMixin(object):
         return self.get_prospect_variant().prospect
 
     def get_results(self, *args, **kwargs):
-        results = self.get_prospect_variant().filter(self.request.user, **build_query(kwargs))
-        signals.prospect_results_created.send(sender=self.get_prospect_variant(), results=results, request=self.request)
-        return results
+        try:
+            self.get_prospect_variant().validate_query(self.request.user, **build_query(kwargs))
+            results = self.get_prospect_variant().filter(self.request.user, **build_query(kwargs))
+            signals.prospect_results_created.send(sender=self.get_prospect_variant(), results=results, request=self.request)
+            return results
+        except:
+            return None
 
     def get_query_dict(self):
         kwgs = dict([(smart_str(k), v.encode('utf8')) for k, v in self.request.GET.iteritems() if k.split('__')[0] in ('aspect', 'lookup') ])
