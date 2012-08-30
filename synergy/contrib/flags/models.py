@@ -65,3 +65,17 @@ class AuthContentFlag(models.Model):
         unique_together = (("is_anonymous", "is_authenticated", "content_flag"),)
 
 
+class CustomContentFlag(models.Model):
+    content_flag = models.ForeignKey('ContentFlag', related_name='custom_content_flags', verbose_name="Flag")
+    custom_model = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    
+    content_object = generic.GenericForeignKey('custom_model', 'object_id')
+    
+    def __unicode__(self):
+        return u"Model - %s, ID - %s, Perm - %s " % (self.custom_model,self.object_id, self.content_flag )
+
+    class Meta:
+        unique_together = (("custom_model", "object_id", "content_flag"),)
+
+    

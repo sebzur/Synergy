@@ -9,7 +9,7 @@ admin.site.register(ContentFlag)
 admin.site.register(GroupContentFlag)
 admin.site.register(UserContentFlag)
 admin.site.register(AuthContentFlag)
-
+admin.site.register(CustomContentFlag)
 
 
 
