@@ -2,6 +2,7 @@
 from django.views import generic
 from django.db.models import get_model
 from django.shortcuts import get_object_or_404
+from django.http import HttpResponseRedirect
 
 from synergy.templates.regions.views import RegionViewMixin
 
@@ -25,27 +26,8 @@ from djangorestframework import status, permissions
 import urllib 
 
 class ProspectMixin(object):
+
     @method_decorator(login_required)
-    def dispatch(self, *args, **kwargs):
-        return super(ProspectMixin, self).dispatch(*args, **kwargs)
-
-    def get_prospect_variant(self):
-        return get_model('prospects', 'ProspectVariant').objects.get(name=self.kwargs.get('variant'))
-
-    def get_representation(self):
-        return self.get_prospect_variant().listrepresentation.representation
-
-    def get_prospect(self):
-        return self.get_prospect_variant().prospect
-
-    def get_results(self, *args, **kwargs):
-        results = self.get_prospect_variant().filter(self.request.user, **build_query(kwargs))
-        signals.prospect_results_created.send(sender=self.get_prospect_variant(), results=results, request=self.request)
-        return results
-
-
-class ListView(ProspectMixin, RegionViewMixin, generic.FormView):
-
     def dispatch(self, request, *args, **kwargs):
         variant = get_model('prospects', 'ProspectVariant').objects.get(name=kwargs.get('variant'))
         expressions = []
@@ -60,13 +42,39 @@ class ListView(ProspectMixin, RegionViewMixin, generic.FormView):
             str_converted = dict(((smart_str(k), v) for k, v in _kwargs.iteritems()))
             kwargs.update(str_converted)
 
-        return super(ListView, self).dispatch(request, *args, **kwargs)
+        return super(ProspectMixin, self).dispatch(request, *args, **kwargs)
 
     def resolve(self, regex, path):
         _regex = re.compile(regex, re.UNICODE)
         match = _regex.search(path)
         if match:
             return match.groupdict()
+
+
+    def get_prospect_variant(self):
+        return get_model('prospects', 'ProspectVariant').objects.get(name=self.kwargs.get('variant'))
+
+    def get_representation(self):
+        return self.get_prospect_variant().listrepresentation.representation
+
+    def get_prospect(self):
+        return self.get_prospect_variant().prospect
+
+    def get_results(self, *args, **kwargs):
+        try:
+            self.get_prospect_variant().validate_query(self.request.user, **build_query(kwargs))
+            results = self.get_prospect_variant().filter(self.request.user, **build_query(kwargs))
+            signals.prospect_results_created.send(sender=self.get_prospect_variant(), results=results, request=self.request)
+            return results
+        except:
+            return None
+
+    def get_query_dict(self):
+        kwgs = dict([(smart_str(k), v.encode('utf8')) for k, v in self.request.GET.iteritems() if k.split('__')[0] in ('aspect', 'lookup') ])
+        return kwgs
+
+
+class ListView(ProspectMixin, RegionViewMixin, generic.FormView):
 
     def get_form_class(self):
         return prospectform_factory(self.get_prospect(), self.kwargs.get('variant'))
@@ -77,6 +85,9 @@ class ListView(ProspectMixin, RegionViewMixin, generic.FormView):
         kwargs['instance'] = self.get_prospect_variant()
         return kwargs
 
+    def get_initial(self):
+        return self.get_query_dict()
+
     def get_context_data(self, *args, **kwargs):
         ctx = super(ListView, self).get_context_data(*args, **kwargs)
 
@@ -84,42 +95,44 @@ class ListView(ProspectMixin, RegionViewMixin, generic.FormView):
         ctx['prospect'] = self.get_prospect()
         ctx['variant'] = self.get_prospect_variant()
         ctx['arguments'] = self.kwargs
-        ctx['encoded'] = None
-
+        ctx['encoded'] = urllib.urlencode(self.get_query_dict())
+        ctx['results'] = self.get_results(**self.get_query_dict())
         repr_obj = self.get_representation()
         ctx[repr_obj._meta.object_name.lower()] = repr_obj
 
         ctx.update(self.get_representation().get_context_data(*args, **kwargs))
 
-        results = []
-
-        if kwargs['form'].is_valid():
-            kwgs = dict((smart_str(key), value) for key, value in kwargs['form'].cleaned_data.iteritems())
-            for context in kwargs['form'].contexts.values():
-                kwgs.update(dict((smart_str(key), value) for key, value in context.cleaned_data.iteritems()))
-            # some older python version require dict keys to be strings when passed as kwargs
-
-            results = self.get_results(**kwgs)
-
-            c_kwgs = kwgs.copy()
-            for k, v in c_kwgs.iteritems():
-                if hasattr(v, 'id'):
-                    c_kwgs[k] = v.id
-                else:
-                    try:
-                        # urlencode recuire encoded data
-                        c_kwgs[k] = v.encode('utf-8')
-                    except:
-                        # sometimes v is not unicode instance
-                        pass
-            #c_kwgs = dict([(k, v.encode('utf-8')) for k, v in c_kwgs.items()])
-            ctx['encoded'] = urllib.urlencode(c_kwgs)
-
-        ctx['results'] = results
         return ctx
 
     def form_valid(self, form):
-        return self.render_to_response(self.get_context_data(form=form))
+        kwgs = self.get_query_dict()
+        kwgs.update(dict((smart_str(key), value) for key, value in form.cleaned_data.iteritems()))
+        for context in form.contexts.values():
+            kwgs.update(dict((smart_str(key), value) for key, value in context.cleaned_data.iteritems()))
+
+        # some older python version require dict keys to be strings when passed as kwargs
+        c_kwgs = kwgs.copy()
+        for k, v in c_kwgs.iteritems():
+            if hasattr(v, 'id'):
+                c_kwgs[k] = v.id
+            else:
+                try:
+                    # urlencode recuire encoded data
+                    c_kwgs[k] = v.encode('utf-8')
+                except:
+                    # sometimes v is not unicode instance
+                    pass
+        #c_kwgs = dict([(k, v.encode('utf-8')) for k, v in c_kwgs.items()])
+        encoded = urllib.urlencode(c_kwgs)
+
+        
+        return HttpResponseRedirect("%s?%s" % (self.get_success_url(), encoded))
+
+    def get_success_url(self):
+        return reverse('list', args=[self.get_prospect_variant().name])
+
+#    def form_valid(self, form):
+#        return self.render_to_response(self.get_context_data(form=form))
 
 
 class RESTListView(ProspectMixin, View):

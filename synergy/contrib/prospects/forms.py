@@ -25,7 +25,9 @@ def get_fields(prospect, variant):
     fields = SortedDict()
     source = prospect.get_source()
 
-    excluded = get_model('prospects', 'aspectvalue').objects.filter(variant__name=variant, is_exposed=False).values_list('aspect', flat=True)
+    excluded = list(get_model('prospects', 'aspectvalue').objects.filter(variant__name=variant, is_exposed=False).values_list('aspect', flat=True))
+    excluded = list(prospect.source.aspects.exclude(is_exposed=True).values_list('id', flat=True)) + excluded
+
     for aspect in source.aspects.exclude(id__in=excluded):
         aspect_hash = build_aspect_hash(aspect)
         aspect_field_name = build_field_name("aspect", aspect_hash)
