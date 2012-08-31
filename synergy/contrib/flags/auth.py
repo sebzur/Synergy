@@ -120,9 +120,12 @@ class FlagsBackend(object):
         PRIORTY=['user','groups','auth','custom']
         
         for i in PRIORTY:
-            result = getattr(self, "_check_%s"%i)(user, perm, obj, model_perm_query, object_flag)
-            if not result is None:
-                return result
-                
+            try:
+                result = getattr(self, "_check_%s"%i)(user, perm, obj, model_perm_query, object_flag)
+                if not result is None:
+                    return result
+            except AttributeError:
+                return False
+                    
         #zabezpieczenie jakby zakonczylo sie Nonem !
         return False
