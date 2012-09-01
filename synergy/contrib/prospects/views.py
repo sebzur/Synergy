@@ -229,6 +229,6 @@ class DetailContextView(ProspectMixin, RegionViewMixin, DetailMixin, generic.Det
         ctx['detail_context'] = self.get_detail_context()
         ctx['query'] = ctx['detail_context'].get_query(self.object)
 
-        arg_values = dict((arg_val.argument.name, arg_val.value_field.get_value(self.object))  for arg_val in self.get_detail_context().argument_values.all())
+        arg_values = dict((smart_str(arg_val.argument.name), arg_val.value_field.get_value(self.object))  for arg_val in self.get_detail_context().argument_values.all())
         ctx['arguments'] = arg_values
         return ctx
