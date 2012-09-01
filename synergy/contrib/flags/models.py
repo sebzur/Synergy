@@ -33,36 +33,49 @@ class ContentFlag(models.Model):
         unique_together = (("flag", "content_type", "object_id"),)
 
     
-class GroupFlag(models.Model):
-    flag = models.ForeignKey('ContentFlag', related_name="group_flags", verbose_name="Flag")
-    group = models.ForeignKey('Group', related_name="group_flags", verbose_name="Group")
+class GroupContentFlag(models.Model):
+    content_flag = models.ForeignKey('ContentFlag', related_name="group_content_flags", verbose_name="Flag")
+    group = models.ForeignKey('Group', related_name="group_content_flags", verbose_name="Group")
 
     def __unicode__(self):
-        return u"%s - %s " % (self.group, self.flag, )
+        return u"%s - %s " % (self.group, self.content_flag, )
         
     class Meta:
-        unique_together = (("group", "flag"),)
+        unique_together = (("group", "content_flag"),)
 
-class UserFlag(models.Model):
-    flag = models.ForeignKey('ContentFlag', related_name="user_flags", verbose_name="Flag")
-    user = models.ForeignKey('auth.User', related_name="user_flags", verbose_name="User")
+class UserContentFlag(models.Model):
+    content_flag = models.ForeignKey('ContentFlag', related_name="user_content_flags", verbose_name="Flag")
+    user = models.ForeignKey('auth.User', related_name="user_content_flags", verbose_name="User")
     
     def __unicode__(self):
-        return u"%s - %s " % (self.user, self.flag, )
+        return u"%s - %s " % (self.user, self.content_flag, )
 
     class Meta:
-        unique_together = (("user", "flag"),)
-    
-class UserStateFlag(models.Model):
-    flag = models.ForeignKey('ContentFlag', related_name="visitor_flags", verbose_name="Flag")
+        unique_together = (("user", "content_flag"),)
+
+class AuthContentFlag(models.Model):
+    content_flag = models.ForeignKey('ContentFlag', related_name="auth_content_flags", verbose_name="Flag")
     is_anonymous = models.BooleanField(verbose_name="Anonymous")
     is_authenticated = models.BooleanField(verbose_name="Authenticated")
     
     def __unicode__(self):
-        return u"Anon - %s, Auth - %s, Perm - %s " % (self.is_anonymous,self.is_authenticated, self.flag )
+        return u"Anon - %s, Auth - %s, Perm - %s " % (self.is_anonymous,self.is_authenticated, self.content_flag )
 
     class Meta:
-        unique_together = (("is_anonymous", "is_authenticated", "flag"),)
+        unique_together = (("is_anonymous", "is_authenticated", "content_flag"),)
 
 
-#class ContentStateFlag()
+class CustomContentFlag(models.Model):
+    content_flag = models.ForeignKey('ContentFlag', related_name='custom_content_flags', verbose_name="Flag")
+    custom_model = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    
+    content_object = generic.GenericForeignKey('custom_model', 'object_id')
+    
+    def __unicode__(self):
+        return u"Model - %s, ID - %s, Perm - %s " % (self.custom_model,self.object_id, self.content_flag )
+
+    class Meta:
+        unique_together = (("custom_model", "object_id", "content_flag"),)
+
+    
