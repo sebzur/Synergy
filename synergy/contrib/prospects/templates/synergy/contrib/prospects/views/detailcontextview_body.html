@@ -1,0 +1,36 @@
+{% load synergy_region %}
+{% load prospects_rendering %}
+{% load menu_tags %}
+{% load records_tags %}
+
+{% region objectdetail %}
+<div style="float:left; display:block; width: 70%;">
+    {{ object|fields:objectdetail }}
+</div>
+<div  style="padding: 20px; float:left; width: 25%;">
+
+<h3>Menu</h3>
+
+<ul>
+  <li><a href="{% url detail objectdetail.variant.name object.id %}"><strong>Powrót do szczegółów</strong></a></li>
+</ul>
+
+</div>
+{% endregion %}
+
+{% region objectcontext %}
+<div class="clearfix">
+</div>
+
+
+{% if body %}
+<div style="margin-top: 10px;">
+{{ body }}
+</div>
+{% endif %}
+
+
+{% render_results detail_context.variant request.user query %}
+
+{% endregion %}
+

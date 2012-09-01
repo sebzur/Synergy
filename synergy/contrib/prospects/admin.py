@@ -36,9 +36,11 @@ class ListRepresentationAdmin(admin.ModelAdmin):
 admin.site.register(Prospect, ProspectAdmin)
 admin.site.register(Source, SourceAdmin)
 admin.site.register(Aspect, AspectAdmin)
+admin.site.register(NullState)
 
 admin.site.register(ProspectVariant)
 admin.site.register(AspectValue)
+admin.site.register(NullStateValue)
 admin.site.register(UserRelation)
 
 admin.site.register(Field, FieldAdmin)
@@ -51,6 +53,7 @@ admin.site.register(ListRepresentation, ListRepresentationAdmin)
 admin.site.register(ObjectDetail)
 admin.site.register(VariantContext)
 admin.site.register(VariantContextAspectValue)
+admin.site.register(VariantContextArgumentValue)
 
 admin.site.register(CustomPostfix)
 admin.site.register(Table)

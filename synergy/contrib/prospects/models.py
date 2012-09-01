@@ -93,11 +93,8 @@ class Prospect(models.Model):
     def get_source(self):
         return self.source
 
-    def filter(self, **query):
-        return self._filter(**query)
-
-    def _filter(self, **query):
-        return self.get_source().filter(**self.sanitize_query(**query))
+    def filter(self, query, nulls):
+        return self.get_source().filter(self.sanitize_query(**query), nulls)
     
     def sanitize_query(self, **query):
         # the ids list of admissible aspects
@@ -139,27 +136,44 @@ class Source(models.Model):
     def get_model(self):
         return self.content_type.model_class()
 
-    def filter(self, **query):
+    def filter(self, aspects_query, nulls_query):
         # query is a python dictionary build as
         # {aspect_1: {'operator': 'exact', 'value': value},
         #  aspect_2: {'operator': 'exact', 'value': value},
         #  ....
         #  }
-        return self.all().filter(**dict(self.build_query(query)))
+        return self.all().filter(**dict(self.build_query(aspects_query))).filter(**dict(self.build_null_query(nulls_query)))
 
     def build_query(self, query):
         for aspect_id in query:
             yield (smart_str("%s__%s" % (self.aspects.get(id=aspect_id).attribute, query.get(aspect_id).get('lookup'))), query.get(aspect_id).get('value'))
 
+    
+    def build_null_query(self, query):
+        for null_state_id in query:
+            yield (smart_str("%s__isnull" % self.null_states.get(id=null_state_id).attribute), query.get(null_state_id).get('value'))
+
+
 class Context(models.Model):
     source = models.ForeignKey('Source', related_name="contexts")
     variant = models.ForeignKey('ProspectVariant', related_name="Variant")
-    value = models.SlugField(verbose_name="Value", help_text="Value to extract as flatted values_list")
+    value = models.SlugField(verbose_name="Value", help_text="Value to extract as flatted values_list from variant queryset")
     lookup = models.SlugField(verbose_name="Relation lookup", help_text="__in operator is used, provide here the model field" )
 
     class Meta:
         verbose_name = "Context"
         verbose_name_plural = "Contexts"
+
+class NullState(models.Model):
+    source = models.ForeignKey('Source', related_name="null_states")
+    attribute = models.SlugField(max_length=255, verbose_name="Field lookup")
+
+    is_required = models.BooleanField()
+    is_exposed = models.BooleanField(verbose_name="Expose this null state settings to the user?", default=True)
+    
+
+    def __unicode__(self):
+        return u'%s__%s__isnull' % (self.source.content_type.model, self.attribute)
 
 class Aspect(models.Model):
     LOOKUPS = (('exact', 'Exact'), ('iexact', 'Case-insensitive exact'), 
@@ -169,18 +183,18 @@ class Aspect(models.Model):
                ('gt', 'Greater then'), ('gte', 'Greater then or exact'), ('lt', 'Lower then'), ('lte', 'Lower then or exact'))
 
 
+    source = models.ForeignKey('Source', related_name="aspects")
     # Attribute is stored as a string (slug) in native Django
     # format used for query building, i.e. the valid forms are
     # 'first_name', 'personal_data__first_name', 'contact_data__personal_data__last_name'
     # The field type and related aspect features are then extracted with
     # models introspecting
     attribute = models.SlugField(max_length=255, verbose_name="Field lookup")
-    source = models.ForeignKey('Source', related_name="aspects")
 
     initial_lookup = models.CharField(max_length=15, verbose_name="Initial lookup", choices=LOOKUPS)
     is_lookup_switchable = models.BooleanField(default=True, verbose_name="Is lookup switchable")
     is_required = models.BooleanField()
-    is_exposed = models.BooleanField(verbose_name="Should this aspect settings be exposed to the user?", default=True)
+    is_exposed = models.BooleanField(verbose_name="Expose this aspect settings to the user?", default=True)
 
     weight = models.IntegerField(verbose_name="Aspect weight", default=0)
 
@@ -298,13 +312,18 @@ class ProspectVariant(models.Model):
 
         self.validate_query(user, **query)
 
+        # Update query with stored aspect values
         c = {}
         for aspect_value in self.aspect_values.filter(is_exposed=False):
-            c[str(aspect_value.aspect.id)] = {'lookup':aspect_value.lookup, 'value':  aspect_value.value}
-
+            c[str(aspect_value.aspect.id)] = {'lookup': aspect_value.lookup, 'value':  aspect_value.value}
         query.update(c)
 
-        data = self.prospect.filter(**query)        
+        # Update query with stored null state values
+        nulls = {}
+        for null_state_value in self.null_state_values.filter(is_exposed=False):
+            nulls[str(null_state_value.null_state.id)] = {'lookup': null_state_value.null_state.attribute, 'value':  null_state_value.value}
+
+        data = self.prospect.filter(query=query, nulls=nulls)
 
         for context in self.prospect.source.contexts.all():
             if context.variant.prospect.sanitize_query(**query):
@@ -343,14 +362,24 @@ class ProspectVariant(models.Model):
         unique_together = ('prospect', 'is_default')
 
 class AspectValue(models.Model):
-    aspect = models.ForeignKey('Aspect', related_name="variant_values")
     variant = models.ForeignKey('ProspectVariant', related_name="aspect_values")
+    aspect = models.ForeignKey('Aspect', related_name="variant_values")
     value = models.CharField(max_length=255, verbose_name="A value entered")
     lookup = models.CharField(max_length=255, verbose_name="Lookup")
     is_exposed = models.BooleanField(verbose_name="Should this aspect settings be exposed to the user?", default=False)
 
     class Meta:
         unique_together = (('variant', 'aspect'),)
+
+
+class NullStateValue(models.Model):
+    variant = models.ForeignKey('ProspectVariant', related_name="null_state_values")
+    null_state = models.ForeignKey('NullState', related_name="null_states_values lookup")
+    value = models.BooleanField(verbose_name="Null state value (check for True, uncheck for False)")
+    is_exposed = models.BooleanField(verbose_name="Should this state settings be exposed to the user?", default=False)
+
+    class Meta:
+        unique_together = (('variant', 'null_state'),)
 
 
 class VariantArgument(models.Model):
@@ -568,7 +597,7 @@ class ObjectDetail(models.Model):
 
     def get_context_data(self, obj, *args, **kwargs):
         
-        ctx = {'variant_contexts': dict((v_c, v_c.get_query(obj)) for v_c in self.variant_contexts.all())}
+        ctx = {'variant_contexts': dict((v_c, v_c.get_query(obj)) for v_c in self.variant_contexts.filter(view_mode='a'))}
 
         if self.postfix:
             postfix_value = "%s" % self.variant.name
@@ -616,9 +645,13 @@ class DetailMenu(models.Model):
 #    value_field = models.ForeignKey('Field')
     
 
+# VariantContext should be renamed to DetailContext
 class VariantContext(models.Model):
     object_detail = models.ForeignKey('prospects.ObjectDetail', related_name="variant_contexts")
     variant = models.ForeignKey('ProspectVariant')
+
+    VIEW_MODES= (('a', 'Attached to detail view (rendered in tabs)'), ('s', 'Stand alone view'))
+    view_mode = models.CharField(max_length=1, choices=VIEW_MODES, verbose_name="View mode")
 
     def __unicode__(self):
         return u"%s <- %s" % (self.object_detail, self.variant)
@@ -636,9 +669,30 @@ class VariantContextAspectValue(models.Model):
         return u"%s %s %s" % (self.variant_context, self.aspect, self.value_field)
 
     def clean(self):
-        if self.variant_context.variant.prospect != self.aspect.source.prospect:
+        if not self.variant_context.object_detail.variant == self.value_field.variant:
+            raise ValidationError('Variant context and value mismatch!')
+
+        if not self.variant_context.variant.prospect == self.aspect.source.prospect:
             raise ValidationError('Variant context and aspect prospects mismatch!')
+
+
+class VariantContextArgumentValue(models.Model):
+    variant_context = models.ForeignKey('VariantContext', related_name="argument_values")
+    argument = models.ForeignKey('VariantArgument')
+    value_field = models.ForeignKey('Field')
+
+    def __unicode__(self):
+        return u"%s %s %s" % (self.variant_context, self.argument, self.value_field)
+
+    def clean(self):
+        if not self.value_field.variant == self.variant_context.object_detail.variant:
+            raise ValidationError('Value field adn variant context mismatch!')
+
+        if not self.argument.variant == self.variant_context.variant:
+            raise ValidationError('Variant context and argument prospects mismatch!')
         
+    class Meta:
+        unique_together = (('argument', 'variant_context'),)
 
 #class ObjectDetailContext(models.Model):
 #    verbose_name = models.CharField(max_length=255, verbose_name="Verbose name")

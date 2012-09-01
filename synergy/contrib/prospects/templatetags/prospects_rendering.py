@@ -86,10 +86,6 @@ def table_row(parser, token):
 
 
 
-
-
-
-
 @register.filter
 def css_styles(column, value):
     styles = column.get_styles(value)
@@ -137,7 +133,7 @@ class VariantResultsNode(template.Node):
 
         context = {'table': variant.listrepresentation.representation,
                    'results': variant.filter(user, **query),
-                   'arguments':  {}
+                   'arguments':  context.get('arguments', {})
                    }
         return render_to_string(tpl, context)
 

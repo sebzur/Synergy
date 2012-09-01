@@ -178,7 +178,8 @@ class DetailView(ProspectMixin, RegionViewMixin, generic.DetailView):
         return get_model('prospects', 'ProspectVariant').objects.get(name=self.kwargs.get('variant'))
     
     def get_queryset(self):
-        return self.get_results(**self.get_query_dict())
+        return self.get_prospect().filter(self.get_query_dict(), {})
+        #return self.get_results(**self.get_query_dict())
 
     def get_query_dict(self):
         return {}
@@ -195,5 +196,39 @@ class DetailView(ProspectMixin, RegionViewMixin, generic.DetailView):
             ctx_operator(self.request, self.get_object(), ctx, *args, **kwargs)
         return ctx
 
+class DetailMixin(object):
+    def get_prospect_variant(self):
+        return get_model('prospects', 'ProspectVariant').objects.get(name=self.kwargs.get('variant'))
+    
+    def get_queryset(self):
+        return self.get_prospect().filter(query=self.get_query_dict(), nulls={})
+        #return self.get_results(**self.get_query_dict())
 
+    def get_query_dict(self):
+        return {}
 
+    def get_context_data(self, *args, **kwargs):
+        ctx = super(DetailMixin, self).get_context_data(*args, **kwargs)
+        ctx['objectdetail'] = self.get_prospect_variant().objectdetail
+        ctx['title'] = ctx['objectdetail'].get_title(self.get_object())
+        ctx['body'] = ctx['objectdetail'].get_body(self.get_object())
+        ctx['name'] = self.get_prospect_variant().name
+        ctx.update(self.get_prospect_variant().objectdetail.get_context_data(self.get_object(), *args, **kwargs))
+        ctx_operator = self.get_prospect_variant().objectdetail.context_operator
+        if ctx_operator:
+            ctx_operator(self.request, self.get_object(), ctx, *args, **kwargs)
+        return ctx
+
+class DetailContextView(ProspectMixin, RegionViewMixin, DetailMixin, generic.DetailView):
+
+    def get_detail_context(self):
+        return get_model('prospects', 'VariantContext').objects.get(variant__name=self.kwargs.get('context'), object_detail__variant__name=self.kwargs.get('variant'))
+
+    def get_context_data(self, *args, **kwargs):
+        ctx = super(DetailContextView, self).get_context_data(*args, **kwargs)
+        ctx['detail_context'] = self.get_detail_context()
+        ctx['query'] = ctx['detail_context'].get_query(self.object)
+
+        arg_values = dict((arg_val.argument.name, arg_val.value_field.get_value(self.object))  for arg_val in self.get_detail_context().argument_values.all())
+        ctx['arguments'] = arg_values
+        return ctx

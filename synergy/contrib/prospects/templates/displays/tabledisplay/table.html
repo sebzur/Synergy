@@ -4,6 +4,7 @@
 
 {% if results %}
 
+
 <table class="results-dable display" id="prospect-results">
   <thead>
     {% for column in table.columns.all %}
@@ -15,6 +16,7 @@
 
 
     {# {{ obj|tr:table }} #}
+
 
     {% table_row obj table arguments %}
 
