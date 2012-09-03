@@ -214,6 +214,9 @@ class DetailMixin(object):
         ctx['body'] = ctx['objectdetail'].get_body(self.get_object())
         ctx['name'] = self.get_prospect_variant().name
         ctx.update(self.get_prospect_variant().objectdetail.get_context_data(self.get_object(), *args, **kwargs))
+        ctx.update(self.get_representation().get_context_data(*args, **kwargs))
+
+
         ctx_operator = self.get_prospect_variant().objectdetail.context_operator
         if ctx_operator:
             ctx_operator(self.request, self.get_object(), ctx, *args, **kwargs)

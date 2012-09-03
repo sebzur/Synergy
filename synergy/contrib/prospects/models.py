@@ -136,13 +136,13 @@ class Source(models.Model):
     def get_model(self):
         return self.content_type.model_class()
 
-    def filter(self, aspects_query, nulls_query):
+    def filter(self, query, nulls):
         # query is a python dictionary build as
         # {aspect_1: {'operator': 'exact', 'value': value},
         #  aspect_2: {'operator': 'exact', 'value': value},
         #  ....
         #  }
-        return self.all().filter(**dict(self.build_query(aspects_query))).filter(**dict(self.build_null_query(nulls_query)))
+        return self.all().filter(**dict(self.build_query(query))).filter(**dict(self.build_null_query(nulls)))
 
     def build_query(self, query):
         for aspect_id in query:
