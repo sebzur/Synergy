@@ -1,5 +1,7 @@
 {% load menu_tags %}
 
 {% for menu in variant.menus.all %}
+{% if menu.is_enabled %}
 {% menu menu.menu.name user=user %} 
+{% endif %}
 {% endfor %}
