@@ -77,7 +77,7 @@ class ProspectMixin(object):
 class ListView(ProspectMixin, RegionViewMixin, generic.FormView):
 
     def get_form_class(self):
-        return prospectform_factory(self.get_prospect(), self.kwargs.get('variant'))
+        return prospectform_factory(self.request, self.get_prospect(), self.kwargs.get('variant'))
 
     def get_form_kwargs(self, *args, **kwargs):
         kwargs = super(ListView, self).get_form_kwargs(*args, **kwargs)

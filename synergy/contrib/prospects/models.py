@@ -199,7 +199,7 @@ class Aspect(models.Model):
     weight = models.IntegerField(verbose_name="Aspect weight", default=0)
 
     def __unicode__(self):
-        return u"%s (%s)" % (self.attribute, self.source.prospect.name)
+        return u"%s (%s)" % (self.source.prospect.verbose_name, self.attribute)
 
     def get_field(self):
         chain = self.attribute.split('__')
@@ -270,7 +270,7 @@ class Aspect(models.Model):
             raise ValidationError('Invalid initial lookup! Proper choices: %s' % proper)
 
     class Meta:
-        ordering = ('weight', )
+        ordering = ('weight', 'source__prospect__name')
         unique_together = (('attribute', 'source'),)
 
 
@@ -359,6 +359,7 @@ class ProspectVariant(models.Model):
         return self.verbose_name
     
     class Meta:
+        ordering = ('verbose_name', )
         unique_together = ('prospect', 'is_default')
 
 class AspectValue(models.Model):
@@ -367,6 +368,29 @@ class AspectValue(models.Model):
     value = models.CharField(max_length=255, verbose_name="A value entered")
     lookup = models.CharField(max_length=255, verbose_name="Lookup")
     is_exposed = models.BooleanField(verbose_name="Should this aspect settings be exposed to the user?", default=False)
+
+    class Meta:
+        unique_together = (('variant', 'aspect'),)
+
+class AspectValueChoices(models.Model):
+    variant = models.ForeignKey('ProspectVariant', related_name="aspect_choices", verbose_name="Variant")
+    aspect = models.ForeignKey('Aspect', related_name="choices", verbose_name="Aspect")
+    value_field = models.ForeignKey('Field', related_name="aspect_choices", verbose_name="Choices source", help_text="What field will be used to build allowed choices")
+    VALUES = (('i', 'Field value `id` attribute'), ('v', 'Field value'), ('s', 'Source object `id` attribute'))
+    id_mapper = models.CharField(max_length=1, choices=VALUES, help_text="While field value is used as choice verbose name, what is the identifier of the choice")
+
+    def get_choices(self, user, query={}):
+        mappers = {'i': lambda x: self.value_field.get_value(x).id,
+                  'v': lambda x: self.value_field.get_value(x),
+                  's': lambda x: x.id,}
+        id_mapper = mappers[self.id_mapper]
+        value_mapper = mappers['v']
+        
+        return map(lambda x: (id_mapper(x), value_mapper(x)), self.value_field.variant.filter(user, **query))
+
+    def clean(self):
+        if self.variant.prospect.source != self.aspect.source:
+            raise ValidationError('Variant and aspect mismatch!')
 
     class Meta:
         unique_together = (('variant', 'aspect'),)
@@ -459,7 +483,7 @@ class Field(models.Model):
     rewrite_as = models.CharField(max_length=255, verbose_name="Rewrite the output of this field", help_text="If checked, you can alter the output of this field by specifying a string of text with replacement tokens that can use any existing field output.", blank=True)
     
     class Meta:
-        ordering = ('variant', 'weight')
+        ordering = ('variant__name', 'weight')
         
 
     def get_field_object(self):
@@ -550,7 +574,7 @@ class Field(models.Model):
         return resolve_lookup(obj, lookup)
 
     def __unicode__(self):
-        return u"%s::%s (%s)" % (self.db_field, self.lookup, self.variant.name)
+        return u"%s: %s %s" % (self.variant.verbose_name, self.db_field, self.lookup, )
     
 class FieldURL(models.Model):
     field = models.OneToOneField('Field', related_name='field_url')

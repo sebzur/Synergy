@@ -21,7 +21,7 @@ def split_field_name(field_name):
 def build_field_name(prefix, aspect_hash):
     return "%s__%s" % (prefix, aspect_hash)
 
-def get_fields(prospect, variant):
+def get_fields(request, prospect, variant):
     fields = SortedDict()
     source = prospect.get_source()
 
@@ -34,6 +34,15 @@ def get_fields(prospect, variant):
         lookup_field_name = build_field_name("lookup", aspect_hash)
         fields[aspect_field_name] = aspect.get_formfield()
         fields[lookup_field_name] = forms.ChoiceField(choices=aspect.get_lookups())
+
+        
+        # choices
+        try:
+            fields[aspect_field_name].choices = aspect.choices.get(variant__name=variant).get_choices(request)
+            fields[aspect_field_name].choices.insert(0, ('','---------------'))
+        except get_model('prospects','AspectValueChoices').DoesNotExist:
+            pass
+        
 
         fields[lookup_field_name].initial = aspect.initial_lookup
         if not aspect.is_lookup_switchable:
@@ -114,8 +123,8 @@ def build_query(data):
     query = dict([(get_hash_property(hash, 'id'),  {'lookup': data.get(build_field_name("lookup", hash)), 'value': data.get(build_field_name("aspect", hash))}) for hash in aspect_hashes])
     return query
 
-def prospectform_factory(prospect, variant):
-    fields = get_fields(prospect, variant)
+def prospectform_factory(request, prospect, variant):
+    fields = get_fields(request, prospect, variant)
     contexts = {}
     for context in prospect.source.contexts.all():
         contexts[context] = prospectform_factory(context.variant.prospect, context.variant.name)

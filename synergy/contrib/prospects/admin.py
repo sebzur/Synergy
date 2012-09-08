@@ -40,6 +40,7 @@ admin.site.register(NullState)
 
 admin.site.register(ProspectVariant)
 admin.site.register(AspectValue)
+admin.site.register(AspectValueChoices)
 admin.site.register(NullStateValue)
 admin.site.register(UserRelation)
 
