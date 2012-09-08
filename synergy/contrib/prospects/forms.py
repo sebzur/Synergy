@@ -38,7 +38,7 @@ def get_fields(request, prospect, variant):
         
         # choices
         try:
-            fields[aspect_field_name].choices = aspect.choices.get(variant__name=variant).get_choices(request)
+            fields[aspect_field_name].choices = aspect.choices.get(variant__name=variant).get_choices(request.user)
             fields[aspect_field_name].choices.insert(0, ('','---------------'))
         except get_model('prospects','AspectValueChoices').DoesNotExist:
             pass
