@@ -94,7 +94,7 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
 
             for related_model in related_models:
                 self.external[related_model] = []
-                instances = related_model.model.model_class().objects.filter(**{smart_str(related_model.setup.model.model): self.instance})
+                instances = related_model.model.model_class().objects.filter(**{smart_str(related_model.rel_id_field): self.instance.id})
                 for i in range(related_model.get_max_count()):
                     ins = None
                     if not self.instance.pk is None:
@@ -105,7 +105,7 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                     prefix="%s_%d" % (related_model.model.model, i)
                     empty_permitted = related_model.min_count is None or i >= related_model.min_count
                     df = createform_factory(related_model.model.model_class(), [], [], use_model_m2m_fields, 
-                                            excluded_fields=[self._meta.model._meta.object_name.lower()],
+                                            excluded_fields=[related_model.rel_id_field, related_model.rel_model_field],
                                             can_delete=True,)(instance=ins, prefix=prefix, empty_permitted=empty_permitted, *args, **kwargs)
                     self.external[related_model].append(df)
 
@@ -187,8 +187,14 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
 
             super(CreateBaseForm, self)._post_clean() # this gives us the self.instance update
 
-            for ex in itertools.chain(*self.external.values()): # loops over fk related forms
-                setattr(ex.instance, self._meta.model._meta.object_name.lower(), self.instance)
+            #for ex in itertools.chain(*self.external.values()): # loops over fk related forms
+            #    setattr(ex.instance, self._meta.model._meta.object_name.lower(), self.instance)
+
+            for related_model, related_forms in self.external.iteritems():
+                for f in related_forms:                
+                    setattr(f.instance, related_model.rel_id_field, self.instance.id)
+                    if related_model.rel_model_field:
+                        setattr(f.instance, related_model.rel_model_field, get_model('contenttypes','contenttype').objects.get_for_model(self.instance))
 
             try:
                 # Check if the proper number of forms is filled 
@@ -225,16 +231,21 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
         def save(self, *args, **kwargs):
             self.instance = super(CreateBaseForm, self).save(*args, **kwargs)
 
-            for f in itertools.chain(*self.external.values()):
-                if f.to_update() or f.to_insert():
-                    # probably we shuld assign self.instance here and then simply
-                    # save with commit = True, or an option is to 
-                    # use _post_clean internal ModelForm method hook
-                    ins = f.save(commit=False)
-                    setattr(ins, self._meta.model._meta.object_name.lower(), self.instance)
-                    ins.save()
-                elif f.to_delete():
-                    f.instance.delete()
+#            for f in itertools.chain(*self.external.values()):
+
+            for related_model, related_forms in self.external.iteritems():
+                for f in related_forms:                
+                    if f.to_update() or f.to_insert():
+                        # probably we shuld assign self.instance here and then simply
+                        # save with commit = True, or an option is to 
+                        # use _post_clean internal ModelForm method hook
+                        ins = f.save(commit=False)
+                        setattr(ins, related_model.rel_id_field, self.instance.id)
+                        if related_model.rel_model_field:
+                            setattr(ins, related_model.rel_model_field, get_model('contenttypes','contenttype').objects.get_for_model(self.instance))
+                        ins.save()
+                    elif f.to_delete():
+                        f.instance.delete()
 
             for f in itertools.chain(*self.external_m2m.values()):
                 if f.to_update() or f.to_insert():

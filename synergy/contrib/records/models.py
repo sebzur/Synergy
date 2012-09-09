@@ -157,6 +157,7 @@ class RecordArgument(models.Model):
 class RecordField(models.Model):
     setup = models.ForeignKey('RecordSetup', related_name="fields")
     field = models.SlugField() # this shuld be renamed to `name`
+    
     default_value = models.CharField(max_length=255, blank=True)
     is_hidden = models.BooleanField(default=False)
 
@@ -222,6 +223,9 @@ class M2MChoicesSetup(models.Model):
 class O2MRelationSetup(models.Model):
     setup = models.ForeignKey(RecordSetup, related_name="related_o2m_models")
     model = models.ForeignKey(ContentType, related_name="o2m_setups")
+
+    rel_id_field = models.CharField(max_length=50, verbose_name="Related content ID field", help_text="Name of the field that stores id of the related content")
+    rel_model_field = models.CharField(max_length=50, verbose_name="Related content model field", help_text="Name of the field that stores model of the related content. Use this for generic relations with ContentTypes", blank=True)
 
     min_count = models.PositiveSmallIntegerField(null=True, blank=True)
     max_count = models.PositiveSmallIntegerField(null=True, blank=True)
