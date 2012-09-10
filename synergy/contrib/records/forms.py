@@ -94,7 +94,7 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
 
             for related_model in related_models:
                 self.external[related_model] = []
-                instances = related_model.model.model_class().objects.filter(**{smart_str(related_model.rel_id_field): self.instance.id})
+                instances = related_model.model.model_class().objects.filter(**{smart_str(related_model.get_rel_id_field()): self.instance.id})
                 for i in range(related_model.get_max_count()):
                     ins = None
                     if not self.instance.pk is None:
@@ -105,7 +105,7 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                     prefix="%s_%d" % (related_model.model.model, i)
                     empty_permitted = related_model.min_count is None or i >= related_model.min_count
                     df = createform_factory(related_model.model.model_class(), [], [], use_model_m2m_fields, 
-                                            excluded_fields=[related_model.rel_id_field, related_model.rel_model_field],
+                                            excluded_fields=[related_model.get_rel_field_name(), related_model.get_rel_ct_field_name()],
                                             can_delete=True,)(instance=ins, prefix=prefix, empty_permitted=empty_permitted, *args, **kwargs)
                     self.external[related_model].append(df)
 
@@ -192,9 +192,10 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
 
             for related_model, related_forms in self.external.iteritems():
                 for f in related_forms:                
-                    setattr(f.instance, related_model.rel_id_field, self.instance.id)
-                    if related_model.rel_model_field:
-                        setattr(f.instance, related_model.rel_model_field, get_model('contenttypes','contenttype').objects.get_for_model(self.instance))
+#                    if related_model.rel_type == 'g':
+#                        filter(lambda x: x.name == related_model.rel_field_name, f.instance._meta.virtual_fields)[0]
+                    setattr(f.instance, related_model.rel_field_name, self.instance)
+
 
             try:
                 # Check if the proper number of forms is filled 
@@ -240,9 +241,9 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                         # save with commit = True, or an option is to 
                         # use _post_clean internal ModelForm method hook
                         ins = f.save(commit=False)
-                        setattr(ins, related_model.rel_id_field, self.instance.id)
-                        if related_model.rel_model_field:
-                            setattr(ins, related_model.rel_model_field, get_model('contenttypes','contenttype').objects.get_for_model(self.instance))
+                        setattr(ins, related_model.get_rel_id_field(), self.instance.id)
+                        if related_model.get_rel_ct_field_name():
+                            setattr(ins, related_model.get_rel_ct_field_name(), get_model('contenttypes','contenttype').objects.get_for_model(self.instance))
                         ins.save()
                     elif f.to_delete():
                         f.instance.delete()

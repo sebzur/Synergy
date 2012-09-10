@@ -17,12 +17,17 @@
 }
 
 ul.errorlist{
-    background-color: #F2ABAA;
+    background-color: #FFE6E6;
+    border: 1px solid #C4302B;
     color: #000000;
+
 }
 
 ul.errorlist li{
     padding:3px 0px 3px 0px; 
+    background-color: #FFE6E6;
+    font-weight: bold;
+    width: 100%;
 }
 
 

@@ -224,14 +224,40 @@ class O2MRelationSetup(models.Model):
     setup = models.ForeignKey(RecordSetup, related_name="related_o2m_models")
     model = models.ForeignKey(ContentType, related_name="o2m_setups")
 
-    rel_id_field = models.CharField(max_length=50, verbose_name="Related content ID field", help_text="Name of the field that stores id of the related content")
-    rel_model_field = models.CharField(max_length=50, verbose_name="Related content model field", help_text="Name of the field that stores model of the related content. Use this for generic relations with ContentTypes", blank=True)
+    rel_field_name = models.CharField(max_length=50, verbose_name="Related content FK field", help_text="Name of the field that stores related object")
+    FK_TYPES = (('f', 'Standard ForeignKey'), ('g', 'Generic relation (with CT)'), ('r', 'Raw related instance ID'))
+    rel_type = models.CharField(max_length=1, choices=FK_TYPES, default='f')
+
 
     min_count = models.PositiveSmallIntegerField(null=True, blank=True)
     max_count = models.PositiveSmallIntegerField(null=True, blank=True)
 
     def __unicode__(self):
         return u"%s <- %s" % (self.setup, self.model)
+
+
+    def get_rel_field(self):
+        if self.rel_type == 'g':
+            return filter(lambda x: x.name == self.rel_field_name, self.model.model_class()._meta.virtual_fields)[0]
+        return self.model._meta.get_field(self.rel_field_name)
+
+
+    def get_rel_field_name(self):
+        if self.rel_type == 'g':
+            return self.get_rel_field().fk_field
+        return self.rel_field_name
+
+    def get_rel_ct_field_name(self):
+        if self.rel_type == 'g':
+            return self.get_rel_field().ct_field
+        return None
+    
+    def get_rel_id_field(self):
+        if self.rel_type == 'g':
+            return self.get_rel_field().fk_field
+        if self.rel_type == 'f':
+            return "%s_id" % self.rel_field_name
+        return self.rel_field_name
 
     def get_max_count(self):
         return self.max_count or 1
