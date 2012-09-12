@@ -5,85 +5,12 @@
   {{ variant.header|linebreaks|default:"To get the results fill in the form fields and submit the query. The results will be listed below the form." }}
 </p>
 
-<form action="." method="POST">
-
-  <table id="prospect-form-table">
-    <thead>
-      {% for field in form.get_aspect_fields %}
-      <th class="ui-state-default">{{ field.label_tag }}</th>
-      {% endfor %}
-    </thead>
-  <tr>
-    {% for field in form.get_aspect_fields %}
-    <td>{{ field.errors }}</td>
-    {% endfor %}
-  </tr>
-  <tr>
-    {% for field in form.get_aspect_fields %}
-  <td>{{ field }}</td>
-  {% endfor %}
-  </tr>    
-
-  <tr>
-    {% for field in form.get_lookup_fields %}
-  <td>{{ field }}</td>
-  {% endfor %}
-  </tr>    
-  </table>
-
-
-{% for context, context_form in form.contexts.iteritems %}
-
-<fieldset>
-  <legend>{{ context.variant.verbose_name }}</legend>
-
-  <table id="prospect-form-table">
-    <thead>
-      {% for field in context_form.get_aspect_fields %}
-      <th class="ui-state-default">{{ field.label_tag }}</th>
-      {% endfor %}
-    </thead>
-  <tr>
-    {% for field in context_form.get_aspect_fields %}
-    <td>{{ field.errors }}</td>
-    {% endfor %}
-  </tr>
-  <tr>
-    {% for field in context_form.get_aspect_fields %}
-  <td>{{ field }}</td>
-  {% endfor %}
-  </tr>    
-
-  <tr>
-    {% for field in context_form.get_lookup_fields %}
-  <td>{{ field }}</td>
-  {% endfor %}
-  </tr>    
-  </table>
-</fieldset>
-
-{% endfor %}
-
-
-
-{% csrf_token %}
-<p>
-  <input id="prospect-form-submit" type="submit" value="{{ variant.submit_label|default:"Submit" }}" />
-</p>
-</form>
+{% if form.fields %}
+{% include 'synergy/contrib/prospects/views/aspect_form.html' %}
+{% endif %}
 
 <div id="results">
   {% region prospect %}
-  <h3>Wyniki wyszukiwania</h3>
-  {% if results %}
-  {% for source, results in results.iteritems %}
-    {% for obj in results %}
-       {{ obj|teaser }}
-    {% endfor %}
-  {% endfor %}
-  {% else %}
-    Dla zapytania nie zwrócono żadnych wyników. Użyto albo zbyt ostrych kryteriów wyszukiwania, albo zapytanie wyszukujące nie zostało zgłoszone.
-  {% endif %}
   {% endregion %}
 </div>
 

@@ -131,10 +131,16 @@ class VariantResultsNode(template.Node):
         
         tpl = 'displays/tabledisplay/table.html'
 
+        try:
+            results = variant.filter(user, **query)
+        except:
+            results = None
+
         context = {'table': variant.listrepresentation.representation,
-                   'results': variant.filter(user, **query),
+                   'results': results,
                    'arguments':  context.get('arguments', {})
                    }
+
         return render_to_string(tpl, context)
 
 

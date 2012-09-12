@@ -29,8 +29,11 @@
 </div>
 {% endif %}
 
+{% if form.fields %}
+{% include 'synergy/contrib/prospects/views/aspect_form.html' %}
+{% endif %}
 
-{% render_results detail_context.variant request.user query %}
+{% render_results detail_context.variant request.user query %}  
 
 {% endregion %}
 
