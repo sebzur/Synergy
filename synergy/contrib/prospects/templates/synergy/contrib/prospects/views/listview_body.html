@@ -1,21 +1,6 @@
 {% load prospects_rendering %}
 {% load synergy_region %}
 
-<p>
-  {{ variant.header|linebreaks|default:"To get the results fill in the form fields and submit the query. The results will be listed below the form." }}
-</p>
+{#{% include 'synergy/contrib/prospects/views/variant.html' %}#}
 
-{% if form.fields %}
-{% include 'synergy/contrib/prospects/views/aspect_form.html' %}
-{% endif %}
-
-<div id="results">
-  {% region prospect %}
-  {% endregion %}
-</div>
-
-{% if variant.footer %}
-<p>
-  {{ variant.footer|linebreaks }}
-</p>
-{% endif %}
+{% render_results variant request.user query %} 

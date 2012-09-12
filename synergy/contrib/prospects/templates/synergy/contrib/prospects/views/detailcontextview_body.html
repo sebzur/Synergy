@@ -22,18 +22,15 @@
 <div class="clearfix">
 </div>
 
-
 {% if body %}
 <div style="margin-top: 10px;">
 {{ body }}
 </div>
 {% endif %}
 
-{% if form.fields %}
-{% include 'synergy/contrib/prospects/views/aspect_form.html' %}
-{% endif %}
+{# {% include 'synergy/contrib/prospects/views/variant.html' %} #}
 
-{% render_results detail_context.variant request.user query %}  
+{% render_results variant request.user query %} 
 
 {% endregion %}
 

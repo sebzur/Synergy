@@ -3,8 +3,8 @@ table{
     margin: 5px 0px 5px 0px;
 }
 
-table tr.even{
-    background-color: #F2EBDC;
+table tr.odd{
+    background-color: #E2E4FF;
 }
 
 table thead{

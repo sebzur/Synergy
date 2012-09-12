@@ -677,11 +677,17 @@ class VariantContext(models.Model):
     VIEW_MODES= (('a', 'Attached to detail view (rendered in tabs)'), ('s', 'Stand alone view'))
     view_mode = models.CharField(max_length=1, choices=VIEW_MODES, verbose_name="View mode")
 
+    weight = models.IntegerField(verbose_name="Weight")
+
     def __unicode__(self):
         return u"%s <- %s" % (self.object_detail, self.variant)
 
     def get_query(self, obj):
         return dict([(str(aspect_value.aspect.id), {'lookup': aspect_value.lookup, 'value': aspect_value.value_field.get_value(obj)}) for aspect_value in self.aspect_values.all()])
+
+    class Meta:
+        ordering = ('weight',)
+
 
 class VariantContextAspectValue(models.Model):
     variant_context = models.ForeignKey('VariantContext', related_name="aspect_values")
@@ -750,7 +756,10 @@ class RepresentationModel(models.Model):
 
     def get_context_data(self, *args, **kwargs):
         # Every display can add something to the context
-        return {}
+        ctx = {'region_postfixes': {'prospect': self.get_prospect_postfix()}}
+        if self.get_posthead_postfix():
+            ctx['region_postfixes']['posthead'] = self.get_posthead_postfix()
+        return ctx
 
     def get_variant(self):
         return self.variant.get().variant
@@ -768,19 +777,23 @@ class CustomPostfix(RepresentationModel):
     postfix = models.SlugField(max_length=255, verbose_name="Postfix value")
     use_posthead = models.BooleanField(verbose_name="Is template using posthead entries?")
 
-    def get_context_data(self, *args, **kwargs):
-        postfixes = {'prospect': self.postfix,}
+    def get_prospect_postfix(self):
+        return self.postfix
+    
+    def get_posthead_postfix(self):
         if self.use_posthead:
-            postfixes['posthead'] = self.postfix
-        return {'region_postfixes': postfixes}
+            return self.postfix
 
 
 class Table(RepresentationModel):
 
-    def get_context_data(self, *args, **kwargs):
-        postfixes = {'prospect': 'tabledisplay'}
-        postfixes['posthead'] = 'tabledisplay'
-        return {'region_postfixes': postfixes}
+    def get_prospect_postfix(self):
+        return 'tabledisplay'
+    
+    def get_posthead_postfix(self):
+        return self.get_prospect_postfix()
+
+
 
 class Column(models.Model):
     ACTIONS = (('a', 'Field empty label'), ('b', 'Value without link (if link is provided'))
@@ -854,7 +867,7 @@ class CellStyle(models.Model):
         ordering = ('weight',)
 
 
-class Calendar(models.Model):
+class Calendar(RepresentationModel):
     start_date_field = models.ForeignKey('Field', help_text="Event start, this should be date or datetime field", related_name="calendar_start_dates")
     start_time_field = models.ForeignKey('Field', help_text="Event start, this should be date or datetime field", related_name="calendar_start_times", null=True, blank=True)
     stop_date_field = models.ForeignKey('Field', null=True, blank=True, help_text="Event stop, this should be date or datetime field", related_name="calendar_stop_dates")
@@ -886,10 +899,12 @@ class Calendar(models.Model):
             return self.get_title(obj).get('url')
         return None
 
-    def get_context_data(self, *args, **kwargs):
-        postfixes = {'prospect': 'calendardisplay'}
-        postfixes['posthead'] = 'calendardisplay'
-        return {'region_postfixes': postfixes}
+    def get_prospect_postfix(self):
+        return 'calendardisplay'
+    
+    def get_posthead_postfix(self):
+        return self.get_prospect_postfix()
+
 
     class Meta:
         verbose_name = "Calendar"

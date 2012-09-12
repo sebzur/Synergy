@@ -128,20 +128,22 @@ class VariantResultsNode(template.Node):
         variant = self.variant.resolve(context)
         query = self.query.resolve(context)
         user = self.query.resolve(context)
-        
-        tpl = 'displays/tabledisplay/table.html'
 
         try:
             results = variant.filter(user, **query)
         except:
             results = None
 
-        context = {'table': variant.listrepresentation.representation,
-                   'results': results,
-                   'arguments':  context.get('arguments', {})
-                   }
+        ctx = context
+        ctx['results'] = results
 
-        return render_to_string(tpl, context)
+        repr_obj = variant.listrepresentation.representation
+        ctx[repr_obj._meta.object_name.lower()] = repr_obj
+        ctx.update(repr_obj.get_context_data())
+
+        tpl = 'synergy/contrib/prospects/views/variant.html'
+
+        return render_to_string(tpl, ctx)
 
 
 @register.tag
@@ -153,7 +155,6 @@ def render_results(parser, token):
     except ValueError:
         raise template.TemplateSyntaxError("%r tag requires arguments" % token.contents.split()[0])
     return VariantResultsNode(variant, user, query)
-
 
 
 @register.filter(name='as_record')
