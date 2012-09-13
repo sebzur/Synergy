@@ -127,11 +127,11 @@ class VariantResultsNode(template.Node):
     def render(self, context):
         variant = self.variant.resolve(context)
         query = self.query.resolve(context)
-        user = self.query.resolve(context)
+        user = self.user.resolve(context)
 
         try:
             results = variant.filter(user, **query)
-        except:
+        except Exception, error:
             results = None
 
         ctx = context

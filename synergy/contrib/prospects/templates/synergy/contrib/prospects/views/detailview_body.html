@@ -39,7 +39,7 @@
 
   {% for variant_context, query in variant_contexts.iteritems %}
   <div id="tabs-{{ variant_context.id }}">
-    {% render_results variant_context.variant request.user query %}
+    {% render_results variant_context.variant user query %}
   </div>
   {% endfor %}
 </div>
