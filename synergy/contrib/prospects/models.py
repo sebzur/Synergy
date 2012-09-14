@@ -683,6 +683,8 @@ class VariantContext(models.Model):
         return u"%s <- %s" % (self.object_detail, self.variant)
 
     def get_query(self, obj):
+        print self.aspect_values.all()
+        print dict([(str(aspect_value.aspect.id), {'lookup': aspect_value.lookup, 'value': aspect_value.value_field.get_value(obj)}) for aspect_value in self.aspect_values.all()])
         return dict([(str(aspect_value.aspect.id), {'lookup': aspect_value.lookup, 'value': aspect_value.value_field.get_value(obj)}) for aspect_value in self.aspect_values.all()])
 
     class Meta:

@@ -72,9 +72,6 @@ class ProspectMixin(object):
         ctx['encoded'] = urllib.urlencode(self.get_query_dict())
         ctx['query'] = build_query(self.get_query_dict())
 
-        repr_obj = self.get_representation()
-        ctx[repr_obj._meta.object_name.lower()] = repr_obj
-        ctx.update(self.get_representation().get_context_data(*args, **kwargs))
 
         return ctx
 
@@ -118,6 +115,14 @@ class AspectFormMixin(generic.FormView):
         return HttpResponseRedirect("%s?%s" % (self.get_success_url(), encoded))
 
 class ListView(ProspectMixin, RegionViewMixin, AspectFormMixin):
+
+
+    def get_context_data(self, *args, **kwargs):
+        ctx = super(ListView, self).get_context_data(*args, **kwargs)
+        repr_obj = self.get_representation()
+        ctx[repr_obj._meta.object_name.lower()] = repr_obj
+        ctx.update(self.get_representation().get_context_data(*args, **kwargs))
+        return ctx
 
     def get_arguments(self):
         return self.kwargs

@@ -255,8 +255,6 @@ class O2MRelationSetup(models.Model):
     def get_rel_id_field(self):
         if self.rel_type == 'g':
             return self.get_rel_field().fk_field
-        if self.rel_type == 'f':
-            return "%s_id" % self.rel_field_name
         return self.rel_field_name
 
     def get_max_count(self):
