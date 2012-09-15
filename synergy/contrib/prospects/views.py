@@ -33,7 +33,7 @@ class ProspectMixin(object):
         variant = get_model('prospects', 'ProspectVariant').objects.get(name=kwargs.get(self.get_arguments_url_kwarg()))
         expressions = []
 
-        for argument in variant.arguments.all():
+        for argument in self.get_variant_arguments(**kwargs):
             expressions.append("(?P<%s>%s)" % (argument.name, argument.regex))
         regex = "/".join(expressions)
         path = kwargs.get('arguments')
@@ -53,7 +53,10 @@ class ProspectMixin(object):
             return match.groupdict()
 
     def get_prospect_variant(self):
-        return get_model('prospects', 'ProspectVariant').objects.get(name=self.kwargs.get('variant'))
+        return self._get_prospect_variant(**self.kwargs)
+
+    def _get_prospect_variant(self, **kwargs):
+        return get_model('prospects', 'ProspectVariant').objects.get(name=kwargs.get('variant'))
 
     def get_representation(self):
         return self.get_prospect_variant().listrepresentation.representation
@@ -122,6 +125,9 @@ class ListView(ProspectMixin, RegionViewMixin, AspectFormMixin):
     def get_arguments_url_kwarg(self):
         return 'variant'
 
+    def get_variant_arguments(self, **kwargs):
+        return self._get_prospect_variant(**kwargs).arguments.all()
+
     def get_context_data(self, *args, **kwargs):
         ctx = super(ListView, self).get_context_data(*args, **kwargs)
         repr_obj = self.get_representation()
@@ -138,8 +144,17 @@ class ListView(ProspectMixin, RegionViewMixin, AspectFormMixin):
 
 class DetailContextView(ProspectMixin, RegionViewMixin, AspectFormMixin, generic.detail.SingleObjectMixin):
 
-    def get_arguments_url_kwarg(self):
+    def get_arguments_url_kwarg(self, **kwargs):
         return 'context'
+
+    def get_variant_arguments(self, **kwargs):
+        ids = self._get_variant_context(**kwargs).argument_values.all().values_list('argument', flat=True)
+        return self._get_prospect_variant(**kwargs).arguments.exclude(id__in=ids)
+
+    def get_arguments(self):
+        arguments = self.kwargs.copy()
+        arguments.update(dict((smart_str(arg_val.argument.name), arg_val.value_field.get_value(self.get_object()))  for arg_val in self.get_variant_context().argument_values.all()))
+        return arguments
 
     def get_success_url(self):
         return reverse('context', args=[self.kwargs.get('variant'),self.kwargs.get('pk'),self.kwargs.get('context')])
@@ -149,10 +164,17 @@ class DetailContextView(ProspectMixin, RegionViewMixin, AspectFormMixin, generic
         return super(DetailContextView, self).get(request, **kwargs)
 
     def get_variant_context(self):
-        return get_model('prospects', 'VariantContext').objects.get(variant__name=self.kwargs.get('context'), object_detail__variant__name=self.kwargs.get('variant'))
+        # this is required, when the view sefl.kwargs has not been already initialized
+        return self._get_variant_context(**self.kwargs)
 
     def get_prospect_variant(self):
         return self.get_variant_context().variant
+
+    def _get_variant_context(self, **kwargs):
+        return get_model('prospects', 'VariantContext').objects.get(variant__name=kwargs.get('context'), object_detail__variant__name=kwargs.get('variant'))
+
+    def _get_prospect_variant(self, **kwargs):
+        return self._get_variant_context(**kwargs).variant
 
     def get_object_detail(self):
         return get_model('prospects', 'ProspectVariant').objects.get(name=self.kwargs.get('variant')).objectdetail
@@ -160,10 +182,6 @@ class DetailContextView(ProspectMixin, RegionViewMixin, AspectFormMixin, generic
     def get_queryset(self):
         return self.get_object_detail().variant.prospect.source.all()
 
-    def get_arguments(self):
-        arguments = self.kwargs.copy()
-        arguments.update(dict((smart_str(arg_val.argument.name), arg_val.value_field.get_value(self.get_object()))  for arg_val in self.get_variant_context().argument_values.all()))
-        return arguments
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(DetailContextView, self).get_context_data(*args, **kwargs)
