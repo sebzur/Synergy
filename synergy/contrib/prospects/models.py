@@ -10,6 +10,7 @@ from django.utils.encoding import smart_str
 
 from django.core.exceptions import ValidationError
 from django import template
+from django.utils.datastructures import SortedDict
 
 def get_field(model, attribute):
     chain = attribute.split('__')
@@ -480,11 +481,10 @@ class Field(models.Model):
     default_text = models.CharField(max_length=255, verbose_name="If value evaluates to False, display this text instead", blank=True)
     default_if_none_text = models.CharField(max_length=255, verbose_name="If the field is None, display this text instead", blank=True)
     # The field output can be rewriten. The synatx is: %(token)s where token is a valid replacement string.
-    rewrite_as = models.CharField(max_length=255, verbose_name="Rewrite the output of this field", help_text="If checked, you can alter the output of this field by specifying a string of text with replacement tokens that can use any existing field output.", blank=True)
+    rewrite_as = models.TextField(verbose_name="Rewrite the output of this field", help_text="If checked, you can alter the output of this field by specifying a string of text with replacement tokens that can use any existing field output.", blank=True)
     
     class Meta:
-        ordering = ('variant__name', 'weight')
-        
+        ordering = ('variant__verbose_name', 'weight')
 
     def get_field_object(self):
         if not hasattr(self, '_field_obj'):
@@ -619,10 +619,11 @@ class ObjectDetail(models.Model):
     def __unicode__(self):
         return self.variant.name
 
-    def get_context_data(self, obj, *args, **kwargs):
-        
-        ctx = {'variant_contexts': dict((v_c, v_c.get_query(obj)) for v_c in self.variant_contexts.filter(view_mode='a'))}
+    def get_variant_contexts(self):
+        return self.variant_contexts.filter(view_mode='a')
 
+    def get_context_data(self, obj, *args, **kwargs):
+        ctx = {'variant_contexts': SortedDict((v_c, v_c.get_query(obj)) for v_c in self.get_variant_contexts())}
         if self.postfix:
             postfix_value = "%s" % self.variant.name
             postfixes = {'objectdetail': postfix_value}
@@ -683,8 +684,6 @@ class VariantContext(models.Model):
         return u"%s <- %s" % (self.object_detail, self.variant)
 
     def get_query(self, obj):
-        print self.aspect_values.all()
-        print dict([(str(aspect_value.aspect.id), {'lookup': aspect_value.lookup, 'value': aspect_value.value_field.get_value(obj)}) for aspect_value in self.aspect_values.all()])
         return dict([(str(aspect_value.aspect.id), {'lookup': aspect_value.lookup, 'value': aspect_value.value_field.get_value(obj)}) for aspect_value in self.aspect_values.all()])
 
     class Meta:

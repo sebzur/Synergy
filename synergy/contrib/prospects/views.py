@@ -19,18 +19,20 @@ from django.utils.encoding import smart_str
 
 import re
 
-
 from djangorestframework.views import View
 from djangorestframework import status, permissions
 
 import urllib 
 
+from django.http import HttpResponseRedirect, HttpResponse, Http404
+
 class ProspectMixin(object):
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        variant = get_model('prospects', 'ProspectVariant').objects.get(name=kwargs.get('variant'))
+        variant = get_model('prospects', 'ProspectVariant').objects.get(name=kwargs.get(self.get_arguments_url_kwarg()))
         expressions = []
+
         for argument in variant.arguments.all():
             expressions.append("(?P<%s>%s)" % (argument.name, argument.regex))
         regex = "/".join(expressions)
@@ -117,6 +119,9 @@ class AspectFormMixin(generic.FormView):
 class ListView(ProspectMixin, RegionViewMixin, AspectFormMixin):
 
 
+    def get_arguments_url_kwarg(self):
+        return 'variant'
+
     def get_context_data(self, *args, **kwargs):
         ctx = super(ListView, self).get_context_data(*args, **kwargs)
         repr_obj = self.get_representation()
@@ -132,6 +137,9 @@ class ListView(ProspectMixin, RegionViewMixin, AspectFormMixin):
 
 
 class DetailContextView(ProspectMixin, RegionViewMixin, AspectFormMixin, generic.detail.SingleObjectMixin):
+
+    def get_arguments_url_kwarg(self):
+        return 'context'
 
     def get_success_url(self):
         return reverse('context', args=[self.kwargs.get('variant'),self.kwargs.get('pk'),self.kwargs.get('context')])
@@ -153,8 +161,9 @@ class DetailContextView(ProspectMixin, RegionViewMixin, AspectFormMixin, generic
         return self.get_object_detail().variant.prospect.source.all()
 
     def get_arguments(self):
-        arg_values = dict((smart_str(arg_val.argument.name), arg_val.value_field.get_value(self.get_object()))  for arg_val in self.get_variant_context().argument_values.all())
-        return arg_values
+        arguments = self.kwargs.copy()
+        arguments.update(dict((smart_str(arg_val.argument.name), arg_val.value_field.get_value(self.get_object()))  for arg_val in self.get_variant_context().argument_values.all()))
+        return arguments
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(DetailContextView, self).get_context_data(*args, **kwargs)
@@ -224,6 +233,10 @@ class RESTCalendarView(ProspectMixin, View):
 
 class DetailView(ProspectMixin, RegionViewMixin, generic.DetailView):
 
+    def get_arguments_url_kwarg(self):
+        #return self.kwargs.get('context')
+        return 'variant'
+
     def get_prospect_variant(self):
         return get_model('prospects', 'ProspectVariant').objects.get(name=self.kwargs.get('variant'))
     
@@ -235,7 +248,10 @@ class DetailView(ProspectMixin, RegionViewMixin, generic.DetailView):
         return {}
 
     def get_arguments(self):
-        return self.kwargs
+        arguments = self.kwargs.copy()
+        for d in self.get_prospect_variant().objectdetail.get_variant_contexts():
+            arguments.update(dict((smart_str(arg_val.argument.name), arg_val.value_field.get_value(self.get_object()))  for arg_val in d.argument_values.all()))
+        return arguments
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(DetailView, self).get_context_data(*args, **kwargs)

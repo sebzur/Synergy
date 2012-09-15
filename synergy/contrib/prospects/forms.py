@@ -127,6 +127,6 @@ def prospectform_factory(request, prospect, variant):
     fields = get_fields(request, prospect, variant)
     contexts = {}
     for context in prospect.source.contexts.all():
-        contexts[context] = prospectform_factory(context.variant.prospect, context.variant.name)
+        contexts[context] = prospectform_factory(request, context.variant.prospect, context.variant.name)
     attributes = {}
     return type('ProspectForm', (ProspectBaseForm,), {'base_fields': fields, 'attributes': attributes, 'prospect': prospect, 'contexts': contexts})
