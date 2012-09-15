@@ -251,6 +251,9 @@ class RESTCalendarView(ProspectMixin, View):
 
 class DetailView(ProspectMixin, RegionViewMixin, generic.DetailView):
 
+    def get_variant_arguments(self, **kwargs):
+        return self._get_prospect_variant(**kwargs).arguments.all()
+
     def get_arguments_url_kwarg(self):
         #return self.kwargs.get('context')
         return 'variant'
