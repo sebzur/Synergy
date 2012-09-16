@@ -1,5 +1,6 @@
 {% load prospects_rendering %}
-<td {{ column|css_styles:object }}>
+{# <td {{ column|css_styles:object }}> #}
+<td>
   {% if link %}
   <a href="{{ value.url }}">{{ value.value }}</a>
   {% else %}

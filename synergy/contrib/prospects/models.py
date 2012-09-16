@@ -347,6 +347,9 @@ class ProspectVariant(models.Model):
             data = data.exclude(q_obj[True])
         # ----------------------------------------------
 
+        # -------------------------------------
+        data = data.only(*self.fields.exclude(db_field='self').values_list('db_field', flat=True))
+        # ------------------------------------
 
         if self.prospect.operators.exists():
             for operator in self.prospect.operators.all():
@@ -462,8 +465,8 @@ class VariantMenu(models.Model):
 class Field(models.Model):
     LINK_CHOICES = (('o', 'Object detail view'), ('u', 'Record update'), ('d', 'Record delete'))
 
-    variant = models.ForeignKey('ProspectVariant')
-    verbose_name = models.CharField(max_length=255, verbose_name="Column header")
+    variant = models.ForeignKey('ProspectVariant', related_name="fields")
+    verbose_name = models.CharField(max_length=255, verbose_name="Verbose name")
     # -----------------------------------------
     # The two fields below define the field value.
     # - db_field selects the model instance field or instance related field

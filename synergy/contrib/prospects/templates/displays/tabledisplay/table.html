@@ -12,16 +12,17 @@
     {% endfor %}
   </thead>
   <tbody>
+    {% with table.columns.all as columns %}
     {% for obj in results %}
 
 
     {# {{ obj|tr:table }} #}
 
 
-    {% table_row obj table arguments %}
-
+    {% table_row obj table columns arguments  %}
 
     {% endfor %}
+    {% endwith %}
   </tbody>
 </table>
 
