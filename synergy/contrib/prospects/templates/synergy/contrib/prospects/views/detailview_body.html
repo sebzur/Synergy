@@ -6,7 +6,16 @@
 {% region objectdetail %}
 <div style="float:left; display:block; width: 70%;">
     {{ object|fields:objectdetail }}
+
+{% if objectdetail.has_record %}
+<p class="object-link">
+  <a href="{% url update objectdetail.get_record.name object.id %}">Edytuj</a>
+</p>
+{% endif %}
+
+
 </div>
+
 <div  style="padding: 20px; float:left; width: 25%;">
 
   {% for menu in objectdetail.menus.all %}
