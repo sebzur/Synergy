@@ -5,6 +5,11 @@ class ProspectAdmin(admin.ModelAdmin):
     list_display = ('name', 'verbose_name')
     search_fields = ('name', 'verbose_name')
 
+
+class VariantContextAdmin(admin.ModelAdmin):
+    list_display = ('object_detail', 'variant', 'weight', 'view_mode')
+    list_filter = ('object_detail',)
+    
 class SourceAdmin(admin.ModelAdmin):
     list_display = ('content_type', 'prospect')
 
@@ -52,7 +57,7 @@ admin.site.register(ProspectOperator)
 
 admin.site.register(ListRepresentation, ListRepresentationAdmin)
 admin.site.register(ObjectDetail)
-admin.site.register(VariantContext)
+admin.site.register(VariantContext, VariantContextAdmin)
 admin.site.register(VariantContextAspectValue)
 admin.site.register(VariantContextArgumentValue)
 
