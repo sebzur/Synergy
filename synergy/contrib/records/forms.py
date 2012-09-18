@@ -94,7 +94,7 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
 
             for related_model in related_models:
                 self.external[related_model] = []
-                instances = related_model.model.model_class().objects.filter(**{smart_str(related_model.get_rel_id_field()): self.instance.id})
+                instances = related_model.model.model_class().objects.filter(**{smart_str(related_model.get_rel_id_field()): related_model.extract_id(self.instance)})
                 for i in range(related_model.get_max_count()):
                     ins = None
                     if not self.instance.pk is None:
@@ -241,7 +241,7 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                         # save with commit = True, or an option is to 
                         # use _post_clean internal ModelForm method hook
                         ins = f.save(commit=False)
-                        setattr(ins, related_model.get_rel_id_field(), self.instance.id)
+                        setattr(ins, related_model.get_rel_id_field(), related_model.extract_id(self.instance))
                         if related_model.get_rel_ct_field_name():
                             setattr(ins, related_model.get_rel_ct_field_name(), get_model('contenttypes','contenttype').objects.get_for_model(self.instance))
                         ins.save()
