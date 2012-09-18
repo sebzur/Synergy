@@ -362,6 +362,11 @@ class ProspectVariant(models.Model):
 
     def get_model_name(self):
         return self.prospect.source.content_type.model
+    get_model_name.short_description = 'Related model'
+
+    def get_app_label(self):
+        return self.prospect.source.content_type.app_label
+    get_model_name.short_description = 'Related model app'
 
     def __unicode__(self):
         return self.verbose_name
