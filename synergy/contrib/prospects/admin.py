@@ -7,8 +7,8 @@ class ProspectAdmin(admin.ModelAdmin):
 
 class ProspectVarantAdmin(admin.ModelAdmin):
     list_display = ('verbose_name', 'name', 'prospect', 'get_model_name', 'get_app_label')
-    search_fields = ('name', 'verbose_name',)
-    list_filter = ('prospect__name', 'prospect__source__content_type__model', 'prospect__source__content_type__model')
+    search_fields = ('name', 'verbose_name', 'prospect__source__content_type__model', 'prospect__source__content_type__model')
+    list_filter = ('prospect',)
 
 
 class VariantContextAdmin(admin.ModelAdmin):

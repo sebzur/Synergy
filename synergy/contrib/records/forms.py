@@ -67,7 +67,7 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                 
             categorical_model = get_model('records', 'CategoricalValue')
 
-            for field in self._meta.model._meta.fields:
+            for field in [field in self._meta.model._meta.fields if field.name not in to_exclude]:
                 if field.rel and field.rel.to is categorical_model:
                     # Jeżeli pole jest relacją do CategoricalValue, to dozwolone wartości 
                     # muszą należeć do grupy o tej nazwie pola
