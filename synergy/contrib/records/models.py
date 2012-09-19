@@ -257,6 +257,11 @@ class O2MRelationSetup(models.Model):
             return self.get_rel_field().fk_field
         return self.rel_field_name
 
+    def extract_id(self, obj):
+        if self.rel_type == 'f':
+            return obj
+        return obj.id
+
     def get_max_count(self):
         return self.max_count or 1
 

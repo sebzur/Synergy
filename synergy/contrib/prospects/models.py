@@ -143,10 +143,11 @@ class Source(models.Model):
         #  aspect_2: {'operator': 'exact', 'value': value},
         #  ....
         #  }
-        return self.all().filter(**dict(self.build_query(query))).filter(**dict(self.build_null_query(nulls)))
+        return self.all().filter(**dict(self.build_query(query, 'f'))).exclude(**dict(self.build_query(query, 'e'))).filter(**dict(self.build_null_query(nulls)))
 
-    def build_query(self, query):
-        for aspect_id in query:
+    def build_query(self, query, mode):
+        ids = query.keys()
+        for aspect_id in map(str, self.aspects.filter(mode=mode, id__in=ids).values_list('id', flat=True)): # str map to get the proper dict keys
             yield (smart_str("%s__%s" % (self.aspects.get(id=aspect_id).attribute, query.get(aspect_id).get('lookup'))), query.get(aspect_id).get('value'))
 
     
@@ -196,6 +197,9 @@ class Aspect(models.Model):
     is_lookup_switchable = models.BooleanField(default=True, verbose_name="Is lookup switchable")
     is_required = models.BooleanField()
     is_exposed = models.BooleanField(verbose_name="Expose this aspect settings to the user?", default=True)
+
+    MODES = (('f', 'Filter'), ('e', 'Exclude'))
+    mode = models.CharField(max_length=1, choices=MODES, verbose_name="Aspect mode")
 
     weight = models.IntegerField(verbose_name="Aspect weight", default=0)
 
@@ -358,6 +362,11 @@ class ProspectVariant(models.Model):
 
     def get_model_name(self):
         return self.prospect.source.content_type.model
+    get_model_name.short_description = 'Related model'
+
+    def get_app_label(self):
+        return self.prospect.source.content_type.app_label
+    get_model_name.short_description = 'Related model app'
 
     def __unicode__(self):
         return self.verbose_name
