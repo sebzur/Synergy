@@ -12,3 +12,10 @@ $( "#accordion" ).accordion({ header: 'h3', autoHeight: false } );
 
 
 
+{% load ui_loaders %}
+{% load datatables_scripts %}
+
+{% load_plugin jquery %}
+{% load_plugin jqueryui %}
+{% load_plugin datatables %}
+{% simple_table .results-table %}

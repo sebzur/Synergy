@@ -642,6 +642,8 @@ class ObjectDetail(models.Model):
             if self.use_posthead:
                 postfixes['posthead'] = postfix_value
             ctx.update({'region_postfixes': postfixes})
+
+
         return ctx
 
 
