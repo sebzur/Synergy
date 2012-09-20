@@ -10,12 +10,3 @@ $( "#accordion" ).accordion({ header: 'h3', autoHeight: false } );
 <link rel="stylesheet" media="screen" href="{{ STATIC_URL }}/prospects/style.css" type="text/css" media="screen" />
 <link rel="stylesheet" media="screen" href="{{ STATIC_URL }}/records/style.css" type="text/css" media="screen" />
 
-
-
-{% load ui_loaders %}
-{% load datatables_scripts %}
-
-{% load_plugin jquery %}
-{% load_plugin jqueryui %}
-{% load_plugin datatables %}
-{% simple_table .results-table %}

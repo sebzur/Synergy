@@ -35,32 +35,46 @@ class RegionNode(template.Node):
     def render(self, context):
        
          region_postfixes = context.get('region_postfixes', {})
+         postfixes = ['']
          if region_postfixes.has_key(self.region_name):
-              postfix = region_postfixes[self.region_name]
-         else:
-              postfix = ''
-    
+              for pstfx in region_postfixes[self.region_name]:
+                   if not pstfx in postfixes:
+                        postfixes.append(pstfx)
 
 
          if context.get('region_info'):
               contents = []
-              for tpl in context.get('region_info').get_template_names(self.region_name, postfix):
-                   try:
-                        content = render_to_string(tpl, context)
+              for postfix in postfixes:
+                   for tpl in context.get('region_info').get_template_names(self.region_name, postfix):
+
                         if settings.DEBUG:
-                             print tpl, '*' if content else ''
+                             # just for debug: print out the template name we're looking for
+                             print tpl
+
+                        try:
+                             content = render_to_string(tpl, context)
+                        except template.TemplateDoesNotExist:
+                             continue
+
+
+                        # only first template is used, so if we're in FIRST
+                        # mode we return the content here
                         if self.mode == FIRST:
                              return content
-                        contents.append(render_to_string(tpl, context))
-                   except template.TemplateDoesNotExist:
-                        continue
+                        #otherwise we append the content to the list and break the postifxes loop
+                        contents.append(content)
+                        break
 
-         merged_content =  ''.join(contents)
+         
+         # If we're in STACKED mode the contents elements are merged and the result is returned
+         merged_content = ''.join(contents)
          if merged_content:
               return merged_content
 
-         if postfix:
-              raise template.TemplateDoesNotExist('You should provided template with "%s" postfix' % postfix)
+         # if we're still here and there's something beside [''] in postfixes, this is an error
+         if len(postfixes) > 1:
+              raise template.TemplateDoesNotExist('You should provided templates with `%s` postfixes' % ",".join(postfixes))
 
+         # otherwise, theres no custom template provided and it is not required, so simply return the original {% region %} content
          return self.nodelist.render(context)
 
