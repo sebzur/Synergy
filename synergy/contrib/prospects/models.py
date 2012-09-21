@@ -636,12 +636,14 @@ class ObjectDetail(models.Model):
 
     def get_context_data(self, obj, *args, **kwargs):
         ctx = {'variant_contexts': SortedDict((v_c, v_c.get_query(obj)) for v_c in self.get_variant_contexts())}
-        if self.postfix:
-            postfix_value = "%s" % self.variant.name
-            postfixes = {'objectdetail': postfix_value}
-            if self.use_posthead:
-                postfixes['posthead'] = postfix_value
-            ctx.update({'region_postfixes': postfixes})
+
+        postfix_value = "%s" % self.variant.name
+        postfixes =  {'posthead': [postfix_value] if self.use_posthead else [], 
+                      'objectdetail': [postfix_value] if self.postfix else []}
+
+        for variant_context in ctx['variant_contexts']:
+            postfixes['posthead'].extend(variant_context.variant.listrepresentation.representation.get_posthead_postfixes())
+        ctx.update({'region_postfixes': postfixes})
         return ctx
 
 
@@ -675,6 +677,9 @@ class DetailFieldStyle(models.Model):
 class DetailMenu(models.Model):
     object_detail = models.ForeignKey('ObjectDetail', related_name="menus")
     menu = models.ForeignKey('menu.Menu', related_name="object_details")
+
+    class Meta:
+        ordering = ('menu__weight',)
 
 #class DetailMenuArgument(models.Model):
 #    detail_menu = models.ForeignKey('DetailMenu', related_name="arguments")
@@ -769,10 +774,16 @@ class RepresentationModel(models.Model):
 
     def get_context_data(self, *args, **kwargs):
         # Every display can add something to the context
-        ctx = {'region_postfixes': {'prospect': self.get_prospect_postfix()}}
+        ctx = {'region_postfixes': {'prospect': self.get_prospect_postfixes()}}
         if self.get_posthead_postfix():
-            ctx['region_postfixes']['posthead'] = self.get_posthead_postfix()
+            ctx['region_postfixes']['posthead'] = self.get_posthead_postfixes()
         return ctx
+
+    def get_posthead_postfixes(self):
+        return [self.get_posthead_postfix()]
+
+    def get_prospect_postfixes(self):
+        return [self.get_prospect_postfix()]
 
     def get_variant(self):
         return self.variant.get().variant
