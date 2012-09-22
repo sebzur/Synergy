@@ -12,6 +12,8 @@ from django.core.exceptions import ValidationError
 from django import template
 from django.utils.datastructures import SortedDict
 
+LOOKUP_MODES = (('f', 'Filter'), ('e', 'Exclude'))
+
 def get_field(model, attribute):
     chain = attribute.split('__')
     for i, attribute in enumerate(chain):
@@ -108,7 +110,10 @@ class Prospect(models.Model):
     def get_optional_aspects(self):
         return self.get_source().aspects.exclude(id__in=self.get_required_aspects().values_list('id', flat=True))
 
-            
+        
+    class Meta:
+        ordering = ('verbose_name', 'name')
+    
 class Operator(models.Model):
     callable = fields.CallableField(max_length=255, verbose_name="The callable to call after the prospects returns the data", blank=True) 
     description = models.TextField()
@@ -155,12 +160,17 @@ class Source(models.Model):
         for null_state_id in query:
             yield (smart_str("%s__isnull" % self.null_states.get(id=null_state_id).attribute), query.get(null_state_id).get('value'))
 
+    class Meta:
+        ordering = ('content_type__model', 'prospect__verbose_name')
+                
+
 
 class Context(models.Model):
     source = models.ForeignKey('Source', related_name="contexts")
-    variant = models.ForeignKey('ProspectVariant', related_name="Variant")
+    variant = models.ForeignKey('ProspectVariant', related_name="contexts")
     value = models.SlugField(verbose_name="Value", help_text="Value to extract as flatted values_list from variant queryset")
     lookup = models.SlugField(verbose_name="Relation lookup", help_text="__in operator is used, provide here the model field" )
+    mode = models.CharField(max_length=1, choices=LOOKUP_MODES, verbose_name="Context mode")
 
     class Meta:
         verbose_name = "Context"
@@ -198,8 +208,8 @@ class Aspect(models.Model):
     is_required = models.BooleanField()
     is_exposed = models.BooleanField(verbose_name="Expose this aspect settings to the user?", default=True)
 
-    MODES = (('f', 'Filter'), ('e', 'Exclude'))
-    mode = models.CharField(max_length=1, choices=MODES, verbose_name="Aspect mode")
+
+    mode = models.CharField(max_length=1, choices=LOOKUP_MODES, verbose_name="Aspect mode")
 
     weight = models.IntegerField(verbose_name="Aspect weight", default=0)
 
@@ -275,7 +285,8 @@ class Aspect(models.Model):
             raise ValidationError('Invalid initial lookup! Proper choices: %s' % proper)
 
     class Meta:
-        ordering = ('weight', 'source__prospect__name')
+        #ordering = ('weight', 'source__prospect__name')
+        ordering = ('source__prospect__verbose_name', 'weight')
         unique_together = (('attribute', 'source'),)
 
 
@@ -330,10 +341,12 @@ class ProspectVariant(models.Model):
 
         data = self.prospect.filter(query=query, nulls=nulls)
 
+
         for context in self.prospect.source.contexts.all():
-            if context.variant.prospect.sanitize_query(**query):
-                context_values = context.variant.filter(user, **query).values_list(context.value, flat=True)
-                data = data.filter(**{smart_str("%s__in" % context.lookup): context_values})
+            sanitized_query = context.variant.prospect.sanitize_query(**query)
+            if sanitized_query:
+                context_values = context.variant.filter(user, **sanitized_query).values_list(context.value, flat=True)
+                data = getattr(data, {'f': 'filter', 'e': 'exclude'}.get(context.mode))(**{smart_str("%s__in" % context.lookup): context_values})
 
         # User related lookup
         q_obj = {False: None, True: None}
@@ -721,7 +734,12 @@ class VariantContextAspectValue(models.Model):
             raise ValidationError('Variant context and value mismatch!')
 
         if not self.variant_context.variant.prospect == self.aspect.source.prospect:
-            raise ValidationError('Variant context and aspect prospects mismatch!')
+            try:
+                # if aspect is not related directly with variant, it still can be related
+                # by Source context, so let's check it:
+                models.get_model('prospects','Aspect').objects.filter(source__in=self.variant_context.variant.prospect.source.contexts.all().values_list('variant__prospect__source', flat=True)).get(id=self.aspect.id)
+            except models.get_model('prospects','Aspect').DoesNotExist:
+                raise ValidationError('Variant context and aspect prospects mismatch!')
 
 
 class VariantContextArgumentValue(models.Model):
