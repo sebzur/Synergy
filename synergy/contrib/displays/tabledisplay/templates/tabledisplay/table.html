@@ -1,23 +1,14 @@
-{% load prospects_rendering %}
-
-<h4>{{ table.get_verbose_name|title }}</h4>
-
-{% if results %}
-
-
+{% load tabledisplay_rendering %}
 <table class="results-table display">
   <thead>
     {% for column in table.columns.all %}
     <th>{{ column.field.verbose_name }}</th>
     {% endfor %}
   </thead>
+
   <tbody>
     {% with table.columns.all as columns %}
     {% for obj in results %}
-
-
-    {# {{ obj|tr:table }} #}
-
 
     {% table_row obj table columns arguments  %}
 
@@ -26,8 +17,5 @@
   </tbody>
 </table>
 
-{% else %}
-   {{ table.get_variant.empty_text|default:"No results were found. The query is to strict or it was not submitted." }}
-{% endif %}
 
 
