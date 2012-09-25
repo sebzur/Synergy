@@ -653,8 +653,8 @@ class ObjectDetail(models.Model):
     def get_variant_contexts(self):
         return self.variant_contexts.filter(view_mode='a')
 
-    def get_context_data(self, obj, *args, **kwargs):
-        ctx = {'variant_contexts': SortedDict((v_c, v_c.get_query(obj)) for v_c in self.get_variant_contexts())}
+    def get_context_data(self, obj, parent, *args, **kwargs):
+        ctx = {'variant_contexts': SortedDict((v_c, v_c.get_query(obj, parent)) for v_c in self.get_variant_contexts())}
 
         postfix_value = "%s" % self.variant.name
         postfixes =  {'posthead': [postfix_value] if self.use_posthead else [], 
@@ -719,8 +719,18 @@ class VariantContext(models.Model):
     def __unicode__(self):
         return u"%s <- %s" % (self.object_detail, self.variant)
 
-    def get_query(self, obj):
-        return dict([(str(aspect_value.aspect.id), {'lookup': aspect_value.lookup, 'value': aspect_value.value_field.get_value(obj)}) for aspect_value in self.aspect_values.all()])
+    def get_query(self, obj, parent):
+        value_src = [(obj, self.object_detail.variant)]
+        if self.object_detail.parent:
+            value_src.append((parent, self.object_detail.parent.variant))
+
+        query = {}
+        for v_obj, src in value_src:
+            query.update(dict([(str(aspect_value.aspect.id), {'lookup': aspect_value.lookup, 'value': aspect_value.value_field.get_value(v_obj)}) for aspect_value in self.aspect_values.filter(value_field__variant=src)]))
+
+#        print query, parent
+        return query
+        #return dict([(str(aspect_value.aspect.id), {'lookup': aspect_value.lookup, 'value': aspect_value.value_field.get_value(obj)}) for aspect_value in self.aspect_values.all()])
 
     class Meta:
         ordering = ('weight',)
@@ -737,7 +747,11 @@ class VariantContextAspectValue(models.Model):
 
     def clean(self):
         if not self.variant_context.object_detail.variant == self.value_field.variant:
-            raise ValidationError('Variant context and value mismatch!')
+            # if object_detail has parent, it is allowed to use parent field
+            # as context value 
+            parent = self.variant_context.object_detail.parent 
+            if (parent and not parent.variant == self.value_field.variant) or not parent:
+                raise ValidationError('Variant context and value mismatch!')
 
         if not self.variant_context.variant.prospect == self.aspect.source.prospect:
             try:

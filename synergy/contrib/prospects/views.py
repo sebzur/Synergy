@@ -182,6 +182,9 @@ class DetailContextView(ProspectMixin, RegionViewMixin, AspectFormMixin, generic
     def get_queryset(self):
         return self.get_object_detail().variant.prospect.source.all()
 
+    def get_parent(self):
+        # na razie, poki nie obslugujemy argumentu w URLu
+        return None
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(DetailContextView, self).get_context_data(*args, **kwargs)
@@ -191,12 +194,13 @@ class DetailContextView(ProspectMixin, RegionViewMixin, AspectFormMixin, generic
         ctx['body'] = ctx['objectdetail'].get_body(self.get_object())
         ctx['name'] = self.get_prospect_variant().name
 
-        ctx.update(self.get_object_detail().get_context_data(self.get_object(), *args, **kwargs))
+
+        ctx.update(self.get_object_detail().get_context_data(self.get_object(), self.get_parent(), *args, **kwargs))
         ctx.update(self.get_representation().get_context_data(*args, **kwargs))
 
         ctx['detail_context'] = self.get_variant_context()
 
-        ctx['query'] = ctx['detail_context'].get_query(self.get_object())
+        ctx['query'] = ctx['detail_context'].get_query(self.get_object(), self.get_parent())
         ctx['query'].update(build_query(self.get_query_dict()))
         return ctx
 
@@ -289,7 +293,7 @@ class DetailView(ProspectMixin, RegionViewMixin, generic.DetailView):
         ctx['body'] = ctx['objectdetail'].get_body(self.get_object())
         ctx['name'] = self.get_prospect_variant().name
         ctx['parent'] = self.get_parent()
-        ctx.update(self.get_prospect_variant().objectdetail.get_context_data(self.get_object(), *args, **kwargs))
+        ctx.update(self.get_prospect_variant().objectdetail.get_context_data(self.get_object(), self.get_parent(), *args, **kwargs))
         ctx_operator = self.get_prospect_variant().objectdetail.context_operator
         if ctx_operator:
             ctx_operator(self.request, self.get_object(), ctx, *args, **kwargs)
