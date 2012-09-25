@@ -477,6 +477,8 @@ class VariantMenu(models.Model):
     def __unicode__(self):
         return u"%s | %s" % (self.variant, self.menu)
 
+    class Meta:
+        ordering = ('menu__weight', )
 
 #class VariantRelation(models.Model):
 #    variant = models.ForeignKey('ProspectVariant')
