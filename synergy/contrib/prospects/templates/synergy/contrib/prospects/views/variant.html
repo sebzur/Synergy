@@ -9,14 +9,11 @@
 {% include 'synergy/contrib/prospects/views/aspect_form.html' %}
 {% endif %}
 
-{% if results %}
-  <div id="results">
-    {% region prospect %}
-    {% endregion %}
-  </div>
-{% else %}
-  {{ variant.empty_text|default:"No results were found. The query is to strict or it was not submitted." }}
-{% endif %}
+
+<div id="results">
+  {% region prospect %}
+  {% endregion %}
+</div>
 
 {% if variant.footer %}
 <p>

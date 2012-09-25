@@ -373,6 +373,9 @@ class ProspectVariant(models.Model):
                 data = operator.callable(data)
         return data
 
+    def get_model_class(self):
+        return self.prospect.source.content_type.model_class()
+
     def get_model_name(self):
         return self.prospect.source.content_type.model
     get_model_name.short_description = 'Related model'
@@ -615,6 +618,7 @@ class FieldURL(models.Model):
 
 class ObjectDetail(models.Model):
     variant = models.OneToOneField('ProspectVariant')
+    parent = models.ForeignKey('ObjectDetail', null=True, blank=True, verbose_name="Parent")
     postfix = models.BooleanField(default=False)
     use_posthead = models.BooleanField(default=False)
     context_operator = fields.CallableField(max_length=255, verbose_name="The callable to call on the context", blank=True)    
