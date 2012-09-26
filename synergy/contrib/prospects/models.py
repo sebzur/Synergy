@@ -13,6 +13,7 @@ from django import template
 from django.utils.datastructures import SortedDict
 
 LOOKUP_MODES = (('f', 'Filter'), ('e', 'Exclude'))
+CONTEXT_MODES = (('f', 'Filter'), ('e', 'Exclude'), ('m', 'Distinct merge'))
 
 def get_field(model, attribute):
     chain = attribute.split('__')
@@ -170,7 +171,7 @@ class Context(models.Model):
     variant = models.ForeignKey('ProspectVariant', related_name="contexts")
     value = models.SlugField(verbose_name="Value", help_text="Value to extract as flatted values_list from variant queryset")
     lookup = models.SlugField(verbose_name="Relation lookup", help_text="__in operator is used, provide here the model field" )
-    mode = models.CharField(max_length=1, choices=LOOKUP_MODES, verbose_name="Context mode")
+    mode = models.CharField(max_length=1, choices=CONTEXT_MODES, verbose_name="Context mode")
 
     class Meta:
         verbose_name = "Context"
@@ -346,7 +347,15 @@ class ProspectVariant(models.Model):
             sanitized_query = context.variant.prospect.sanitize_query(**query)
             if sanitized_query:
                 context_values = context.variant.filter(user, **sanitized_query).values_list(context.value, flat=True)
-                data = getattr(data, {'f': 'filter', 'e': 'exclude'}.get(context.mode))(**{smart_str("%s__in" % context.lookup): context_values})
+                lookup = {smart_str("%s__in" % context.lookup): context_values}
+                if context.mode in ('f', 'e'):
+                    # if the context is in 'filter' or 'exclude' mode, retrieved objects are used
+                    # to select the subset of the `data` queryset
+                    data = getattr(data, {'f': 'filter', 'e': 'exclude'}.get(context.mode))(**lookup)
+                else:
+                    # if the context s in 'merge' mode, the queryset is *extended*
+                    data |= data.model._default_manager.filter(**lookup)
+            
 
         # User related lookup
         q_obj = {False: None, True: None}
