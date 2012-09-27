@@ -34,7 +34,11 @@ class RegionNode(template.Node):
 
     def render(self, context):
          region_postfixes = context.get('region_postfixes', {})
-         postfixes = []
+
+         # troche ugly-hack
+         # potrzebujemy [''] przy klejeniu defaultowych
+         postfixes = [] if self.mode == FIRST else ['']
+
          if region_postfixes.has_key(self.region_name):
               for pstfx in region_postfixes[self.region_name]:
                    if not pstfx in postfixes:
