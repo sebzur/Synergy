@@ -33,14 +33,14 @@ class RegionNode(template.Node):
         self.mode = mode
 
     def render(self, context):
-       
          region_postfixes = context.get('region_postfixes', {})
-         postfixes = ['']
+         postfixes = []
          if region_postfixes.has_key(self.region_name):
               for pstfx in region_postfixes[self.region_name]:
                    if not pstfx in postfixes:
                         postfixes.append(pstfx)
-
+         else:
+              postfixes = ['']
 
          if context.get('region_info'):
               contents = []
