@@ -1,5 +1,5 @@
 from django.db import models
-from synergy.contrib.prospects.models import RepresentationModel
+from synergy.contrib.prospects.models import RepresentationModel, resolve_lookup
 
 class Table(RepresentationModel):
 
