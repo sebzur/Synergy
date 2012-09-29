@@ -22,6 +22,8 @@
   <body>  
     {% block body %} {% endblock %}
 
+    {% comment %}
+
     <!-- Piwik -->
     <script type="text/javascript">
       var pkBaseURL = (("https:" == document.location.protocol) ? "https://piwik.codelab.pl/" : "http://piwik.codelab.pl/");
@@ -34,6 +36,7 @@
       } catch( err ) {}
     </script><noscript><p><img src="http://piwik.codelab.pl/piwik.php?idsite=3" style="border:0" alt="" /></p></noscript>
     <!-- End Piwik Tracking Code -->
+    {% endcomment %}
 
   </body>
 </html>
