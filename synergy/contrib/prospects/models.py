@@ -423,7 +423,6 @@ class AspectValueChoices(models.Model):
                   's': lambda x: x.id,}
         id_mapper = mappers[self.id_mapper]
         value_mapper = mappers['v']
-        
         return map(lambda x: (id_mapper(x), value_mapper(x)), self.value_field.variant.filter(user, **query))
 
     def clean(self):
