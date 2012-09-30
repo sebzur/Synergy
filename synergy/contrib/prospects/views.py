@@ -148,8 +148,8 @@ class DetailContextView(ProspectMixin, RegionViewMixin, AspectFormMixin, generic
 #        return 'context'
 
     def get_variant_arguments(self, **kwargs):
-        ids = self._get_variant_context(**kwargs).argument_values.using('default').all().values_list('argument', flat=True)
-        return self._get_prospect_variant(**kwargs).arguments.using('default').exclude(id__in=ids)
+        ids = self._get_variant_context(**kwargs).argument_values.all().values_list('argument', flat=True)
+        return self._get_prospect_variant(**kwargs).arguments.exclude(id__in=ids)
 
     def get_arguments(self):
         arguments = self.kwargs.copy()
