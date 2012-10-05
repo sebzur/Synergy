@@ -9,7 +9,7 @@ class Dictionary(models.Model):
     parent = models.ForeignKey('Dictionary', verbose_name="Parent", related_name="subdicts", null=True, blank=True, on_delete=models.SET_NULL)
     
     def __unicode__(self):
-        return self.verbose_name
+        return u"%s" % self.verbose_name
 
     class Meta:
         ordering = ('verbose_name',)
@@ -21,7 +21,7 @@ class Term(models.Model):
     weight = models.IntegerField()
 
     def __unicode__(self):
-        return self.value
+        return u"%s (%s)" %(self.value, self.dictionary)
     
     class Meta:
         unique_together = (('key', 'value', 'dictionary'),)
