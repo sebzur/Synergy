@@ -17,9 +17,8 @@
 </div>
 
 <div  style="padding: 20px; float:left; width: 25%;">
-
   {% for menu in objectdetail.menus.all %}
-  {% menu menu.menu.name object=object %} 
+  {% menu menu.menu.name object=object parent=parent %} 
   {% endfor %}
 </div>
 {% endregion %}

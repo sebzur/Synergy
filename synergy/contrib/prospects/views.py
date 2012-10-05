@@ -30,7 +30,7 @@ class ProspectMixin(object):
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        variant = get_model('prospects', 'ProspectVariant').objects.get(name=kwargs.get(self.get_arguments_url_kwarg()))
+        #variant = get_model('prospects', 'ProspectVariant').objects.get(name=kwargs.get(self.get_arguments_url_kwarg()))
         expressions = []
 
         for argument in self.get_variant_arguments(**kwargs):
@@ -122,8 +122,8 @@ class AspectFormMixin(generic.FormView):
 class ListView(ProspectMixin, RegionViewMixin, AspectFormMixin):
 
 
-    def get_arguments_url_kwarg(self):
-        return 'variant'
+#    def get_arguments_url_kwarg(self):
+#        return 'variant'
 
     def get_variant_arguments(self, **kwargs):
         return self._get_prospect_variant(**kwargs).arguments.all()
@@ -144,8 +144,8 @@ class ListView(ProspectMixin, RegionViewMixin, AspectFormMixin):
 
 class DetailContextView(ProspectMixin, RegionViewMixin, AspectFormMixin, generic.detail.SingleObjectMixin):
 
-    def get_arguments_url_kwarg(self, **kwargs):
-        return 'context'
+#    def get_arguments_url_kwarg(self, **kwargs):
+#        return 'context'
 
     def get_variant_arguments(self, **kwargs):
         ids = self._get_variant_context(**kwargs).argument_values.all().values_list('argument', flat=True)
@@ -182,6 +182,9 @@ class DetailContextView(ProspectMixin, RegionViewMixin, AspectFormMixin, generic
     def get_queryset(self):
         return self.get_object_detail().variant.prospect.source.all()
 
+    def get_parent(self):
+        # na razie, poki nie obslugujemy argumentu w URLu
+        return None
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(DetailContextView, self).get_context_data(*args, **kwargs)
@@ -191,12 +194,13 @@ class DetailContextView(ProspectMixin, RegionViewMixin, AspectFormMixin, generic
         ctx['body'] = ctx['objectdetail'].get_body(self.get_object())
         ctx['name'] = self.get_prospect_variant().name
 
-        ctx.update(self.get_object_detail().get_context_data(self.get_object(), *args, **kwargs))
+
+        ctx.update(self.get_object_detail().get_context_data(self.get_object(), self.get_parent(), *args, **kwargs))
         ctx.update(self.get_representation().get_context_data(*args, **kwargs))
 
         ctx['detail_context'] = self.get_variant_context()
 
-        ctx['query'] = ctx['detail_context'].get_query(self.get_object())
+        ctx['query'] = ctx['detail_context'].get_query(self.get_object(), self.get_parent())
         ctx['query'].update(build_query(self.get_query_dict()))
         return ctx
 
@@ -254,9 +258,9 @@ class DetailView(ProspectMixin, RegionViewMixin, generic.DetailView):
     def get_variant_arguments(self, **kwargs):
         return self._get_prospect_variant(**kwargs).arguments.all()
 
-    def get_arguments_url_kwarg(self):
-        #return self.kwargs.get('context')
-        return 'variant'
+#    def get_arguments_url_kwarg(self):
+#        #return self.kwargs.get('context')
+#        return 'variant'
 
     def get_prospect_variant(self):
         return get_model('prospects', 'ProspectVariant').objects.get(name=self.kwargs.get('variant'))
@@ -274,13 +278,22 @@ class DetailView(ProspectMixin, RegionViewMixin, generic.DetailView):
             arguments.update(dict((smart_str(arg_val.argument.name), arg_val.value_field.get_value(self.get_object()))  for arg_val in d.argument_values.all()))
         return arguments
 
+    def get_object_detail(self):
+        return self.get_prospect_variant().objectdetail
+
+    def get_parent(self):
+        parent_id = self.kwargs.get('parent')
+        if parent_id:
+            return self.get_object_detail().parent.variant.get_model_class().objects.get(id=parent_id)
+
     def get_context_data(self, *args, **kwargs):
         ctx = super(DetailView, self).get_context_data(*args, **kwargs)
-        ctx['objectdetail'] = self.get_prospect_variant().objectdetail
+        ctx['objectdetail'] = self.get_object_detail()
         ctx['title'] = ctx['objectdetail'].get_title(self.get_object())
         ctx['body'] = ctx['objectdetail'].get_body(self.get_object())
         ctx['name'] = self.get_prospect_variant().name
-        ctx.update(self.get_prospect_variant().objectdetail.get_context_data(self.get_object(), *args, **kwargs))
+        ctx['parent'] = self.get_parent()
+        ctx.update(self.get_prospect_variant().objectdetail.get_context_data(self.get_object(), self.get_parent(), *args, **kwargs))
         ctx_operator = self.get_prospect_variant().objectdetail.context_operator
         if ctx_operator:
             ctx_operator(self.request, self.get_object(), ctx, *args, **kwargs)

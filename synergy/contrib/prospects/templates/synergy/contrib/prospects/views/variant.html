@@ -2,12 +2,13 @@
 {% load synergy_region %}
 
 <p>
-  {{ variant.header|linebreaks|safe|default:"To get the results fill in the form fields and submit the query. The results will be listed below the form." }}
+  {{ variant.header|safe|linebreaks|default:"To get the results fill in the form fields and submit the query. The results will be listed below the form." }}
 </p>
 
 {% if form.fields %}
 {% include 'synergy/contrib/prospects/views/aspect_form.html' %}
 {% endif %}
+
 
 <div id="results">
   {% region prospect %}

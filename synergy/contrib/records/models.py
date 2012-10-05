@@ -228,7 +228,6 @@ class O2MRelationSetup(models.Model):
     FK_TYPES = (('f', 'Standard ForeignKey'), ('g', 'Generic relation (with CT)'), ('r', 'Raw related instance ID'))
     rel_type = models.CharField(max_length=1, choices=FK_TYPES, default='f')
 
-
     min_count = models.PositiveSmallIntegerField(null=True, blank=True)
     max_count = models.PositiveSmallIntegerField(null=True, blank=True)
 

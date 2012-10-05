@@ -12,6 +12,9 @@ from django.core.exceptions import ValidationError
 from django import template
 from django.utils.datastructures import SortedDict
 
+LOOKUP_MODES = (('f', 'Filter'), ('e', 'Exclude'))
+CONTEXT_MODES = (('f', 'Filter'), ('e', 'Exclude'), ('m', 'Distinct merge'))
+
 def get_field(model, attribute):
     chain = attribute.split('__')
     for i, attribute in enumerate(chain):
@@ -108,7 +111,10 @@ class Prospect(models.Model):
     def get_optional_aspects(self):
         return self.get_source().aspects.exclude(id__in=self.get_required_aspects().values_list('id', flat=True))
 
-            
+        
+    class Meta:
+        ordering = ('verbose_name', 'name')
+    
 class Operator(models.Model):
     callable = fields.CallableField(max_length=255, verbose_name="The callable to call after the prospects returns the data", blank=True) 
     description = models.TextField()
@@ -155,12 +161,17 @@ class Source(models.Model):
         for null_state_id in query:
             yield (smart_str("%s__isnull" % self.null_states.get(id=null_state_id).attribute), query.get(null_state_id).get('value'))
 
+    class Meta:
+        ordering = ('content_type__model', 'prospect__verbose_name')
+                
+
 
 class Context(models.Model):
     source = models.ForeignKey('Source', related_name="contexts")
-    variant = models.ForeignKey('ProspectVariant', related_name="Variant")
+    variant = models.ForeignKey('ProspectVariant', related_name="contexts")
     value = models.SlugField(verbose_name="Value", help_text="Value to extract as flatted values_list from variant queryset")
     lookup = models.SlugField(verbose_name="Relation lookup", help_text="__in operator is used, provide here the model field" )
+    mode = models.CharField(max_length=1, choices=CONTEXT_MODES, verbose_name="Context mode")
 
     class Meta:
         verbose_name = "Context"
@@ -198,8 +209,8 @@ class Aspect(models.Model):
     is_required = models.BooleanField()
     is_exposed = models.BooleanField(verbose_name="Expose this aspect settings to the user?", default=True)
 
-    MODES = (('f', 'Filter'), ('e', 'Exclude'))
-    mode = models.CharField(max_length=1, choices=MODES, verbose_name="Aspect mode")
+
+    mode = models.CharField(max_length=1, choices=LOOKUP_MODES, verbose_name="Aspect mode")
 
     weight = models.IntegerField(verbose_name="Aspect weight", default=0)
 
@@ -275,7 +286,8 @@ class Aspect(models.Model):
             raise ValidationError('Invalid initial lookup! Proper choices: %s' % proper)
 
     class Meta:
-        ordering = ('weight', 'source__prospect__name')
+        #ordering = ('weight', 'source__prospect__name')
+        ordering = ('source__prospect__verbose_name', 'weight')
         unique_together = (('attribute', 'source'),)
 
 
@@ -330,10 +342,20 @@ class ProspectVariant(models.Model):
 
         data = self.prospect.filter(query=query, nulls=nulls)
 
+
         for context in self.prospect.source.contexts.all():
-            if context.variant.prospect.sanitize_query(**query):
-                context_values = context.variant.filter(user, **query).values_list(context.value, flat=True)
-                data = data.filter(**{smart_str("%s__in" % context.lookup): context_values})
+            sanitized_query = context.variant.prospect.sanitize_query(**query)
+            if sanitized_query:
+                context_values = context.variant.filter(user, **sanitized_query).values_list(context.value, flat=True)
+                lookup = {smart_str("%s__in" % context.lookup): context_values}
+                if context.mode in ('f', 'e'):
+                    # if the context is in 'filter' or 'exclude' mode, retrieved objects are used
+                    # to select the subset of the `data` queryset
+                    data = getattr(data, {'f': 'filter', 'e': 'exclude'}.get(context.mode))(**lookup)
+                else:
+                    # if the context s in 'merge' mode, the queryset is *extended*
+                    data |= data.model._default_manager.filter(**lookup)
+            
 
         # User related lookup
         q_obj = {False: None, True: None}
@@ -359,6 +381,9 @@ class ProspectVariant(models.Model):
             for operator in self.prospect.operators.all():
                 data = operator.callable(data)
         return data
+
+    def get_model_class(self):
+        return self.prospect.source.content_type.model_class()
 
     def get_model_name(self):
         return self.prospect.source.content_type.model
@@ -398,7 +423,6 @@ class AspectValueChoices(models.Model):
                   's': lambda x: x.id,}
         id_mapper = mappers[self.id_mapper]
         value_mapper = mappers['v']
-        
         return map(lambda x: (id_mapper(x), value_mapper(x)), self.value_field.variant.filter(user, **query))
 
     def clean(self):
@@ -461,6 +485,8 @@ class VariantMenu(models.Model):
     def __unicode__(self):
         return u"%s | %s" % (self.variant, self.menu)
 
+    class Meta:
+        ordering = ('menu__weight', )
 
 #class VariantRelation(models.Model):
 #    variant = models.ForeignKey('ProspectVariant')
@@ -602,6 +628,7 @@ class FieldURL(models.Model):
 
 class ObjectDetail(models.Model):
     variant = models.OneToOneField('ProspectVariant')
+    parent = models.ForeignKey('ObjectDetail', null=True, blank=True, verbose_name="Parent")
     postfix = models.BooleanField(default=False)
     use_posthead = models.BooleanField(default=False)
     context_operator = fields.CallableField(max_length=255, verbose_name="The callable to call on the context", blank=True)    
@@ -634,8 +661,8 @@ class ObjectDetail(models.Model):
     def get_variant_contexts(self):
         return self.variant_contexts.filter(view_mode='a')
 
-    def get_context_data(self, obj, *args, **kwargs):
-        ctx = {'variant_contexts': SortedDict((v_c, v_c.get_query(obj)) for v_c in self.get_variant_contexts())}
+    def get_context_data(self, obj, parent, *args, **kwargs):
+        ctx = {'variant_contexts': SortedDict((v_c, v_c.get_query(obj, parent)) for v_c in self.get_variant_contexts())}
 
         postfix_value = "%s" % self.variant.name
         postfixes =  {'posthead': [postfix_value] if self.use_posthead else [], 
@@ -700,8 +727,18 @@ class VariantContext(models.Model):
     def __unicode__(self):
         return u"%s <- %s" % (self.object_detail, self.variant)
 
-    def get_query(self, obj):
-        return dict([(str(aspect_value.aspect.id), {'lookup': aspect_value.lookup, 'value': aspect_value.value_field.get_value(obj)}) for aspect_value in self.aspect_values.all()])
+    def get_query(self, obj, parent):
+        value_src = [(obj, self.object_detail.variant)]
+        if self.object_detail.parent:
+            value_src.append((parent, self.object_detail.parent.variant))
+
+        query = {}
+        for v_obj, src in value_src:
+            query.update(dict([(str(aspect_value.aspect.id), {'lookup': aspect_value.lookup, 'value': aspect_value.value_field.get_value(v_obj)}) for aspect_value in self.aspect_values.filter(value_field__variant=src)]))
+
+#        print query, parent
+        return query
+        #return dict([(str(aspect_value.aspect.id), {'lookup': aspect_value.lookup, 'value': aspect_value.value_field.get_value(obj)}) for aspect_value in self.aspect_values.all()])
 
     class Meta:
         ordering = ('weight',)
@@ -718,10 +755,19 @@ class VariantContextAspectValue(models.Model):
 
     def clean(self):
         if not self.variant_context.object_detail.variant == self.value_field.variant:
-            raise ValidationError('Variant context and value mismatch!')
+            # if object_detail has parent, it is allowed to use parent field
+            # as context value 
+            parent = self.variant_context.object_detail.parent 
+            if (parent and not parent.variant == self.value_field.variant) or not parent:
+                raise ValidationError('Variant context and value mismatch!')
 
         if not self.variant_context.variant.prospect == self.aspect.source.prospect:
-            raise ValidationError('Variant context and aspect prospects mismatch!')
+            try:
+                # if aspect is not related directly with variant, it still can be related
+                # by Source context, so let's check it:
+                models.get_model('prospects','Aspect').objects.filter(source__in=self.variant_context.variant.prospect.source.contexts.all().values_list('variant__prospect__source', flat=True)).get(id=self.aspect.id)
+            except models.get_model('prospects','Aspect').DoesNotExist:
+                raise ValidationError('Variant context and aspect prospects mismatch!')
 
 
 class VariantContextArgumentValue(models.Model):
@@ -807,88 +853,6 @@ class CustomPostfix(RepresentationModel):
     def get_posthead_postfix(self):
         if self.use_posthead:
             return self.postfix
-
-
-class Table(RepresentationModel):
-
-    def get_prospect_postfix(self):
-        return 'tabledisplay'
-    
-    def get_posthead_postfix(self):
-        return self.get_prospect_postfix()
-
-
-
-class Column(models.Model):
-    ACTIONS = (('a', 'Field empty label'), ('b', 'Value without link (if link is provided'))
-
-    table = models.ForeignKey('Table', related_name="columns")
-    field = models.ForeignKey('Field', related_name="columns")
-
-    trigger_lookup = models.CharField(max_length=128, verbose_name="A lookup on the object that triggers if the column should be rendered", blank=True)
-    negate_trigger = models.BooleanField()
-    rewrite_disabled_as = models.CharField(max_length=1, choices=ACTIONS)
-
-    sortable = models.BooleanField(verbose_name="Is this column sortable?")
-    weight = models.IntegerField()
-
-    def __unicode__(self):
-        return u"%s %s" % (self.table, self.field)
-
-    def is_url(self, obj):
-        return self.field.as_link() and self.is_triggered(obj)
-
-    def get_value(self, obj, **kwargs):
-        triggered = self.is_triggered(obj)
-        link = self.is_url(obj)
-        if triggered or self.rewrite_disabled_as == 'b':
-            value = self.field.get_value(obj, **kwargs)
-        if not triggered and self.rewrite_disabled_as == 'b':
-            value = value.get('value')
-        if not triggered and self.rewrite_disabled_as == 'a':
-            value = None
-#        if type(value) == bool:
-#            return template.Template("""{{ value|yesno:"Tak,Nie" }}""").render(template.Context({'value': value}))
-        return value
-
-    def is_triggered(self, obj):
-        """ Obj is the objects that is the source of the field in column """
-        if not hasattr(self, '_is_triggered'):
-            self._is_triggered = True
-            if self.trigger_lookup and not (obj is None):
-                self._is_triggered = self.negate_trigger ^ bool(resolve_lookup(obj, self.trigger_lookup))
-        return self._is_triggered
-
-    def get_styles(self, value):
-        return {'class': ' '.join(self.get_triggered_styles('c', value)),
-                'style': ' '.join(self.get_triggered_styles('s', value))
-                }
-
-    def get_triggered_styles(self, css_mode, value):
-        return (style.css for style in self.styles.filter(css_mode=css_mode) if style.is_triggered(value))
-
-    class Meta:
-        ordering = ('weight',)
-
-class CellStyle(models.Model):
-    MODES = (('c', 'class'), ('s', 'style'))
-    column = models.ForeignKey('Column', related_name="styles")
-    css_mode = models.CharField(max_length=1, choices=MODES)
-    css = models.CharField(max_length=128, verbose_name="CSS class name")
-    trigger_lookup = models.CharField(max_length=128, verbose_name="A lookup on the object that triggers the class name to be applied", blank=True)
-    weight = models.IntegerField()
-
-    def get_table(self):
-        return self.column.table
-
-    def is_triggered(self, obj):
-        """ Obj is the objects that is the source of the field in column """
-        if self.trigger_lookup and not (obj is None):
-            return bool(resolve_lookup(obj, self.trigger_lookup))
-        return True
-
-    class Meta:
-        ordering = ('weight',)
 
 
 class Calendar(RepresentationModel):
