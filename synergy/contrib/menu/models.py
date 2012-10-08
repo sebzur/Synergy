@@ -14,7 +14,7 @@ class Menu(models.Model):
     is_enabled = models.BooleanField(default=True)
 
     def __unicode__(self):
-        return self.verbose_name
+        return u"%s (%s)" % (self.verbose_name, self.name)
 
     class Meta:
         unique_together = (('name', 'verbose_name'),)
