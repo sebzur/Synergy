@@ -92,7 +92,6 @@ class CreateRecordView(ProtectedView, RegionViewMixin, ObjectViewMixin, CreateVi
         ctx['initial'] = self.get_initial()
         ctx['cancel_url'] = setup.get_cancel_url(**self.get_arguments())
         ctx.update(setup.get_context_elements(ctx, 'c'))
-        print ctx['form'].instance
         return  ctx
 
     def get_success_url(self):
