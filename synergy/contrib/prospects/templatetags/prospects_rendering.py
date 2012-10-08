@@ -3,6 +3,7 @@ from django.template.loader import render_to_string
 from django.conf import settings
 from django.db.models import get_model
 import re
+import copy
 
 from synergy.contrib.records.models import get_parent_field
 from django.utils.datastructures import SortedDict
@@ -82,9 +83,9 @@ class VariantResultsNode(template.Node):
         except Exception, error:
             results = None
 
-        ctx = context
+        ctx = copy.copy(context)
         ctx['results'] = results
-
+        ctx['variant'] = variant
         repr_obj = variant.listrepresentation.representation
         ctx[repr_obj._meta.object_name.lower()] = repr_obj
         ctx.update(repr_obj.get_context_data())
