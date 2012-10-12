@@ -199,7 +199,6 @@ class M2MRelationSetup(models.Model):
         return self.get_to_model()._meta.verbose_name
 
     def get_model_verbose_name_plural(self):
-        #return self.get_to_model()._meta.verbose_name_plural
         return self.through.model_class()._meta.verbose_name_plural
 
     def get_to_model(self):
@@ -211,7 +210,14 @@ class M2MRelationSetup(models.Model):
     def get_choices_manager(self):
         return self.get_to_model()._default_manager
 
-    def get_choices(self, arguments):
+    def get_choices(self):
+        return self.get_choices_manager().complex_filter(self.get_choices_field().rel.limit_choices_to)
+        #return self.through.model_class()._meta.get_field(self.to_field).get_choices()
+
+    def get_choices_field(self):
+        return self.through.model_class()._meta.get_field(self.to_field)
+
+    def get_choices_by_arguments(self, arguments):
         query = dict(((smart_str(lookup.lookup), arguments.get(lookup.field.field) ) for lookup in self.lookups.all()))
         return self.get_choices_manager().filter(**query)
 

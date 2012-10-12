@@ -109,9 +109,9 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                 self.external_m2m[related_m2m_model] = []
                 choice_manager  = related_m2m_model.get_choices_manager()
                 if choice_manager.model._meta.object_name is categorical_model_name:
-                    choices = choice_manager.filter(group__name=related_m2m_model.to_field)
+                    choices = related_m2m_model.get_choices()
                 else:
-                    choices = related_m2m_model.get_choices(self.initial or self.instance.__dict__)
+                    choices = related_m2m_model.get_choices_by_arguments(self.initial or self.instance.__dict__)
                 for choice in choices:
                     ins = None
                     if not self.instance.pk is None:
@@ -138,7 +138,8 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                     self.internal_m2m[related_m2m_model] = []
                     choice_manager  = related_m2m_model.rel.to._default_manager
                     if choice_manager.model._meta.object_name is categorical_model_name:
-                        choices = choice_manager.filter(group__name=related_m2m_model.rel.through._meta.object_name.lower())
+                        #choices = choice_manager.filter(group__name=related_m2m_model.rel.through._meta.object_name.lower())
+                        choices = related_m2m_model.get_choices()
                     else:
                         choices = choice_manager.all()
                     for choice in choices:
