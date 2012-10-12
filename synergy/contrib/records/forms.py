@@ -65,15 +65,7 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
             for hidden in hidden_fields:
                 self.fields[hidden].widget = forms.widgets.HiddenInput()
                 
-            categorical_model = get_model('records', 'CategoricalValue')
-
             for field in [field for field in self._meta.model._meta.fields if field.name not in to_exclude]:
-                if field.rel and field.rel.to is categorical_model:
-                    # Jeżeli pole jest relacją do CategoricalValue, to dozwolone wartości 
-                    # muszą należeć do grupy o tej nazwie pola
-                    self.fields[field.name].queryset = self.fields[field.name].queryset.filter(group__name=field.name)
-
-
                 db_type = field.db_type()
                 if db_type == 'boolean':
                     # Specjalna obsługa dla boola, ze względu na potrzebę jasności wyboru, lepiej jeżeli
@@ -90,6 +82,7 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
 
             if can_delete and instance:
                  self.fields.insert(0, "%s_%d_DELETE" % (instance._meta.object_name.lower(), instance.id), forms.BooleanField(label="Usunąć wpis?", required=False, initial=False))                
+
 
 
             for related_model in related_models:
@@ -110,14 +103,15 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                     self.external[related_model].append(df)
 
 
+            categorical_model_name = 'CategoricalValue' # <---- remove this!!
             self.external_m2m = SortedDict()
             for related_m2m_model in related_m2m_models:
                 self.external_m2m[related_m2m_model] = []
                 choice_manager  = related_m2m_model.get_choices_manager()
-                if choice_manager.model is categorical_model:
-                    choices = choice_manager.filter(group__name=related_m2m_model.to_field)
+                if choice_manager.model._meta.object_name is categorical_model_name:
+                    choices = related_m2m_model.get_choices()
                 else:
-                    choices = related_m2m_model.get_choices(self.initial or self.instance.__dict__)
+                    choices = related_m2m_model.get_choices_by_arguments(self.initial or self.instance.__dict__)
                 for choice in choices:
                     ins = None
                     if not self.instance.pk is None:
@@ -143,8 +137,9 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                 for related_m2m_model in internal_m2ms:
                     self.internal_m2m[related_m2m_model] = []
                     choice_manager  = related_m2m_model.rel.to._default_manager
-                    if choice_manager.model is categorical_model:
-                        choices = choice_manager.filter(group__name=related_m2m_model.rel.through._meta.object_name.lower())
+                    if choice_manager.model._meta.object_name is categorical_model_name:
+                        #choices = choice_manager.filter(group__name=related_m2m_model.rel.through._meta.object_name.lower())
+                        choices = related_m2m_model.get_choices()
                     else:
                         choices = choice_manager.all()
                     for choice in choices:
