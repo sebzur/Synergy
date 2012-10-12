@@ -3,5 +3,7 @@
 <ul>
   {% for item, url in items.iteritems %}
   <li>{{ item.prefix_text }} <a href="{{ url }}"><strong>{{ item.verbose_name }}</strong></a> {{ item.suffix_text }}</li>
+  {% empty %}
+  <li><em>No items available</em></li>
   {% endfor %}
 </ul>
