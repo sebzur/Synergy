@@ -65,16 +65,7 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
             for hidden in hidden_fields:
                 self.fields[hidden].widget = forms.widgets.HiddenInput()
                 
-            #categorical_model = get_model('records', 'CategoricalValue')
-            categorical_model_name = 'CategoricalValue'
-
             for field in [field for field in self._meta.model._meta.fields if field.name not in to_exclude]:
-                if field.rel and field.rel.to._meta.object_name is categorical_model_name:
-                    # Jeżeli pole jest relacją do CategoricalValue, to dozwolone wartości 
-                    # muszą należeć do grupy o tej nazwie pola
-                    self.fields[field.name].queryset = self.fields[field.name].queryset.filter(group__name=field.name)
-
-
                 db_type = field.db_type()
                 if db_type == 'boolean':
                     # Specjalna obsługa dla boola, ze względu na potrzebę jasności wyboru, lepiej jeżeli
@@ -91,6 +82,7 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
 
             if can_delete and instance:
                  self.fields.insert(0, "%s_%d_DELETE" % (instance._meta.object_name.lower(), instance.id), forms.BooleanField(label="Usunąć wpis?", required=False, initial=False))                
+
 
 
             for related_model in related_models:
@@ -111,6 +103,7 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                     self.external[related_model].append(df)
 
 
+            categorical_model_name = 'CategoricalValue' # <---- remove this!!
             self.external_m2m = SortedDict()
             for related_m2m_model in related_m2m_models:
                 self.external_m2m[related_m2m_model] = []
