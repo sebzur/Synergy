@@ -54,7 +54,7 @@ class NoteType(models.Model):
     # notes are allowed to have the files attached -- attachment_path attribute
     # defines where the file will be stored -- see attachment_save function for details
     attachment_path = models.CharField(max_length=255, verbose_name="Attachment path definition")
-    content_type = models.ForeignKey(ContentType, verbose_name="Content Type to work with")
+    content_type = models.ForeignKey('contenttypes.ContentType', verbose_name="Content Type to work with")
     
     def __unicode__(self):
         return self.name

@@ -1,5 +1,6 @@
 from django.contrib import admin
-from models import Comment, CommentType
+from models import *
 
-admin.site.register(Comment)
-admin.site.register(CommentType)
+admin.site.register(NoteComment)
+admin.site.register(Note)
+admin.site.register(NoteType)
