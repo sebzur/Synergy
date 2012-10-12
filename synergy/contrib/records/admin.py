@@ -5,7 +5,8 @@ class CreateAdmin(admin.ModelAdmin):
     list_display = ('name', 'model')
 
 class O2MRelationAdmin(admin.ModelAdmin):
-    list_display = ('setup', 'model')
+    list_display = ('model', 'setup')
+    list_filter = ('setup',)
 
 class CategoricalValueAdmin(admin.ModelAdmin):
     list_display = ('value', 'key', 'group', 'weight')
@@ -25,9 +26,9 @@ admin.site.register(FieldValueSetup)
 
 admin.site.register(M2MRelationSetup)
 admin.site.register(M2MChoicesSetup)
-admin.site.register(O2MRelationSetup)
+admin.site.register(O2MRelationSetup, O2MRelationAdmin)
 
-admin.site.register(RecordRelation, O2MRelationAdmin)
+#admin.site.register(RecordRelation, O2MRelationAdmin)
 admin.site.register(CategoricalValue, CategoricalValueAdmin)
 admin.site.register(ValuesGroup)
 
