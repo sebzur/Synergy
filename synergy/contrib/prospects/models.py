@@ -295,7 +295,6 @@ class ProspectVariant(models.Model):
     prospect = models.ForeignKey('Prospect')
     name = models.SlugField(verbose_name="Machine name", unique=True)
     verbose_name = models.CharField(max_length=255, verbose_name="Verbose name")
-    is_default = models.BooleanField(verbose_name="Is this state the default one?")
     record = models.ForeignKey('records.RecordSetup', null=True, blank=True)
     # The results will be cached with the timeout specified here.
     cache_timeout = models.PositiveSmallIntegerField(verbose_name="Cache timeout", null=True, blank=True)
@@ -398,7 +397,6 @@ class ProspectVariant(models.Model):
     
     class Meta:
         ordering = ('verbose_name', )
-        unique_together = ('prospect', 'is_default')
 
 class AspectValue(models.Model):
     variant = models.ForeignKey('ProspectVariant', related_name="aspect_values")
