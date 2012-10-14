@@ -274,8 +274,16 @@ class DetailView(ProspectMixin, RegionViewMixin, generic.DetailView):
 
     def get_arguments(self):
         arguments = self.kwargs.copy()
+
+
+        obj, parent = self.get_object(), self.get_parent()
         for d in self.get_prospect_variant().objectdetail.get_variant_contexts():
-            arguments.update(dict((smart_str(arg_val.argument.name), arg_val.value_field.get_value(self.get_object()))  for arg_val in d.argument_values.all()))
+            arguments.update(d.get_arguments(obj, parent))
+
+#        for d in self.get_prospect_variant().objectdetail.get_variant_contexts():
+#            arguments.update(dict((smart_str(arg_val.argument.name), arg_val.value_field.get_value(self.get_object()))  for arg_val in d.argument_values.all()))
+
+
         return arguments
 
     def get_object_detail(self):
