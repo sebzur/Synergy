@@ -11,7 +11,7 @@ from django.contrib.auth.models import User
 class CurrentUserField(models.ForeignKey):
 
     def __init__(self, **kwargs):
-        super(CurrentUserField, self).__init__(User, null=True, on_delete=models.SET_NULL, **kwargs)
+        super(CurrentUserField, self).__init__(User, null=True, blank=True, on_delete=models.SET_NULL, **kwargs)
 
     def contribute_to_class(self, cls, name):
         super(CurrentUserField, self).contribute_to_class(cls, name)

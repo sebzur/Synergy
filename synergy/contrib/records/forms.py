@@ -207,6 +207,16 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
             except forms.ValidationError, e:
                 self._errors[NON_FIELD_ERRORS] = self.error_class(e.messages)
 
+        def is_multipart(self):
+            is_multipart = super(CreateBaseForm, self).is_multipart()
+            if not is_multipart:
+                is_multipart = is_multipart or any((form.is_multipart for form in self.get_related_forms()))
+            return is_multipart
+
+        def get_related_forms(self):
+            containers = ['external', 'external_m2m', 'internal_m2m']
+            forms = itertools.chain(*(getattr(self, container).values() for container in containers))
+            return itertools.chain(*forms)
 
         def is_valid(self):
             valid = [super(CreateBaseForm, self).is_valid()]
@@ -222,7 +232,6 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                 valid.append(f.is_valid())
 
             return all(valid)
-
             
         def save(self, *args, **kwargs):
             self.instance = super(CreateBaseForm, self).save(*args, **kwargs)
