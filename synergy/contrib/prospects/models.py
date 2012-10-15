@@ -295,7 +295,6 @@ class ProspectVariant(models.Model):
     prospect = models.ForeignKey('Prospect')
     name = models.SlugField(verbose_name="Machine name", unique=True)
     verbose_name = models.CharField(max_length=255, verbose_name="Verbose name")
-    is_default = models.BooleanField(verbose_name="Is this state the default one?")
     record = models.ForeignKey('records.RecordSetup', null=True, blank=True)
     # The results will be cached with the timeout specified here.
     cache_timeout = models.PositiveSmallIntegerField(verbose_name="Cache timeout", null=True, blank=True)
@@ -398,7 +397,6 @@ class ProspectVariant(models.Model):
     
     class Meta:
         ordering = ('verbose_name', )
-        unique_together = ('prospect', 'is_default')
 
 class AspectValue(models.Model):
     variant = models.ForeignKey('ProspectVariant', related_name="aspect_values")
@@ -727,19 +725,25 @@ class VariantContext(models.Model):
     def __unicode__(self):
         return u"%s <- %s" % (self.object_detail, self.variant)
 
-    def get_query(self, obj, parent):
+    def _get_value_src(self, obj, parent):
         value_src = [(obj, self.object_detail.variant)]
         if self.object_detail.parent:
             value_src.append((parent, self.object_detail.parent.variant))
+        return value_src
 
+    def get_query(self, obj, parent):
         query = {}
-        for v_obj, src in value_src:
+        for v_obj, src in self._get_value_src(obj, parent):
             query.update(dict([(str(aspect_value.aspect.id), {'lookup': aspect_value.lookup, 'value': aspect_value.value_field.get_value(v_obj)}) for aspect_value in self.aspect_values.filter(value_field__variant=src)]))
 
-#        print query, parent
         return query
-        #return dict([(str(aspect_value.aspect.id), {'lookup': aspect_value.lookup, 'value': aspect_value.value_field.get_value(obj)}) for aspect_value in self.aspect_values.all()])
 
+    def get_arguments(self, obj, parent):
+        arguments = {}
+        for v_obj, src in self._get_value_src(obj, parent):
+            arguments.update(dict((smart_str(arg_val.argument.name), arg_val.value_field.get_value(v_obj))  for arg_val in self.argument_values.filter(value_field__variant=src)))
+        return arguments
+    
     class Meta:
         ordering = ('weight',)
 
@@ -780,7 +784,11 @@ class VariantContextArgumentValue(models.Model):
 
     def clean(self):
         if not self.value_field.variant == self.variant_context.object_detail.variant:
-            raise ValidationError('Value field adn variant context mismatch!')
+            # if object_detail has parent, it is allowed to use parent field
+            # as context value 
+            parent = self.variant_context.object_detail.parent 
+            if (parent and not parent.variant == self.value_field.variant) or not parent:
+                raise ValidationError('Value field adn variant context mismatch!')
 
         if not self.argument.variant == self.variant_context.variant:
             raise ValidationError('Variant context and argument prospects mismatch!')
