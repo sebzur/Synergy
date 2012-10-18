@@ -101,8 +101,13 @@ class Prospect(models.Model):
         return self.get_source().filter(self.sanitize_query(**query), nulls)
     
     def sanitize_query(self, **query):
-        # the ids list of admissible aspects
-        ids = self.get_source().aspects.values_list('id', flat=True)
+        # the ids list of admissible aspects is build with id of source aspects
+        # and the ids of source contexts aspects
+        ids = list(self.get_source().aspects.values_list('id', flat=True))
+
+        for related_context in self.get_source().contexts.all():
+            ids.extend(list(related_context.variant.prospect.source.aspects.values_list('id', flat=True)))
+        
         return dict([(smart_str(id), query.get(id)) for id in filter(lambda x: int(x) in ids, query.keys())])
 
     def get_required_aspects(self):
@@ -772,12 +777,25 @@ class VariantContextAspectValue(models.Model):
                 raise ValidationError('Variant context and value mismatch!')
 
         if not self.variant_context.variant.prospect == self.aspect.source.prospect:
-            try:
-                # if aspect is not related directly with variant, it still can be related
-                # by Source context, so let's check it:
-                models.get_model('prospects','Aspect').objects.filter(source__in=self.variant_context.variant.prospect.source.contexts.all().values_list('variant__prospect__source', flat=True)).get(id=self.aspect.id)
-            except models.get_model('prospects','Aspect').DoesNotExist:
+            # if aspect is not related directly with variant, it still can be related
+            # by Source context, so let's check it:
+            base_variant = self.variant_context.variant
+            # In case base_variant context variants are having their own contexts, we have
+            # to check if the aspect exists deeper in the structure
+            variants = [base_variant] + [context.variant for context in base_variant.prospect.source.contexts.all()]
+            error = True
+            for variant in variants:
+                try:
+                    models.get_model('prospects','Aspect').objects.filter(source__in=variant.prospect.source.contexts.all().values_list('variant__prospect__source', flat=True)).get(id=self.aspect.id)
+                    error = False
+                    break
+                except models.get_model('prospects','Aspect').DoesNotExist:
+                    continue
+            if error:
                 raise ValidationError('Variant context and aspect prospects mismatch!')
+            #models.get_model('prospects','Aspect').objects.filter(source__in=self.variant_context.variant.prospect.source.contexts.all().values_list('variant__prospect__source', flat=True)).get(id=self.aspect.id)
+
+                
 
 
 class VariantContextArgumentValue(models.Model):
