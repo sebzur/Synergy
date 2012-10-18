@@ -78,17 +78,22 @@ class MenuNode(template.Node):
 @register.tag
 def secondary_menu(parser, token):
     bits = token.split_contents()
-    if len(bits) < 2:
-        raise TemplateSyntaxError("'%s' takes at least one argument"
-                                  " (user)" % bits[0])
-    return SecondaryMenuNode(bits[1])
+    if len(bits) < 3:
+        raise template.TemplateSyntaxError("'%s' takes two arguments"
+                                  " (user, component)" % bits[0])
+    return SecondaryMenuNode(bits[1], bits[2])
 
 class SecondaryMenuNode(template.Node):
-    def __init__(self, user):
+    def __init__(self, user, component):
         self.user = template.Variable(user)
+        self.component = template.Variable(component)
 
     def render(self, context):
-        menus = get_model('menu', 'Menu').objects.filter(category='s', is_enabled=True)
+        component = self.component.resolve(context)
+        ids = []
+        if component:
+            ids = component.menus.all().values_list('menu', flat=True)
+        menus = get_model('menu', 'Menu').objects.filter(id__in=ids)
 
         user = self.user.resolve(context)
         excluded = []

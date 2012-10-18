@@ -393,10 +393,16 @@ class ProspectVariant(models.Model):
     get_model_name.short_description = 'Related model app'
 
     def __unicode__(self):
-        return self.verbose_name
+        return u"%s (%s)" % (self.verbose_name, self.name)
     
+    def get_component(self):
+        try:
+            return self.component_assignment.component
+        except:
+            return None
+
     class Meta:
-        ordering = ('verbose_name', )
+        ordering = ('verbose_name', 'name')
 
 class AspectValue(models.Model):
     variant = models.ForeignKey('ProspectVariant', related_name="aspect_values")

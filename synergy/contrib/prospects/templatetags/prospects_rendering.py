@@ -77,18 +77,19 @@ class VariantResultsNode(template.Node):
         variant = self.variant.resolve(context)
         query = self.query.resolve(context)
         user = self.user.resolve(context)
-        error = None
 
+        error_info = None
         try:
             results = variant.filter(user, **query)
         except Exception, error:
+            if settings.DEBUG:
+                error_info = error
             results = None
-            error = error
 
         ctx = copy.copy(context)
         ctx['results'] = results
         ctx['variant'] = variant
-        ctx['error'] = error
+        ctx['error'] = error_info
         repr_obj = variant.listrepresentation.representation
         ctx[repr_obj._meta.object_name.lower()] = repr_obj
         ctx.update(repr_obj.get_context_data())

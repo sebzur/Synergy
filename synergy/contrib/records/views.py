@@ -29,6 +29,9 @@ class ObjectViewMixin(object):
     def get_model(self):
         return self.get_model_setup().model.model_class()
 
+    def get_component(self):
+        return self.get_model_setup().get_component()
+
     def get_queryset(self):
         return self.get_model()._default_manager.all()
 
@@ -91,7 +94,9 @@ class CreateRecordView(ProtectedView, RegionViewMixin, ObjectViewMixin, CreateVi
         setup = self.get_model_setup()
         ctx['initial'] = self.get_initial()
         ctx['cancel_url'] = setup.get_cancel_url(**self.get_arguments())
+        ctx['component'] = self.get_component()
         ctx.update(setup.get_context_elements(ctx, 'c'))
+        print ctx
         return  ctx
 
     def get_success_url(self):
@@ -116,6 +121,7 @@ class UpdateRecordView(ObjectViewMixin, ProtectedView, RegionViewMixin, UpdateVi
         ctx['setup'] = setup
 
         ctx['delete_enabled'] = setup.is_delete_enabled()
+        ctx['component'] = self.get_component()
 
         ctx.update(setup.get_context_elements(ctx, 'u'))
         return  ctx
@@ -143,6 +149,7 @@ class DeleteRecordView(ObjectViewMixin, ProtectedView, RegionViewMixin, DeleteVi
     def get_context_data(self, *args, **kwargs):
         ctx = super(DeleteRecordView, self).get_context_data(*args, **kwargs)
         ctx['cancel_url'] = self.get_model_setup().get_success_url(**{'object': self.object})
+        ctx['component'] = self.get_component()
         setup = self.get_model_setup()
         ctx.update(setup.get_context_elements(ctx, 'd'))
         return  ctx
