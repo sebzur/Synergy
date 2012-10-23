@@ -33,6 +33,10 @@ class ListRepresentationAdmin(admin.ModelAdmin):
     search_fields = ('name',)
     list_filter = ('representation_type',)
 
+class DetailMenuAdmin(admin.ModelAdmin):
+    list_display = ('object_detail', 'menu')
+    
+
 
 admin.site.register(Prospect, ProspectAdmin)
 admin.site.register(Source, SourceAdmin)
@@ -61,7 +65,7 @@ admin.site.register(CustomPostfix)
 admin.site.register(Calendar)
 
 
-admin.site.register(DetailMenu)
+admin.site.register(DetailMenu, DetailMenuAdmin)
 admin.site.register(DetailField)
 admin.site.register(DetailFieldStyle)
 admin.site.register(VariantMenu)
