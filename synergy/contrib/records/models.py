@@ -129,6 +129,7 @@ class RecordSetup(models.Model):
         return dict(filter(lambda x: not x[1] is None, initial))
 
     def get_success_url(self, **kwargs):
+        print kwargs
         return self.get_url(self.success_url, self.reverse_success_url, **kwargs)
 
     def get_generic_url(self, **kwargs):
