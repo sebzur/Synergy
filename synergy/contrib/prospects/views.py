@@ -64,6 +64,10 @@ class ProspectMixin(object):
     def get_prospect(self):
         return self.get_prospect_variant().prospect
 
+    def get_component(self):
+        return self.get_prospect_variant().get_component()
+        
+
     def get_query_dict(self):
         kwgs = dict([(smart_str(k), v.encode('utf8')) for k, v in self.request.GET.iteritems() if k.split('__')[0] in ('aspect', 'lookup') ])
         return kwgs
@@ -76,8 +80,7 @@ class ProspectMixin(object):
         ctx['arguments'] = self.get_arguments()
         ctx['encoded'] = urllib.urlencode(self.get_query_dict())
         ctx['query'] = build_query(self.get_query_dict())
-
-
+        ctx['component'] = self.get_component()
         return ctx
 
 

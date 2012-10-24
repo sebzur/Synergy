@@ -9,6 +9,10 @@
 {% include 'synergy/contrib/prospects/views/aspect_form.html' %}
 {% endif %}
 
+{% if error %}
+<h3>Error in prospect definition</h3>
+ {{ error }}
+{% endif %}
 
 <div id="results">
   {% region prospect %}

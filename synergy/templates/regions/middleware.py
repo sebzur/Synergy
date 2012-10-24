@@ -7,7 +7,7 @@ from synergy.templates.regions.views import RegionViewMixin
 class RegionInfoMiddleware(object):
     def process_view(self, request, view_func, view_args, view_kwargs):
         if RegionViewMixin._registry.has_key(view_func.__name__):
-            request.region_info = RegionInfo(request, view_func, view_args, view_kwargs )
+            request.region_info = RegionInfo(request, view_func, view_args, view_kwargs)
            
     
 class RegionInfo(object):
