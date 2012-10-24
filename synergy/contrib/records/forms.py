@@ -87,7 +87,9 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
 
             for related_model in related_models:
                 self.external[related_model] = []
-                instances = related_model.model.model_class().objects.filter(**{smart_str(related_model.get_rel_id_field()): related_model.extract_id(self.instance)})
+                instances = related_model.model.model_class().objects.filter(**{smart_str(related_model.get_rel_id_field()): related_model.extract_id(self.instance)}).order_by('id')
+                # In previouse line ordering is super important -- I got some issues with individual elements
+                # selecting (try-except block below) without it
                 for i in range(related_model.get_max_count()):
                     ins = None
                     if not self.instance.pk is None:
@@ -129,8 +131,6 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
 
             self.internal_m2m = SortedDict()
             if use_model_m2m_fields:
-
-
                 _handled = [m2m_relation.through for m2m_relation in related_m2m_models]
                 _get = get_model('contenttypes','contenttype').objects.get_for_model
                 internal_m2ms = (relation for relation in created_model._meta.many_to_many if _get(relation.rel.through) not in _handled)
@@ -138,8 +138,9 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                     self.internal_m2m[related_m2m_model] = []
                     choice_manager  = related_m2m_model.rel.to._default_manager
                     if choice_manager.model._meta.object_name is categorical_model_name:
-                        #choices = choice_manager.filter(group__name=related_m2m_model.rel.through._meta.object_name.lower())
-                        choices = related_m2m_model.get_choices()
+                        to_field_name = related_m2m_model.m2m_reverse_field_name()
+                        to_field = related_m2m_model.rel.through._meta.get_field(to_field_name)
+                        choices = choice_manager.complex_filter(to_field.rel.limit_choices_to)
                     else:
                         choices = choice_manager.all()
                     for choice in choices:
