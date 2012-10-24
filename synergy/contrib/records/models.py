@@ -7,6 +7,16 @@ from django.template import Context, Template
 from django.contrib.contenttypes import generic
 from django.utils.datastructures import SortedDict
 
+
+def render_url(url, **kwargs):
+    bits = url.split()
+    if bits[0] == 'create':
+        t = Template("{%% load records_tags %%}{%% create %s %%}" % " ".join(bits[1:]))
+    else:
+        t = Template("{%% url %s %%}" % url)
+    return t.render(Context(kwargs))
+
+
 def get_parent_field(options):
     no_auto_fields = filter(lambda x: not isinstance(x, models.AutoField), options.fields)
     tmp = no_auto_fields[0]
@@ -139,10 +149,8 @@ class RecordSetup(models.Model):
 
     def get_url(self, url, reverse, **kwargs):
         if reverse:
-            t = Template("{%% url %s %%}" % url)
-            return t.render(Context(kwargs))
+            return render_url(url, **kwargs)
         return url
-
 
     def __unicode__(self):
         return self.name

@@ -596,7 +596,7 @@ class Field(models.Model):
         if url_setup.reverse_url:
             bits = url_setup.url.split()
             if bits[0] == 'create':
-                t = template.Template("{%% load records_tags %%} {%% create %s %%}" % " ".join(bits[1:]))
+                t = template.Template("{%% load records_tags %%}{%% create %s %%}" % " ".join(bits[1:]))
             else:
                 t = template.Template("{%% url %s %%}" % url_setup.url)
         else:
