@@ -49,10 +49,14 @@ class Column(models.Model):
     def is_triggered(self, obj):
         """ Obj is the objects that is the source of the field in column """
         if not hasattr(self, '_is_triggered'):
-            self._is_triggered = True
+            self._is_triggered = {}
+        
+        if not self._is_triggered.has_key(obj):
+            self._is_triggered[obj] = True
             if self.trigger_lookup and not (obj is None):
-                self._is_triggered = self.negate_trigger ^ bool(resolve_lookup(obj, self.trigger_lookup))
-        return self._is_triggered
+                self._is_triggered[obj] = self.negate_trigger ^ bool(resolve_lookup(obj, self.trigger_lookup))
+            
+        return self._is_triggered.get(obj, None)
 
     def get_styles(self, value):
         return {'class': ' '.join(self.get_triggered_styles('c', value)),
