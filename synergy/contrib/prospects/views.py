@@ -1,30 +1,25 @@
 # -*- coding: utf-8 -*-
+import re
+import urllib 
+import signals
+import itertools
+
 from django.views import generic
 from django.db.models import get_model
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseRedirect
-
-from synergy.templates.regions.views import RegionViewMixin
-
 from django.core.urlresolvers import reverse
-
-from synergy.contrib.prospects.forms import prospectform_factory, build_query
-
-
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
-import signals
-
 from django.utils.encoding import smart_str 
 
-import re
-
+from django.http import HttpResponseRedirect, HttpResponse, Http404
 from djangorestframework.views import View
 from djangorestframework import status, permissions
+from synergy.templates.regions.views import RegionViewMixin
+from synergy.contrib.prospects.forms import prospectform_factory, build_query
+from synergy.contrib.components import urlresolvers
 
-import urllib 
-
-from django.http import HttpResponseRedirect, HttpResponse, Http404
 
 class ProspectMixin(object):
 
@@ -142,8 +137,9 @@ class ListView(ProspectMixin, RegionViewMixin, AspectFormMixin):
         return self.kwargs
 
     def get_success_url(self):
-        return reverse('list', args=[self.get_prospect_variant().name])
+        return urlresolvers.component_url('list', self.get_prospect_variant().name, **self.get_arguments())
 
+    
 
 class DetailContextView(ProspectMixin, RegionViewMixin, AspectFormMixin, generic.detail.SingleObjectMixin):
 
