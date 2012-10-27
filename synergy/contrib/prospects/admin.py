@@ -27,6 +27,9 @@ class FieldAdmin(admin.ModelAdmin):
     list_display = ('variant', 'verbose_name', 'db_field', 'lookup', 'link_to', 'as_object_link', 'get_db_type', 'has_choices')
     list_filter = ('variant',)
 
+class FieldURLAdmin(admin.ModelAdmin):
+    list_display = ('field', 'url', 'reverse_url')
+    list_filter = ('field__variant',)
 
 class ListRepresentationAdmin(admin.ModelAdmin):
     list_display = ('variant', 'name', 'representation_type', 'representation_id', )
@@ -54,7 +57,7 @@ admin.site.register(NullStateValue)
 admin.site.register(UserRelation)
 
 admin.site.register(Field, FieldAdmin)
-admin.site.register(FieldURL)
+admin.site.register(FieldURL, FieldURLAdmin)
 
 admin.site.register(Operator)
 admin.site.register(ProspectOperator)
