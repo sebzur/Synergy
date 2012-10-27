@@ -52,7 +52,7 @@ class CreateRecordView(ProtectedView, RegionViewMixin, ObjectViewMixin, CreateVi
     def dispatch(self, request, *args, **kwargs):
         setup = get_model('records', 'RecordSetup').objects.get(name=kwargs.get('name'))
         expressions = []
-        for argument in setup.arguments.all():
+        for argument in setup.arguments.all().order_by('weight'):
             expressions.append("(?P<%s>%s)" % (argument.name, argument.regex))
         regex = "/".join(expressions)
         path = kwargs.get('arguments')
