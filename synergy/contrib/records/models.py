@@ -163,11 +163,11 @@ class RecordArgument(models.Model):
     weight = models.IntegerField()
 
     def __unicode__(self):
-        return u"%s:%s" % (self.setup, self.name)
+        return u"%s:%s" % (self.name, self.setup)
 
     class Meta:
         unique_together = (('setup', 'name'), ('setup', 'weight'))
-        ordering = ('weight',)
+        ordering = ('name', 'weight',)
 
 class RecordField(models.Model):
     setup = models.ForeignKey('RecordSetup', related_name="fields")
@@ -190,7 +190,7 @@ class RecordField(models.Model):
 
             
 class FieldValueSetup(models.Model):
-    value = models.ForeignKey('RecordArgument')
+    value = models.ForeignKey('RecordArgument', verbose_name="Record argument")
     field = models.OneToOneField('RecordField', related_name="value")
 
 
