@@ -101,7 +101,7 @@ class CreateRecordView(ProtectedView, RegionViewMixin, ObjectViewMixin, CreateVi
     def get_success_url(self):
         tmp = self.get_arguments().copy()
         tmp.update({'object': self.object})
-        print 'Got succses url:', [self.get_model_setup().get_success_url(**tmp)]
+        #print 'Got succses url:', [self.get_model_setup().get_success_url(**tmp)]
         return self.get_model_setup().get_success_url(**tmp)
 
 
