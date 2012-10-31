@@ -8,14 +8,24 @@
 	{% region title %}
         <h1>{{ title|default:"Styles." }}</h1>
 	{% endregion %}
+
+	<div {% if blocks.sidebar %}class="primary"{% endif %}>
 	{% region body %}
 	{% include 'pageone/default_node_content.html' %}
 	{% endregion %}
+	</div>
             <aside>
 	      {% region sidebar %}
+	      {% if blocks.sidebar %}
+	        {% for block in blocks.sidebar %}
+	           {{ block.body|safe }}
+	         {% endfor %}
+	      {% else %}
 	      {% include 'pageone/default_node_sidebar.html' %}
+	      {% endif %}
 	      {% endregion %}
             </aside>
+
 
       </section>
 {% endregion %}

@@ -31,8 +31,10 @@ class ProspectMixin(object):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         #variant = get_model('prospects', 'ProspectVariant').objects.get(name=kwargs.get(self.get_arguments_url_kwarg()))
-        expressions = []
 
+        self.authenticate(request, **kwargs)
+
+        expressions = []
         for argument in self.get_variant_arguments(**kwargs):
             expressions.append("(?P<%s>%s)" % (argument.name, argument.regex))
         regex = "/".join(expressions)
@@ -46,6 +48,15 @@ class ProspectMixin(object):
 
         return super(ProspectMixin, self).dispatch(request, *args, **kwargs)
 
+
+    def authenticate(self, request, **kwargs):
+        component = self._get_component(**kwargs)
+        variant = self._get_prospect_variant(**kwargs)
+
+        if component :
+            return request.user.has_perm('components.component.can_see', component)
+        return request.user.has_perm('prospects.prospectvariant.can_see', variant)
+
     def resolve(self, regex, path):
         _regex = re.compile(regex, re.UNICODE)
         match = _regex.search(path)
@@ -57,6 +68,9 @@ class ProspectMixin(object):
 
     def _get_prospect_variant(self, **kwargs):
         return get_model('prospects', 'ProspectVariant').objects.get(name=kwargs.get('variant'))
+
+    def _get_component(self, **kwargs):
+        return self._get_prospect_variant(**kwargs).get_component()
 
     def get_representation(self):
         return self.get_prospect_variant().listrepresentation.representation
@@ -137,6 +151,7 @@ class ListView(ProspectMixin, RegionViewMixin, AspectFormMixin):
         ctx[repr_obj._meta.object_name.lower()] = repr_obj
         ctx.update(self.get_representation().get_context_data(*args, **kwargs))
         return ctx
+
 
     def get_arguments(self):
         return self.kwargs

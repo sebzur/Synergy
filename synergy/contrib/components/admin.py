@@ -10,6 +10,10 @@ admin.site.register(ComponentProspectVariant)
 admin.site.register(ComponentRecord)
 admin.site.register(ComponentMenu)
 
+admin.site.register(Region)
+admin.site.register(Block)
+admin.site.register(BlockACLItem)
+
 
 
 

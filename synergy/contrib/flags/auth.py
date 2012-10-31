@@ -47,7 +47,7 @@ class FlagsBackend(object):
         if model_queryset.exists():
             state = model_queryset.get().content_object.check(user, perm, obj)  #jest unque na object_id i contet wiec NULL jest tylko jeden
         elif obj_exists:
-                state = obj_queryset.get().check(user, perm, obj)
+            state = obj_queryset.get().check(user, perm, obj)
             
         model_exists = model_queryset.exists()
         #zakladam, ze ten jest ostatni w kolejce, a wiec zawsze zwroci True lub False
@@ -97,8 +97,8 @@ class FlagsBackend(object):
       
         #pobierz wszystkie contenty zwiazane z tym permem dla tego modelu
         permission_queryset =  get_model('flags', 'ContentFlag').objects.filter(content_type__app_label__exact=app_name,
-                                                     content_type__model__exact=model_name,
-                                                     flag__name__exact=perm_name)    
+                                                                                content_type__model__exact=model_name,
+                                                                                flag__name__exact=perm_name)    
         
         
         model_perm_query = permission_queryset.filter(object_id__exact=None)

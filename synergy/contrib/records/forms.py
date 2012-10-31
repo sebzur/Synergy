@@ -181,6 +181,9 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
             # self.initial -- we need this behaviour to get the fully polulated instances
             # in the child objects
 
+            if self._errors:
+                return
+
             super(CreateBaseForm, self)._post_clean() # this gives us the self.instance update
 
             #for ex in itertools.chain(*self.external.values()): # loops over fk related forms
