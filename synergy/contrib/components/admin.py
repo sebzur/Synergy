@@ -5,9 +5,12 @@ class ModuleAdmin(admin.ModelAdmin):
     list_display = ('name', 'verbose_name')
     search_fields = ('name', 'verbose_name')
 
+class RecordAdmin(admin.ModelAdmin):
+    list_display = ('records', 'component', 'flag', 'create_flag', 'update_flag', 'delete_flag')
+
 admin.site.register(Component, ModuleAdmin)
 admin.site.register(ComponentProspectVariant)
-admin.site.register(ComponentRecord)
+admin.site.register(ComponentRecord, RecordAdmin)
 admin.site.register(ComponentMenu)
 
 admin.site.register(Region)

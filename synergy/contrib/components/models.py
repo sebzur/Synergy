@@ -3,7 +3,19 @@ from django.db import models
 class Component(models.Model):
     name = models.SlugField(unique=True, verbose_name="Component machine name", help_text="This is slug field")
     verbose_name = models.CharField(max_length=255, verbose_name="Component verbose name", unique=True)
+
+    site = models.ForeignKey('sites.Site', null=True, blank=True, related_name="components")
+
     flag = models.ForeignKey('flags.Flag', null=True, blank=True, related_name="components")
+
+    record_flag = models.ForeignKey('flags.Flag', null=True, blank=True, verbose_name="Records access flag", related_name="components_by_record")
+    prospect_flag = models.ForeignKey('flags.Flag', null=True, blank=True, verbose_name="Prospects access flag", related_name="components_by_prospect")
+
+    list_flag =  models.ForeignKey('flags.Flag', null=True, blank=True, verbose_name="List access flag", related_name="components_by_list")
+    detail_flag =  models.ForeignKey('flags.Flag', null=True, blank=True, verbose_name="Detail access flag", related_name="components_by_detail")
+    create_flag = models.ForeignKey('flags.Flag', null=True, blank=True, verbose_name="Create access flag", related_name="components_by_create")
+    update_flag = models.ForeignKey('flags.Flag', null=True, blank=True, verbose_name="Update access flag", related_name="components_by_update")
+    delete_flag = models.ForeignKey('flags.Flag', null=True, blank=True, verbose_name="Delete access flag", related_name="components_by_delete")
 
     def __unicode__(self):
         return self.verbose_name
@@ -17,7 +29,9 @@ class Component(models.Model):
 class ComponentProspectVariant(models.Model):
     component = models.ForeignKey('Component', related_name='prospect_variants')
     prospect_variant = models.OneToOneField('prospects.ProspectVariant', related_name="component_assignment")
+
     flag = models.ForeignKey('flags.Flag', null=True, blank=True, verbose_name="General access flag", related_name="component_variants")
+    list_flag =  models.ForeignKey('flags.Flag', null=True, blank=True, verbose_name="Detail access flag", related_name="list_access_component_variants")
     detail_flag =  models.ForeignKey('flags.Flag', null=True, blank=True, verbose_name="Detail access flag", related_name="detail_access_component_variants")
 
     class Meta:

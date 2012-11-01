@@ -101,12 +101,6 @@ class RecordSetup(models.Model):
     generic_url = models.CharField(max_length=255)
     reverse_generic_url = models.BooleanField()
 
-    def get_component(self):
-        try:
-            return self.component_assignment.component
-        except Exception, error:
-            return None
-
     def is_delete_enabled(self):
         return not self.actions.filter(action='d', is_enabled=False).exists()
 
