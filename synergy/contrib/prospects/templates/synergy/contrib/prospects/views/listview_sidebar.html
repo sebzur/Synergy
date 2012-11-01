@@ -5,3 +5,10 @@
 {% menu menu.menu.name user=user %} 
 {% endif %}
 {% endfor %}
+
+{% if blocks.sidebar %}
+  {% for block in blocks.sidebar %}
+    {{ block.body|safe }}
+  {% endfor %}
+{% endif %}
+

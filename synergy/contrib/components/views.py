@@ -88,8 +88,13 @@ class ComponentViewMixin(ProtectedView, AuthBase):
 
     def get_blocks(self):
         regions = dict( (region, None) for region in get_model('components', 'region').objects.values_list('name', flat=True))
+
+        app, func = self.access_prefix.split('.')
+        item_name =  self.get_component_item(**self.kwargs).name
+
         for region in regions:
-            regions[region] = get_model('components', 'block').objects.filter(region__name=region)
+            blocks = get_model('components', 'block').objects.filter(region__name=region, acl__isnull=True)
+            regions[region] = blocks
         return regions
 
 

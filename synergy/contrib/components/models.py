@@ -90,7 +90,7 @@ class Block(models.Model):
         
 
 class BlockACLItem(models.Model):
-    block = models.ForeignKey('Block', related_name="views")
+    block = models.ForeignKey('Block', related_name="acl")
     VIEWS = (('c', 'component'), ('p', 'prospect'), ('r', 'record'))
     view_type = models.CharField(max_length=1, choices=VIEWS)
     view_name = models.SlugField(verbose_name="View name")
