@@ -16,10 +16,10 @@ class ProtectedView(object):
         PERM_MISSING = perm and not request.user.has_perm(perm, self.get_obj(**kwargs))
         STRICT_AUTH_MISSING = settings.COMPONENTS_STRICT_AUTH and not request.user.is_authenticated()
         if PERM_MISSING or STRICT_AUTH_MISSING:
-            return self.login_redirect()
+            return self.login_redirect(request)
         return super(ProtectedView, self).dispatch(request, *args, **kwargs)
 
-    def login_redirect(self,login_url=settings.LOGIN_URL, redirect_field_name=REDIRECT_FIELD_NAME):
+    def login_redirect(self, request, login_url=settings.LOGIN_URL, redirect_field_name=REDIRECT_FIELD_NAME):
         path = request.build_absolute_uri()
         # If the login url is the same scheme and net location then just
         # use the path as the "next" url.
