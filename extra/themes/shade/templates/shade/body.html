@@ -1,4 +1,5 @@
 {% extends "shade/base.html" %}
+{% load i18n %}
 {% load synergy_region %}
 {% block body %}
     <div id="page">
@@ -13,8 +14,8 @@
 	  <div id="user-links">	  
 	    <ul>
 	      {% if user.is_authenticated %}
-		<li><a href="#PROFILE">Login: {{ user }}</a></li>
-		<li><a href="{% url logout %}">Wyloguj / Logout</a></li>
+		<li><a href="#PROFILE">{{ user }}</a></li>
+		<li><a href="{% url logout %}">{% trans "Logout" %}</a></li>
 	      {% endif %}
 	    </ul>
 	  </div> <!-- /#user links -->
@@ -39,8 +40,11 @@
 	<div id="footer-menu">
 	  <br />
 	  <br />
-	  Problemy techniczne w pracy oprogramowania należy zgłaszać pod adresem <a href="mailto:support@codelab.pl">support@codelab.pl</a><br/>
-	  Dane znajdujące się w systemie są własnością prawnie chronioną.<br />
+	  {% if blocks.footer %}
+	     {% for block in blocks.footer %}
+	       {{ block.body|safe }}
+	      {% endfor %}
+	  {% endif %}
 	</div>
         {% endregion %}
       </div>

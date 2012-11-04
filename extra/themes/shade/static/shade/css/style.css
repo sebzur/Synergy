@@ -81,13 +81,13 @@ img#logo-image{
     padding-right: 5px;
     text-transform:uppercase;
     text-decoration: none;
-    border-right:1px solid #C4302B; 
+    border-right:1px solid #FFCF40; 
     color: #EDEDED;
     
 }
 
 #user-links a:hover{
-    color: #2B332E;
+    color: #FFCF40;
     text-decoration: none;
 }
 

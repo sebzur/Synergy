@@ -2,6 +2,13 @@ from django.db import models
 from synergy.contrib.prospects.models import RepresentationModel, resolve_lookup
 
 class Table(RepresentationModel):
+    is_filtered = models.BooleanField(verbose_name="Should the table have filtering enabled?")
+
+    LANGS = (('pl', 'Polish'), ('en', 'English'))
+    lang = models.CharField(max_length=2, default='pl', choices=LANGS, verbose_name="Language code")
+    
+    is_paginated = models.BooleanField(verbose_name="Should the table be paginated?")
+    page_rows = models.PositiveIntegerField(verbose_name="Number of rows per page", default=100)
 
     def get_prospect_postfix(self):
         return 'tabledisplay'

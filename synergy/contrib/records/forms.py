@@ -7,6 +7,8 @@ from django.db.models import get_model
 from django.utils.datastructures import SortedDict
 from models import get_parent_field
 from django.utils.encoding import smart_str 
+from django.utils.translation import ugettext_lazy as _
+
 NON_FIELD_ERRORS = '__all__'
 
 def m2m_form_factory(to_exclude, r_name, through_model, m2m_relation_setup=None):
@@ -73,7 +75,7 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                     # dawałe defaultowego False przy braku wyboru
 
                     self.fields[field.name] =  forms.TypedChoiceField(coerce=lambda choice: {'True': True, 'False': False}[choice],
-                                                                      choices=(('False', 'Nie'), ('True', 'Tak')),
+                                                                      choices=(('False', _('No')), ('True', _('Yes'))),
                                                                       widget=forms.RadioSelect,
                                                                       initial=self.fields[field.name].initial,
                                                                       label=self.fields[field.name].label

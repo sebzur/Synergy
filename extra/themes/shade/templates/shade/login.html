@@ -1,3 +1,4 @@
+{% load i18n %}
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
   <head>
@@ -33,24 +34,16 @@
 	  </form>
 	</div>
 	<div id="info">
-	  <h4>Formularz logowania</h4>
-
 	  {% if form.errors %}
 	  <p id="error-message">
-	    Nazwa użytkownika (login) oraz hasło nie pasują wzajemnnie
+	    {% trans "Invalid credentials!" %}<br/>
 	  </p>
 	  {% else %}
-
-
-	  <p style="margin-top: 10px;">
-	    Aby zalogować się do systemu należy wprowadzić dane autentykacyjne: <strong>nazwę użytkownika oraz hasło</strong>.
-	    Jeżeli nie posiadasz tych danych, skontaktuj się z administratorem systemu.
+	  <p style="margin-top: 40px;">
+	    {{ theme_info.site_name|safe|default:"<strong>Code</strong>LAB software" }}<br/>
+	    <em style="font-size: 12px;">Enter your account credentials.</em>
 	  </p>
-
-
 	  {% endif %}
-
-
 	</div>
 	<div style="clear:both;"></div>
       </div>

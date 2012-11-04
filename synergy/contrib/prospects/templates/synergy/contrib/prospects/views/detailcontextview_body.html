@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load synergy_region %}
 {% load prospects_rendering %}
 {% load menu_tags %}
@@ -12,7 +13,7 @@
 <h3>Menu</h3>
 
 <ul>
-  <li><a href="{% url detail objectdetail.variant.name object.id %}"><strong>Powrót do szczegółów</strong></a></li>
+  <li><a href="{% url detail objectdetail.variant.name object.id %}"><strong>{% trans "Return to details" %}</strong></a></li>
 </ul>
 
 </div>

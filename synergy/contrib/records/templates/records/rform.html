@@ -1,7 +1,13 @@
+{% load i18n %}
 {% load records_tags %}
 {% load formstyle_tags %}
 
+{% if form.non_field_errors %}
+<div class="non-field-errors">
+<h4>{% trans "There are some problems with the data provided in this form..." %}</h4>
 {{ form.non_field_errors }}
+</div>
+{% endif %}
 
 <div style="margin-bottom: 10px;">
   {{ form|layout }}

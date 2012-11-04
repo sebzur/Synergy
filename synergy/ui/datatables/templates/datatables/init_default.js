@@ -1,10 +1,10 @@
 <script>  
     $(document).ready(function() {
-	$('{{ selector }}').dataTable({"iDisplayLength": 100,
-				       "bJQueryUI": true,
-				       "oLanguage": {
-					   "sUrl": "/static/datatables/language/pl_PL.txt"
-				       }
+	$('{{ selector }}').dataTable({ "bFilter": {{ is_filtered|yesno:"true,false"}},
+					"bPaginate": {{ is_paginated|yesno:"true,false"}},
+					{% if page_rows %}"iDisplayLength": {{ page_rows }},{% endif %}
+					{% if transfile %}"oLanguage": {"sUrl": "{{ transfile }}"},{% endif %}
+                                 	"bJQueryUI": true {# IMPORTANT: keep no semicolon at the end here #}
 				      });
-    } );
+    });
 </script>

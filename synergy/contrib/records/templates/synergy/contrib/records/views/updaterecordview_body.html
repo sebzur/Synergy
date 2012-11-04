@@ -1,3 +1,4 @@
+{% load i18n %}
 {% if body %}
 <div>
   {{ body|linebreaks }}
@@ -11,10 +12,10 @@
 {% include 'synergy/contrib/records/views/form.html' %}
 
 <p class="clearfix">
-  <input class="button" style="width: 200px; float:right;" type="submit" value="{{ action_label|default:"Aktualizuj" }}" />
-  <a class="ref-btn" style="width: 200px; float:right;" href="{{ cancel_url }}">Anuluj</a>
+  <input class="button" style="width: 200px; float:right;" type="submit" value="{% if action_label %}{{ action_label }}{% else %}{% trans "Update" %}{% endif %}" />
+  <a class="ref-btn" style="width: 200px; float:right;" href="{{ cancel_url }}">{% trans "Cancel" %}</a>
   {% if delete_enabled %}
-  <a class="ref-btn-warn" style="width: 100px;" href="{% url delete setup.name object.id %}">Usuń</a>
+  <a class="ref-btn-warn" style="width: 100px;" href="{% url delete setup.name object.id %}">{% trans "Delete" %}</a>
   {% endif %}
 </p>
 

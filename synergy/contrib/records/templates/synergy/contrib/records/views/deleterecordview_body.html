@@ -1,3 +1,4 @@
+{% load i18n %}
 {% if body %}
 <div>
   {{ body|linebreaks }}
@@ -9,15 +10,14 @@
 <form action="." method="POST">
   {% csrf_token %}
 
-
   <p>
-    Czy na pewno chcesz usunąć z systemu wpis <strong>{{ object }}</strong>? Jeżeli tak, zatwierdź wybór -- przywrócenie danych
-    nie będzie możliwe!
+    {% trans "The entry selected for the delete action is:" %} <strong>{{ object }}</strong>.<br/>
+    {% trans "The object you are going to delete will be removed permanently. Please, confirm your decision." %}
   </p>
  
   <p class="clearfix">
-    <input class="dangerous-button" style="width: 200px; float:right;" type="submit" value="{{ action_label|default:"Potwierdzam usunięcie" }}" />
-    <a class="ref-btn" style="width: 200px; float:right;" href="{{ cancel_url }}">Anuluj</a>
+    <input class="dangerous-button" style="width: 200px; float:right;" type="submit" value="{% if action_label %}{{ action_label }}{% else %}{% trans "Delete" %}{% endif %}" />
+    <a class="ref-btn" style="width: 200px; float:right;" href="{{ cancel_url }}">{% trans "Cancel" %}</a>
   </p>
 
 </form>

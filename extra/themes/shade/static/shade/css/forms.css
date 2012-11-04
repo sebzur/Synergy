@@ -17,11 +17,15 @@
 }
 
 ul.errorlist{
-    background-color: #FFE6E6;
-    border: 1px solid #C4302B;
-    color: #000000;
-}
+ }
 
 ul.errorlist li{
-    padding:3px 0px 3px 0px; 
+    background-color: #FFCF40;
+    padding: 3px 6px 3px 6px; 
+    color: #6B6B6A;
+}
+
+.non-field-errors{
+    padding: 5px 10px 5px 10px;
+    background-color: #FFCF40;
 }

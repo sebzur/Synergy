@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load synergy_region %}
 {% load prospects_rendering %}
 {% load menu_tags %}
@@ -9,7 +10,7 @@
 
 {% if objectdetail.has_record %}
 <p class="object-link">
-  <a href="{% url update objectdetail.get_record.name object.id %}">Edytuj</a>
+  <a href="{% url update objectdetail.get_record.name object.id %}">{% trans "Edit" %}</a>
 </p>
 {% endif %}
 

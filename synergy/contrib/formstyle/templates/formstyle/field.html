@@ -1,8 +1,17 @@
-<div class="fieldWrapper clearfix">
+<div class="fieldWrapper clearfix {% if content.errors %}errors{% endif %}">
   {% if not content.is_hidden %}
+
+  {% if content.field.required %}
+    <span class="required">{{ content.label_tag }}</span>
+  {% else %}
+    {{ content.label_tag }}
+  {% endif %}
+
+  {{ content.help_text }}
+
   {{ content.errors }}
-  {{ content.label_tag }} 
+
+
   {% endif %}
   {{ content }}
-  {{ content.help_text }}
 </div>

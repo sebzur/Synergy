@@ -70,10 +70,8 @@ body{
 
 
 #error-message{
-    margin-top: 20px;
-    font-weight: bold;
-    border: 2px solid #E0E0E0;
-    background-color: #EDEDED;
+    margin-top: 40px;
+    border-left: 40px solid #FFCF40;
     padding: 10px;
 
 }
