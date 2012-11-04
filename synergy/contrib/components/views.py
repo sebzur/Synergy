@@ -1,10 +1,11 @@
 import datetime
+import itertools
 import urlparse
 
 from django.conf import settings
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.views import redirect_to_login
-from django.db.models import get_model, ObjectDoesNotExist
+from django.db.models import get_model, ObjectDoesNotExist, Q
 
 class ProtectedView(object):
     access_prefix = None
@@ -88,15 +89,39 @@ class ComponentViewMixin(ProtectedView, AuthBase):
 
     def get_blocks(self):
         regions = dict( (region, None) for region in get_model('components', 'region').objects.values_list('name', flat=True))
+
+        app, func = self.access_prefix.split('.')
+        component_item =  self.get_component_item(**self.kwargs)
+        component = self.get_component(**self.kwargs)
+
         for region in regions:
-            regions[region] = get_model('components', 'block').objects.filter(region__name=region)
+            # No ACL tested
+            blocks = [get_model('components', 'block').objects.filter(region__name=region, acl__isnull=True).values_list('id', flat=True)]
+            
+            # ACL tests
+            component_acl_query = Q(view_type='c') & Q(view_name=component.name)
+            func_acl_query = Q(view_type=app[0]) & Q(view_name=component_item.name)
+
+            acl = get_model('components', 'BlockACLItem').objects.filter(component_acl_query|func_acl_query)
+
+            query_action = {'r': 'exclude', 'a': 'filter'}
+            for mode in ('a', 'r'):
+                _b = get_model('components', 'block').objects.filter(region__name=region, acl_mode=mode, acl__isnull=False)
+                blocks.append(getattr(_b, query_action[mode])(acl__in=acl).values_list('id', flat=True))
+
+                
+            regions[region] = get_model('components', 'block').objects.filter(id__in=itertools.chain(*blocks)).order_by('weight',)
         return regions
 
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(ComponentViewMixin, self).get_context_data(*args, **kwargs)
         ctx['component'] = self.get_component(**self.kwargs)
-        ctx['blocks'] = self.get_blocks()
+
+        ctx['blocks'] = []
+        if ctx['component']:
+            ctx['blocks'] = self.get_blocks()
+
         return ctx
 
 

@@ -36,9 +36,7 @@
 
 
 {% if variant_contexts %}
-<h3>Skojarzone dane</h3>
-<p>Do tego wpisu skojarzone są inne wpisy występujące w bazie</p>
-<div id="tabs">
+<div id="tabs" style="margin-top:20px;">
   <ul>
     {% for variant_context in variant_contexts %}
     <li><a href="#tabs-{{ variant_context.id }}">{{ variant_context.variant.verbose_name }}</a></li>
@@ -52,6 +50,5 @@
   {% endfor %}
 </div>
 {% endif %}
-
 {% endregion %}
 

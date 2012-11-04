@@ -91,7 +91,6 @@ class CreateRecordView(RegionViewMixin, RecordViewMixin, CreateView):
     def get_success_url(self):
         tmp = self.get_arguments().copy()
         tmp.update({'object': self.object})
-        print 'Got succses url:', [self.get_record_setup(**self.kwargs).get_success_url(**tmp)]
         return self.get_record_setup(**self.kwargs).get_success_url(**tmp)
 
 class UpdateRecordView(RecordViewMixin, RegionViewMixin, UpdateView):
