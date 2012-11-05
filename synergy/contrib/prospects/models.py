@@ -484,8 +484,6 @@ class UserRelation(models.Model):
         ordering = ('weight', )
         verbose_name = "User relation"
         verbose_name_plural = "User relations"
-        unique_together = (('variant', 'content_type'),)
-
     
 class VariantMenu(models.Model):
     variant = models.ForeignKey('ProspectVariant', related_name="menus")
