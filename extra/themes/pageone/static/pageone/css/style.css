@@ -95,14 +95,21 @@ p { margin-bottom: 25px; }
 p.intro { font-size: 18px; }
 
 /* links */
-a:link, a:visited {
-/*    color: #285935; */
-    text-decoration: none;
-    outline: 0;
-}
+
 a:hover, a:focus, a:active {
     color: #5E1F00;
 }
+
+a:link, a:visited, .ui-widget-content a:link, .ui-widget-content a:visited {
+    color:#0788C3; 
+    text-decoration:none;
+    outline-color:-moz-use-text-color;
+    outline-style:none;
+    outline-width:medium;
+    text-decoration:none;
+}
+
+
 
 /* Headers */
 h1, h2, h3, h4, h5, h6 {
@@ -507,19 +514,59 @@ a.button:visited{
 }
 
 
+.ref-btn, .ref-btn-warn {
+    display: block;
+    border: 1px solid #B1ACAC;
+    text-align: center;
+    line-height: 38px;
+
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    text-shadow: 0 -1px 0 rgba(0,0,0,0.5);
+
+    color: #ffffff;
+    background: #434343;
+
+    margin: 5px 5px;
+
+    box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #474747;
+    -moz-box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #474747;
+    -webkit-box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #474747;
+
+}
+
+a.ref-btn:visited, a.ref-btn-warn:visited{
+    color: #ffffff;
+}
+
+.ref-btn-warn{
+    background: #FF2000;
+
+    box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #D83720;
+    -moz-box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #D83720;
+    -webkit-box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #D83720;
+
+}
+
+
+
 /* ---------------------------------------------------
     Contact
 ----------------------------------------------------- */
-.primary form {
- 
+form {
+    color: #212121;
+    background-color: #FFFFFF;
+    padding: 20px 30px 20px 30px;
+    border: 1px solid #AAAAAA;
     
 }
-.primary form p {
+form p {
 	font-family: "MerriweatherBold", Serif;
-    font-size: 14.5px;
+	font-size: 14.5px;
 	color: #046416;
 }
-.primary form label {
+form label {
     display: block;
     font-family: "MerriweatherBold", Serif;
     font-size: 14px;
@@ -527,12 +574,13 @@ a.button:visited{
     margin: 0 0 5px 0;
     text-shadow: 1px 1px 0 rgba(255, 255, 255, 1);
 }
-.primary form label span {
+
+form label span {
     color: #046416;
 }
-.primary form input,
-.primary form select,
-.primary form textarea {
+form input,
+form select,
+form textarea {
     width:100%;
     margin-bottom: 10px;
     padding: 4px 0px 4px 4px;
@@ -547,33 +595,32 @@ a.button:visited{
     -webkit-box-shadow:inset 0 1px 3px rgba(0, 0, 0, .1);
     box-shadow:inset 0 1px 3px rgba(0, 0, 0, .1);
 }
-.primary form textarea {
+form textarea {
     height: 325px;
     margin-bottom: 0;
 }
-.primary form input:focus,
-.primary form select:focus,
-.primary form textarea:focus {
+
+form input:focus,
+form select:focus,
+form textarea:focus {
 	background: #F4F4F4;
 }
 
-.primary form input.button {
-   	height: 38px;
-	margin: 5px 0;
-	background: #1F8532 url(../images/btn-bg.png);
+form input.button {
+    height: 38px;
+    margin: 5px 0;
+    background: #1F8532 url(../images/btn-bg.png);
     border: 1px solid #066a19;
     font-family: "MerriweatherBold", Georgia, Serif;
-    font-size: 14px;
     color: #ffffff;
     cursor: pointer;
     text-shadow: 0 -1px 0 rgba(0,0,0,0.5);
-
     box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #28a441;
     -moz-box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #28a441;
     -webkit-box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #28a441;
 }
 
-.ie7 .primary form input.button {
+.ie7 form input.button {
     padding: 0 2px;
 }
 
