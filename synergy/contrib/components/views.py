@@ -13,12 +13,32 @@ class ProtectedView(object):
     # 'prospect.detail', 'records.create', etc.
 
     def dispatch(self, request, *args, **kwargs):
-        perm = self.get_perm_name(**kwargs)
-        PERM_MISSING = perm and not request.user.has_perm(perm, self.get_obj(**kwargs))
+        """ Checks access permissions.
+
+        """
+
+        # ---
+        # as the first step we create handler object -- the call to default
+        # dispatch method sets all required view attributes (e.g. self.kwargs
+        # is required to have `get_object` method working properly)
+        # ---
+        handler = super(ProtectedView, self).dispatch(request, *args, **kwargs)
+
+        # And here comes the auth stuff
+
+        view_perm = self.get_view_perm_name(**kwargs)
+        content_perm = self.get_content_perm_name(**kwargs)
+
+        IS_VIEW_PERM_MISSING = view_perm and not request.user.has_perm(view_perm, self.get_obj(**kwargs))
+        IS_CONTENT_PERM_MISSING = content_perm and not request.user.has_perm(content_perm, self.get_object())
+
+        PERM_MISSING = IS_VIEW_PERM_MISSING or IS_CONTENT_PERM_MISSING
+
         STRICT_AUTH_MISSING = settings.COMPONENTS_STRICT_AUTH and not request.user.is_authenticated()
         if PERM_MISSING or STRICT_AUTH_MISSING:
             return self.login_redirect(request)
-        return super(ProtectedView, self).dispatch(request, *args, **kwargs)
+
+        return handler
 
     def login_redirect(self, request, login_url=settings.LOGIN_URL, redirect_field_name=REDIRECT_FIELD_NAME):
         path = request.build_absolute_uri()
@@ -31,11 +51,27 @@ class ProtectedView(object):
             path = request.get_full_path()
         return redirect_to_login(path, login_url, redirect_field_name)
         
-    def get_perm_name(self, **kwargs):
+    def get_view_perm_name(self, **kwargs):
         flag = self.get_access_flag(**kwargs)
         if flag:
             return "%s.%s" % (self.get_perm_prefix(**kwargs), flag.name)
         return None
+
+    def get_content_perm_name(self, **kwargs):
+        """ Returns permission name required to access the specific content
+        object. Content object is used in detail views as well as in update/delete
+        records, but in general case, every view returning object via `get_object`
+        method will be using this functinality.
+
+        """
+        if hasattr(self, 'get_object'):
+            obj = self.get_object()
+            flag = self.get_access_flag(**kwargs)
+            if obj and flag:
+                content_perm_prefix = "%s.%s" % (obj._meta.app_label, obj._meta.object_name.lower())
+                return "%s.%s" % (content_perm_prefix, flag.name)
+        return None
+
 
     def get_access_flag(self, **kwargs):
         """ Returns view access flag. To have this working it is required to register
@@ -121,9 +157,7 @@ class ComponentViewMixin(ProtectedView, AuthBase):
         ctx['blocks'] = []
         if ctx['component']:
             ctx['blocks'] = self.get_blocks()
-
         return ctx
-
 
 class RecordComponentViewMixin(ComponentViewMixin):
 
@@ -134,8 +168,7 @@ class RecordComponentViewMixin(ComponentViewMixin):
     # Auth-related methods
     # -------------------------
     def get_perm_prefix(self, **kwargs):
-        return 'records.recordsetup'
-
+        return 'components.component'
 
 class ProspectComponentViewMixin(ComponentViewMixin):
 
@@ -146,7 +179,8 @@ class ProspectComponentViewMixin(ComponentViewMixin):
     # Auth-related methods
     # -------------------------
     def get_perm_prefix(self, **kwargs):
-        return 'prospects.prospectvariant'
+        #return 'prospects.prospectvariant'
+        return 'components.component'
 
 
 

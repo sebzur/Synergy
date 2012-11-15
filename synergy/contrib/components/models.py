@@ -25,7 +25,6 @@ class Component(models.Model):
         verbose_name = "Component"
         verbose_name_plural = "Components"
 
-
 class ComponentProspectVariant(models.Model):
     component = models.ForeignKey('Component', related_name='prospect_variants')
     prospect_variant = models.OneToOneField('prospects.ProspectVariant', related_name="component_assignment")

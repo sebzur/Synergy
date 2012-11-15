@@ -19,8 +19,8 @@ class RecordViewMixin(RecordComponentViewMixin):
     def get_record_setup(self, **kwargs):
         return get_model('records', 'RecordSetup').objects.get(name=kwargs.get('name'))
 
-    def get_model(self, **kwargs):
-        return self.get_record_setup(**kwargs).model.model_class()
+    def get_model(self):
+        return self.get_record_setup(**self.kwargs).model.model_class()
 
     def get_queryset(self):
         return self.get_model()._default_manager.all()
@@ -39,6 +39,10 @@ class RecordViewMixin(RecordComponentViewMixin):
 
 class CreateRecordView(RegionViewMixin, RecordViewMixin, CreateView):
     access_prefix = 'record.create'
+
+    def get_object(self):
+        # required for proper dispatch in components
+        return None
 
     def dispatch(self, request, *args, **kwargs):
         setup = self.get_record_setup(**kwargs)
@@ -92,6 +96,8 @@ class CreateRecordView(RegionViewMixin, RecordViewMixin, CreateView):
         tmp = self.get_arguments().copy()
         tmp.update({'object': self.object})
         return self.get_record_setup(**self.kwargs).get_success_url(**tmp)
+
+    
 
 class UpdateRecordView(RecordViewMixin, RegionViewMixin, UpdateView):
     access_prefix = 'record.update'

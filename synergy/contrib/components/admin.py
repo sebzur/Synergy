@@ -8,8 +8,12 @@ class ModuleAdmin(admin.ModelAdmin):
 class RecordAdmin(admin.ModelAdmin):
     list_display = ('records', 'component', 'flag', 'create_flag', 'update_flag', 'delete_flag')
 
+class VariantAdmin(admin.ModelAdmin):
+    list_display = ('prospect_variant', 'component', 'flag', 'list_flag', 'detail_flag')
+    list_filter = ('component',)
+
 admin.site.register(Component, ModuleAdmin)
-admin.site.register(ComponentProspectVariant)
+admin.site.register(ComponentProspectVariant, VariantAdmin)
 admin.site.register(ComponentRecord, RecordAdmin)
 admin.site.register(ComponentMenu)
 
