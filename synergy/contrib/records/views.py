@@ -103,7 +103,7 @@ class UpdateRecordView(RecordViewMixin, RegionViewMixin, UpdateView):
     access_prefix = 'record.update'
 
     def get_object(self):
-        return self.get_model(**self.kwargs).objects.get(pk=self.kwargs.get('pk'))
+        return self.get_model().objects.get(pk=self.kwargs.get('pk'))
 
     def get_form_class(self, *args, **kwargs):
         setup = self.get_record_setup(**self.kwargs)
@@ -139,7 +139,7 @@ class DeleteRecordView(RecordViewMixin, RegionViewMixin, DeleteView):
     access_prefix = 'record.delete'
 
     def get_object(self):
-        return self.get_model(**self.kwargs).objects.get(pk=self.kwargs.get('pk'))
+        return self.get_model().objects.get(pk=self.kwargs.get('pk'))
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(DeleteRecordView, self).get_context_data(*args, **kwargs)

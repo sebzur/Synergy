@@ -65,11 +65,15 @@ class ProtectedView(object):
 
         """
         if hasattr(self, 'get_object'):
-            obj = self.get_object()
-            flag = self.get_access_flag(**kwargs)
-            if obj and flag:
-                content_perm_prefix = "%s.%s" % (obj._meta.app_label, obj._meta.object_name.lower())
-                return "%s.%s" % (content_perm_prefix, flag.name)
+            try:
+                obj = self.get_object()
+                flag = self.get_access_flag(**kwargs)
+                if obj and flag:
+                    content_perm_prefix = "%s.%s" % (obj._meta.app_label, obj._meta.object_name.lower())
+                    return "%s.%s" % (content_perm_prefix, flag.name)
+            except ObjectDoesNotExist:
+                # sometimes there's not object related
+                return None
         return None
 
 
