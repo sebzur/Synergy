@@ -740,3 +740,56 @@ ul.errorlist
 .messages li{
     padding: 10px;
 }
+
+/* --------------------------------------- */
+/*      STYLE DLA APPLICANT-DATA          */
+/* -------------------------------------- */
+
+#one_page_data 
+{
+    font-size:0.9em;
+}
+#one_page_data h2
+{
+  padding-top:50px;
+  
+  color: #046416;
+}
+
+#one_page_data h3
+{
+  padding-top:30px;
+  padding-bottom:20px;
+}
+
+#one_page_data table
+{
+  padding-top:20px;
+  padding-bottom:20px;
+  width:100%;
+}
+
+#one_page_data table th, #one_page_data table td
+{
+  padding-left:5px;
+  padding-right:5px;
+  text-align:center;
+  border:1px solid #AAAAAA;
+}
+
+div.border-applicant-data
+{
+  padding-left:10px;
+  padding-right:10px;
+  border:1px solid #AEAEAE;
+  background-color: #FFFFFF;
+}
+
+.add-button
+{
+  margin-top:10px;
+   width:100%;
+  font-weight:bold;   
+  text-align:right;
+}
+
