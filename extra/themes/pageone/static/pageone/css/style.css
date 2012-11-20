@@ -751,15 +751,14 @@ ul.errorlist
 }
 #one_page_data h2
 {
-  padding-top:50px;
-  
+  padding-top:30px;
   color: #046416;
 }
 
 #one_page_data h3
 {
-  padding-top:30px;
-  padding-bottom:20px;
+  padding-top:15px;
+  padding-bottom:15px;
 }
 
 #one_page_data table
@@ -779,8 +778,9 @@ ul.errorlist
 
 div.border-applicant-data
 {
-  padding-left:10px;
-  padding-right:10px;
+  padding-left:20px;
+  padding-right:20px;
+  padding-bottom:20px;
   border:1px solid #AEAEAE;
   background-color: #FFFFFF;
 }

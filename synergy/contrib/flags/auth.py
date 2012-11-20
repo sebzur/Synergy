@@ -113,7 +113,10 @@ class FlagsBackend(object):
         return None
         
     def has_perm(self, user, perm, obj=None):
-        app_name, model_name, perm_name = perm.split('.')
+        try:
+            app_name, model_name, perm_name = perm.split('.')
+        except:
+            return False
        
         
         if not obj is None:
