@@ -21,7 +21,7 @@ class Term(models.Model):
     weight = models.IntegerField()
 
     def __unicode__(self):
-        return u"%s (%s)" %(self.value, self.dictionary)
+        return u"%s" %(self.value)
     
     class Meta:
         unique_together = (('key', 'value', 'dictionary'),)
