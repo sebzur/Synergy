@@ -17,7 +17,10 @@ from synergy.contrib.components.views import RecordComponentViewMixin
 class RecordViewMixin(RecordComponentViewMixin):
 
     def get_record_setup(self, **kwargs):
-        return get_model('records', 'RecordSetup').objects.get(name=kwargs.get('name'))
+        db_name = { True: 'frontend_db',
+                    False: 'default',
+                    }.get(kwargs.get('name').startswith('compose_frontend'))
+        return get_model('records', 'RecordSetup').objects.using(db_name).get(name=kwargs.get('name'))
 
     def get_model(self):
         return self.get_record_setup(**self.kwargs).model.model_class()
