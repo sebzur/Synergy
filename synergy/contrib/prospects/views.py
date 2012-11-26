@@ -44,9 +44,11 @@ class ProspectMixin(ProspectComponentViewMixin):
 
 
     def get_prospect_variant(self, **kwargs):
-        db_name = { True: settings.FRONTEND_DB,
-                    False: 'default',
-                    }.get(kwargs.get('variant').startswith(settings.FRONTEND_PREFIX))
+	db_name = 'default'
+	if settings.FRONTEND_DB:
+        	db_name = { True: settings.FRONTEND_DB,
+                    	False: 'default',
+                    	}.get(kwargs.get('variant').startswith(settings.FRONTEND_PREFIX))
         return get_model('prospects', 'ProspectVariant').objects.using(db_name).get(name=kwargs.get('variant'))
 
     def get_prospect(self, **kwargs):
