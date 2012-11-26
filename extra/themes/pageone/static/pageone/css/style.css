@@ -741,6 +741,13 @@ ul.errorlist
     padding: 10px;
 }
 
+.required label:after {
+    content: "*";
+    font-size: 9px;
+    padding-left: 4px;
+    color: #FF0000;
+}
+
 /* --------------------------------------- */
 /*      STYLE DLA APPLICANT-DATA          */
 /* -------------------------------------- */
@@ -792,4 +799,14 @@ div.border-applicant-data
   font-weight:bold;   
   text-align:right;
 }
+.cert-section
+{
+   padding:20px;   
+   
+   background-color:#F6F6EF;
+}
 
+.cert-section h3
+{
+    font-size:1.0em;
+}
