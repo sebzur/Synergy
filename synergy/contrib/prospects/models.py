@@ -116,9 +116,6 @@ class Prospect(models.Model):
     def get_optional_aspects(self):
         return self.get_source().aspects.exclude(id__in=self.get_required_aspects().values_list('id', flat=True))
 
-    def is_frontend(self):
-        return self.name.startswith('compose_frontend')
-        
     class Meta:
         ordering = ('verbose_name', 'name')
     
@@ -171,9 +168,6 @@ class Source(models.Model):
         for null_state_id in query:
             yield (smart_str("%s__isnull" % self.null_states.get(id=null_state_id).attribute), query.get(null_state_id).get('value'))
 
-    def is_frontend(self):
-        return self.prospect.is_frontend()
-
     class Meta:
         ordering = ('content_type__model', 'prospect__verbose_name')
                 
@@ -186,9 +180,6 @@ class Context(models.Model):
     lookup = models.SlugField(verbose_name="Relation lookup", help_text="__in operator is used, provide here the model field" )
     mode = models.CharField(max_length=1, choices=CONTEXT_MODES, verbose_name="Context mode")
 
-    def is_frontend(self):
-        return self.source.is_frontend()
-
     class Meta:
         verbose_name = "Context"
         verbose_name_plural = "Contexts"
@@ -199,9 +190,6 @@ class NullState(models.Model):
 
     is_required = models.BooleanField()
     is_exposed = models.BooleanField(verbose_name="Expose this null state settings to the user?", default=True)
-
-    def is_frontend(self):
-        return self.source.is_frontend()    
 
     def __unicode__(self):
         return u'%s__%s__isnull' % (self.source.content_type.model, self.attribute)
@@ -302,9 +290,6 @@ class Aspect(models.Model):
         proper = map(lambda x: x[0], self.get_lookups())
         if self.initial_lookup not in proper:
             raise ValidationError('Invalid initial lookup! Proper choices: %s' % proper)
-
-    def is_frontend(self):
-        return self.source.is_frontend()
 
     class Meta:
         #ordering = ('weight', 'source__prospect__name')
@@ -422,9 +407,6 @@ class ProspectVariant(models.Model):
         except:
             return None
 
-    def is_frontend(self):
-        return self.prospect.is_frontend()
-
     class Meta:
         ordering = ('verbose_name', 'name')
 
@@ -434,9 +416,6 @@ class AspectValue(models.Model):
     value = models.CharField(max_length=255, verbose_name="A value entered")
     lookup = models.CharField(max_length=255, verbose_name="Lookup")
     is_exposed = models.BooleanField(verbose_name="Should this aspect settings be exposed to the user?", default=False)
-
-    def is_frontend(self):
-        return self.variant.is_frontend()
 
     class Meta:
         unique_together = (('variant', 'aspect'),)
@@ -460,9 +439,6 @@ class AspectValueChoices(models.Model):
         if self.variant.prospect.source != self.aspect.source:
             raise ValidationError('Variant and aspect mismatch!')
 
-    def is_frontend(self):
-        return self.variant.is_frontend()
-
     class Meta:
         unique_together = (('variant', 'aspect'),)
 
@@ -472,9 +448,6 @@ class NullStateValue(models.Model):
     null_state = models.ForeignKey('NullState', related_name="null_states_values lookup")
     value = models.BooleanField(verbose_name="Null state value (check for True, uncheck for False)")
     is_exposed = models.BooleanField(verbose_name="Should this state settings be exposed to the user?", default=False)
-
-    def is_frontend(self):
-        return self.variant.is_frontend()
 
     class Meta:
         unique_together = (('variant', 'null_state'),)
@@ -488,9 +461,6 @@ class VariantArgument(models.Model):
 
     def __unicode__(self):
         return u"%s:%s" % (self.variant, self.name)
-
-    def is_frontend(self):
-        return self.variant.is_frontend()
 
     class Meta:
         unique_together = (('variant', 'name'), ('variant', 'weight'))
@@ -511,9 +481,6 @@ class UserRelation(models.Model):
     
     as_exclude = models.BooleanField(default=False, verbose_name="Act as exclusion?")
 
-    def is_frontend(self):
-        return self.variant.is_frontend()
-
     class Meta:
         ordering = ('weight', )
         verbose_name = "User relation"
@@ -525,9 +492,6 @@ class VariantMenu(models.Model):
 
     def __unicode__(self):
         return u"%s | %s" % (self.variant, self.menu)
-
-    def is_frontend(self):
-        return self.variant.is_frontend()
 
     class Meta:
         ordering = ('menu__weight', )
@@ -655,9 +619,6 @@ class Field(models.Model):
     def _resolve_lookup(self, obj, lookup):
         return resolve_lookup(obj, lookup)
 
-    def is_frontend(self):
-        return self.variant.is_frontend()
-
     def __unicode__(self):
         return u"%s: %s %s" % (self.variant.verbose_name, self.db_field, self.lookup, )
     
@@ -673,9 +634,6 @@ class FieldURL(models.Model):
     target = models.CharField(choices=(('_blank', '_blank'), ('_parent', '_parent')), max_length=32, blank=True)
     alt_text = models.CharField(max_length=200, blank=True)
  
-    def is_frontend(self):
-        return self.field.is_frontend()
-
 class ObjectDetail(models.Model):
     variant = models.OneToOneField('ProspectVariant')
     parent = models.ForeignKey('ObjectDetail', null=True, blank=True, verbose_name="Parent")
@@ -723,9 +681,6 @@ class ObjectDetail(models.Model):
         ctx.update({'region_postfixes': postfixes})
         return ctx
 
-    def is_frontend(self):
-        return self.variant.is_frontend()
-
 class DetailField(models.Model):
     object_detail = models.ForeignKey('ObjectDetail', related_name="fields")
     field = models.ForeignKey('Field', related_name="detail_fields")
@@ -733,9 +688,6 @@ class DetailField(models.Model):
 
     def __unicode__(self):
         return u"%s : %s" % (self.object_detail, self.field)
-
-    def is_frontend(self):
-        return self.object_detail.is_frontend()
 
     class Meta:
         verbose_name = "Detail Field"
@@ -751,9 +703,6 @@ class DetailFieldStyle(models.Model):
     trigger_lookup = models.CharField(max_length=128, verbose_name="A lookup on the object that triggers the class name to be applied", blank=True)
     weight = models.IntegerField()
 
-    def is_frontend(self):
-        return self.field.is_frontend()
-
     class Meta:
         verbose_name = "Detail field style"
         verbose_name_plural = "Detail field styles"
@@ -762,9 +711,6 @@ class DetailFieldStyle(models.Model):
 class DetailMenu(models.Model):
     object_detail = models.ForeignKey('ObjectDetail', related_name="menus")
     menu = models.ForeignKey('menu.Menu', related_name="object_details")
-
-    def is_frontend(self):
-        return self.object_detail.is_frontend()
 
     class Meta:
         ordering = ('menu__weight',)
@@ -807,9 +753,6 @@ class VariantContext(models.Model):
             arguments.update(dict((smart_str(arg_val.argument.name), arg_val.value_field.get_value(v_obj))  for arg_val in self.argument_values.filter(value_field__variant=src)))
         return arguments
     
-    def is_frontend(self):
-        return self.object_detail.is_frontend()
-
     class Meta:
         ordering = ('weight',)
 
@@ -850,9 +793,6 @@ class VariantContextAspectValue(models.Model):
                 raise ValidationError('Variant context and aspect prospects mismatch!')
             #models.get_model('prospects','Aspect').objects.filter(source__in=self.variant_context.variant.prospect.source.contexts.all().values_list('variant__prospect__source', flat=True)).get(id=self.aspect.id)
 
-    def is_frontend(self):
-        return self.variant_context.is_frontend()
-                
 
 
 class VariantContextArgumentValue(models.Model):
@@ -874,9 +814,6 @@ class VariantContextArgumentValue(models.Model):
         if not self.argument.variant == self.variant_context.variant:
             raise ValidationError('Variant context and argument prospects mismatch!')
         
-    def is_frontend(self):
-        return self.variant_context.is_frontend()
-
     class Meta:
         unique_together = (('argument', 'variant_context'),)
 
@@ -892,9 +829,6 @@ class ListRepresentation(models.Model):
     representation_type = models.ForeignKey(ContentType, limit_choices_to={'model__in': ('custompostfix', 'table', 'calendar')})
     representation_id = models.PositiveIntegerField()
     representation = generic.GenericForeignKey('representation_type', 'representation_id')
-
-    def is_frontend(self):
-        return self.variant.is_frontend()
 
     class Meta:
         unique_together = (('name', 'variant'), ('representation_type', 'representation_id'))
@@ -928,19 +862,14 @@ class RepresentationModel(models.Model):
         return [self.get_prospect_postfix()]
 
     def get_variant(self):
-        #return self.variant.get().variant
         return self.variant
 
     def get_name(self):
-        #return self.variant.get().name
         return self.variant_generic.get().name
 
     def get_verbose_name(self):
         #return self.variant.get().variant.verbose_name
         return self.get_variant().verbose_name
-
-    def is_frontend(self):
-        return self.variant.is_frontend()
 
     class Meta:
         abstract = True

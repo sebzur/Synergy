@@ -25,7 +25,6 @@ class Column(models.Model):
     ACTIONS = (('a', 'Field empty label'), ('b', 'Value without link (if link is provided'))
 
     table = models.ForeignKey('Table', related_name="columns")
-    #field = models.ForeignKey('Field', related_name="columns")
     field = models.OneToOneField('Field', related_name="column")
 
     trigger_lookup = models.CharField(max_length=128, verbose_name="A lookup on the object that triggers if the column should be rendered", blank=True)
