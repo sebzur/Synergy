@@ -116,7 +116,6 @@ class Prospect(models.Model):
     def get_optional_aspects(self):
         return self.get_source().aspects.exclude(id__in=self.get_required_aspects().values_list('id', flat=True))
 
-        
     class Meta:
         ordering = ('verbose_name', 'name')
     
@@ -129,6 +128,9 @@ class ProspectOperator(models.Model):
     prospect = models.ForeignKey('Prospect')
     weight = models.PositiveSmallIntegerField(default=0)
     
+    def is_frontend(self):
+        return self.prospect.is_frontend()
+
     class Meta:
         ordering = ('weight',)
 
@@ -188,7 +190,6 @@ class NullState(models.Model):
 
     is_required = models.BooleanField()
     is_exposed = models.BooleanField(verbose_name="Expose this null state settings to the user?", default=True)
-    
 
     def __unicode__(self):
         return u'%s__%s__isnull' % (self.source.content_type.model, self.attribute)
@@ -632,7 +633,7 @@ class FieldURL(models.Model):
     suffix_text = models.CharField(max_length=255, blank=True)
     target = models.CharField(choices=(('_blank', '_blank'), ('_parent', '_parent')), max_length=32, blank=True)
     alt_text = models.CharField(max_length=200, blank=True)
-
+ 
 class ObjectDetail(models.Model):
     variant = models.OneToOneField('ProspectVariant')
     parent = models.ForeignKey('ObjectDetail', null=True, blank=True, verbose_name="Parent")
@@ -679,7 +680,6 @@ class ObjectDetail(models.Model):
             postfixes['posthead'].extend(variant_context.variant.listrepresentation.representation.get_posthead_postfixes())
         ctx.update({'region_postfixes': postfixes})
         return ctx
-
 
 class DetailField(models.Model):
     object_detail = models.ForeignKey('ObjectDetail', related_name="fields")
@@ -793,7 +793,6 @@ class VariantContextAspectValue(models.Model):
                 raise ValidationError('Variant context and aspect prospects mismatch!')
             #models.get_model('prospects','Aspect').objects.filter(source__in=self.variant_context.variant.prospect.source.contexts.all().values_list('variant__prospect__source', flat=True)).get(id=self.aspect.id)
 
-                
 
 
 class VariantContextArgumentValue(models.Model):
@@ -840,11 +839,12 @@ class ListRepresentation(models.Model):
 
 
 class RepresentationModel(models.Model):
-    variant = generic.GenericRelation('ListRepresentation', content_type_field="representation_type", object_id_field="representation_id")
+    variant = models.OneToOneField('ProspectVariant')
+    variant_generic = generic.GenericRelation('ListRepresentation', content_type_field="representation_type", object_id_field="representation_id")
 
     def __unicode__(self):
         try:
-            return u"%s" % self.variant.get().name
+            return u"%s" % self.variant_generic.get().name
         except ListRepresentation.DoesNotExist, error:
             return "%s" % error
 
@@ -862,13 +862,14 @@ class RepresentationModel(models.Model):
         return [self.get_prospect_postfix()]
 
     def get_variant(self):
-        return self.variant.get().variant
+        return self.variant
 
     def get_name(self):
-        return self.variant.get().name
+        return self.variant_generic.get().name
 
     def get_verbose_name(self):
-        return self.variant.get().variant.verbose_name
+        #return self.variant.get().variant.verbose_name
+        return self.get_variant().verbose_name
 
     class Meta:
         abstract = True

@@ -44,8 +44,8 @@ def menu(parser, token):
     return MenuNode(menu_name, args, kwargs, asvar)
 
 class MenuNode(template.Node):
-    def __init__(self, menu_name, args, kwargs, asvar):
-        self.menu_name = template.Variable(menu_name)
+    def __init__(self, menu, args, kwargs, asvar):
+        self.menu = template.Variable(menu)
         self.args = args
         self.kwargs = kwargs
         self.asvar = asvar
@@ -55,15 +55,14 @@ class MenuNode(template.Node):
         kwargs = dict([(smart_str(k, 'ascii'), v.resolve(context))
                        for k, v in self.kwargs.items()])
 
-        menu_name = self.menu_name.resolve(context)
+        menu_obj = self.menu.resolve(context)
         #menu_name = self.menu_name#.resolve(context)
 
         if self.asvar:
-            context[self.asvar] = menu_name
+            context[self.asvar] = menu_obj
             return ''
         else:
             tpl = 'menu/menu.html'
-            menu_obj = get_model('menu', 'Menu').objects.get(name=menu_name)
             context = {'menu': menu_obj, 'items': SortedDict()}
 
             for item in menu_obj.items.filter(is_enabled=True):
@@ -93,7 +92,7 @@ class SecondaryMenuNode(template.Node):
         ids = []
         if component:
             ids = component.menus.all().values_list('menu', flat=True)
-        menus = get_model('menu', 'Menu').objects.filter(id__in=ids)
+        menus = get_model('menu', 'Menu').objects.using(ids.db).filter(id__in=ids)
 
         user = self.user.resolve(context)
         excluded = []

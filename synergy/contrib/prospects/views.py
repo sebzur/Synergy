@@ -9,6 +9,7 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.utils.encoding import smart_str 
 from django.views import generic
 from django.shortcuts import get_object_or_404
+from django.conf import settings
 
 from djangorestframework.views import View
 from djangorestframework import status, permissions
@@ -43,7 +44,10 @@ class ProspectMixin(ProspectComponentViewMixin):
 
 
     def get_prospect_variant(self, **kwargs):
-        return get_model('prospects', 'ProspectVariant').objects.get(name=kwargs.get('variant'))
+        db_name = { True: settings.FRONTEND_DB,
+                    False: 'default',
+                    }.get(kwargs.get('variant').startswith(settings.FRONTEND_PREFIX))
+        return get_model('prospects', 'ProspectVariant').objects.using(db_name).get(name=kwargs.get('variant'))
 
     def get_prospect(self, **kwargs):
         return self.get_prospect_variant(**kwargs).prospect

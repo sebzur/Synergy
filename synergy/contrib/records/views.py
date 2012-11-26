@@ -9,6 +9,7 @@ from django.forms import models as model_forms
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.views.generic import ListView, TemplateView, DetailView, CreateView, UpdateView, DeleteView, FormView, View
 from django.utils.encoding import smart_str 
+from django.conf import settings
 from models import get_parent_field, get_parent_for_instance
 from synergy.templates.regions.views import RegionViewMixin
 from synergy.contrib.components.views import RecordComponentViewMixin
@@ -17,7 +18,12 @@ from synergy.contrib.components.views import RecordComponentViewMixin
 class RecordViewMixin(RecordComponentViewMixin):
 
     def get_record_setup(self, **kwargs):
-        return get_model('records', 'RecordSetup').objects.get(name=kwargs.get('name'))
+        db_name = 'default'
+        if settings.FRONTEND_DB:
+            db_name = { True: settings.FRONTEND_DB,
+                        False: 'default',
+                        }.get(kwargs.get('name').startswith(settings.FRONTEND_PREFIX))
+        return get_model('records', 'RecordSetup').objects.using(db_name).get(name=kwargs.get('name'))
 
     def get_model(self):
         return self.get_record_setup(**self.kwargs).model.model_class()
