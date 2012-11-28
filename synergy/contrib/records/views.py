@@ -94,14 +94,14 @@ class CreateRecordView(RegionViewMixin, RecordViewMixin, CreateView):
         ctx = super(CreateRecordView, self).get_context_data(*args, **kwargs)
         setup = self.get_record_setup(**self.kwargs)
         ctx['initial'] = self.get_initial()
-        ctx['cancel_url'] = setup.get_cancel_url(**self.get_arguments())
+        ctx['cancel_url'] = self.request.GET.get('cancel_url') or setup.get_cancel_url(**self.get_arguments())
         ctx.update(setup.get_context_elements(ctx, 'c'))
         return  ctx
 
     def get_success_url(self):
         tmp = self.get_arguments().copy()
         tmp.update({'object': self.object})
-        return self.get_record_setup(**self.kwargs).get_success_url(**tmp)
+        return self.request.POST.get('success_url') or self.get_record_setup(**self.kwargs).get_success_url(**tmp)
 
     
 
@@ -118,7 +118,7 @@ class UpdateRecordView(RecordViewMixin, RegionViewMixin, UpdateView):
     def get_context_data(self, *args, **kwargs):
         ctx = super(UpdateRecordView, self).get_context_data(*args, **kwargs)
         setup = self.get_record_setup(**self.kwargs)
-        ctx['cancel_url'] = self.get_success_url()
+        ctx['cancel_url'] = self.request.GET.get('success_url') or self.get_success_url()
         ctx['setup'] = setup
 
         ctx['delete_enabled'] = setup.is_delete_enabled()
@@ -139,7 +139,7 @@ class UpdateRecordView(RecordViewMixin, RegionViewMixin, UpdateView):
         return super(UpdateRecordView, self).form_valid(form)            
 
     def get_success_url(self):
-        return self.get_record_setup(**self.kwargs).get_success_url(**{'object': self.get_object()})
+        return self.request.POST.get('success_url') or self.get_record_setup(**self.kwargs).get_success_url(**{'object': self.get_object()})
 
 class DeleteRecordView(RecordViewMixin, RegionViewMixin, DeleteView):
     access_prefix = 'record.delete'
@@ -149,10 +149,10 @@ class DeleteRecordView(RecordViewMixin, RegionViewMixin, DeleteView):
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(DeleteRecordView, self).get_context_data(*args, **kwargs)
-        ctx['cancel_url'] = self.get_record_setup(**self.kwargs).get_success_url(**{'object': self.object})
+        ctx['cancel_url'] = self.request.GET.get('success_url') or self.get_record_setup(**self.kwargs).get_success_url(**{'object': self.object})
         setup = self.get_record_setup(**self.kwargs)
         ctx.update(setup.get_context_elements(ctx, 'd'))
         return  ctx
 
     def get_success_url(self):
-        return self.get_record_setup(**self.kwargs).get_generic_url(**{'object': self.object})
+        return self.request.POST.get('delete_url') or self.get_record_setup(**self.kwargs).get_generic_url(**{'object': self.object})

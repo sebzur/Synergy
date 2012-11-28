@@ -1,3 +1,6 @@
 {% load records_tags %}
 {% csrf_token %}
 {{ form|rform }}
+<input type="hidden" name="success_url" value="{{ success_url }}" />
+<input type="hidden" name="delete_url" value="{{ delete_url }}" />
+

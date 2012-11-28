@@ -181,6 +181,12 @@ class RecordField(models.Model):
         except FieldValueSetup.DoesNotExist:
             return Template(self.default_value).render(Context(kwargs)) or None
 
+    def get_value_type(self):
+	if self.lookups.all().exists():
+	    return 'o'
+	if get_model('records','FieldValueSetup').objects.filter(field=self).exists():
+	    return 'v'
+	return 'n'
             
 class FieldValueSetup(models.Model):
     value = models.ForeignKey('RecordArgument')
