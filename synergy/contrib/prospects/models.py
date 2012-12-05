@@ -14,6 +14,43 @@ from django.utils.datastructures import SortedDict
 
 LOOKUP_MODES = (('f', 'Filter'), ('e', 'Exclude'))
 CONTEXT_MODES = (('f', 'Filter'), ('e', 'Exclude'), ('m', 'Distinct merge'))
+def get_sys_db():
+    return settings.SYSTEM_DB
+
+
+FT_PREFIX = 'system_'
+class RelationRouter(object):
+
+    def __getattr__(self, name):
+        # assumption made: name is in format 'get_`fieldname`'
+        if not name.startswith(FT_PREFIX):
+            raise AttributeError
+
+        rel_object, model, direct, m2m = self._meta.get_field_by_name(name.split(FT_PREFIX)[1])
+        if direct:
+            # Handle FK fields
+            _mgr = rel_object.rel.to._base_manager
+            return self._dd(rel_object, _mgr, 'id', getattr(self, '%s_id' % rel_object.name))
+        elif rel_object.field.unique:
+            # O2O Fields
+            _mgr = rel_object.model._base_manager
+            return self._dd(rel_object.field, _mgr, "%s__id" % rel_object.field.name, getattr(self, 'id'))
+        else:
+            return getattr(self, name.split(FT_PREFIX)[1]).using(get_sys_db())
+
+
+    def _dd(self, field, _mgr, lookup, value):
+        try:
+            return getattr(self, field.sys_cache_name)
+        except AttributeError:
+            db = get_sys_db()
+            rel_obj = None
+            if value:
+                rel_obj = _mgr.using(db).get(**{lookup: value})
+            field.frontend_cache_name = "%s_system" % field.get_cache_name()
+            setattr(self, field.sys_cache_name, rel_obj)
+            return rel_obj
+
 
 def get_field(model, attribute):
     chain = attribute.split('__')

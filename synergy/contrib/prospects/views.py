@@ -17,7 +17,7 @@ from djangorestframework import status, permissions
 from synergy.templates.regions.views import RegionViewMixin
 from synergy.contrib.prospects.forms import prospectform_factory, build_query
 from synergy.contrib.components.views import ProspectComponentViewMixin
-
+from synergy.contrib.prospects.models import get_sys_db
 
 class ProspectMixin(ProspectComponentViewMixin):
 
@@ -44,12 +44,7 @@ class ProspectMixin(ProspectComponentViewMixin):
 
 
     def get_prospect_variant(self, **kwargs):
-	db_name = 'default'
-	if settings.FRONTEND_DB:
-        	db_name = { True: settings.FRONTEND_DB,
-                    	False: 'default',
-                    	}.get(kwargs.get('variant').startswith(settings.FRONTEND_PREFIX))
-        return get_model('prospects', 'ProspectVariant').objects.using(db_name).get(name=kwargs.get('variant'))
+        return get_model('prospects', 'ProspectVariant').objects.using(get_sys_db()).get(name=kwargs.get('variant'))
 
     def get_prospect(self, **kwargs):
         return self.get_prospect_variant(**kwargs).prospect
