@@ -47,7 +47,7 @@ class RelationRouter(object):
             rel_obj = None
             if value:
                 rel_obj = _mgr.using(db).get(**{lookup: value})
-            field.frontend_cache_name = "%s_system" % field.get_cache_name()
+            field.sys_cache_name = "%s_system" % field.get_cache_name()
             setattr(self, field.sys_cache_name, rel_obj)
             return rel_obj
 
@@ -120,7 +120,7 @@ def resolve_lookup(obj, lookup):
         return current
 
 
-class Prospect(models.Model):
+class Prospect(models.Model, RelationRouter):
     name = models.SlugField(verbose_name="Machine name", unique=True)
     verbose_name = models.CharField(max_length=255, verbose_name="Verbose name")
     # Operators are applied to the output of the prospect (prospect variants to be
@@ -132,7 +132,7 @@ class Prospect(models.Model):
         return self.verbose_name
 
     def get_source(self):
-        return self.source
+        return self.system_source
 
     def filter(self, query, nulls):
         return self.get_source().filter(self.sanitize_query(**query), nulls)
@@ -140,18 +140,18 @@ class Prospect(models.Model):
     def sanitize_query(self, **query):
         # the ids list of admissible aspects is build with id of source aspects
         # and the ids of source contexts aspects
-        ids = list(self.get_source().aspects.values_list('id', flat=True))
+        ids = list(self.get_source().system_aspects.values_list('id', flat=True))
 
-        for related_context in self.get_source().contexts.all():
-            ids.extend(list(related_context.variant.prospect.source.aspects.values_list('id', flat=True)))
+        for related_context in self.get_source().system_contexts.all():
+            ids.extend(list(related_context.system_variant.system_prospect.system_source.system_aspects.values_list('id', flat=True)))
         
         return dict([(smart_str(id), query.get(id)) for id in filter(lambda x: int(x) in ids, query.keys())])
 
     def get_required_aspects(self):
-        return self.get_source().aspects.filter(is_required=True)
+        return self.system_source.system_aspects.filter(is_required=True)
 
     def get_optional_aspects(self):
-        return self.get_source().aspects.exclude(id__in=self.get_required_aspects().values_list('id', flat=True))
+        return self.get_source().system_aspects.exclude(id__in=self.get_required_aspects().values_list('id', flat=True))
 
     class Meta:
         ordering = ('verbose_name', 'name')
@@ -174,7 +174,7 @@ class ProspectOperator(models.Model):
 # In general source does not have to be a SQL database. One can think 
 # about is as a generic data source, i.e. SQL engine, file storage, web resource 
 # available via REST interface, GranaryDB 
-class Source(models.Model):
+class Source(models.Model, RelationRouter):
     content_type = models.ForeignKey('contenttypes.ContentType')
     prospect = models.OneToOneField('Prospect', related_name='source')
 
@@ -334,7 +334,7 @@ class Aspect(models.Model):
         unique_together = (('attribute', 'source'),)
 
 
-class ProspectVariant(models.Model):
+class ProspectVariant(models.Model, RelationRouter):
     prospect = models.ForeignKey('Prospect')
     name = models.SlugField(verbose_name="Machine name", unique=True)
     verbose_name = models.CharField(max_length=255, verbose_name="Verbose name")
@@ -349,8 +349,8 @@ class ProspectVariant(models.Model):
     submit_label = models.CharField(max_length=255, verbose_name="Sumbmit button label", default="Submit")
 
     def validate_query(self, user, **query):
-        provided = self.aspect_values.filter(is_exposed=False).values_list('aspect', flat=True)
-        required = self.prospect.get_required_aspects().exclude(id__in=provided)
+        provided = self.system_aspect_values.filter(is_exposed=False).values_list('aspect', flat=True)
+        required = self.system_prospect.get_required_aspects().exclude(id__in=provided)
 
         _left = required.exclude(id__in=query.keys())
         if _left.exists():
@@ -373,22 +373,21 @@ class ProspectVariant(models.Model):
 
         # Update query with stored aspect values
         c = {}
-        for aspect_value in self.aspect_values.filter(is_exposed=False):
-            c[str(aspect_value.aspect.id)] = {'lookup': aspect_value.lookup, 'value':  aspect_value.value}
+        for aspect_value in self.system_aspect_values.filter(is_exposed=False):
+            c[str(aspect_value.system_aspect.id)] = {'lookup': aspect_value.lookup, 'value':  aspect_value.value}
         query.update(c)
 
         # Update query with stored null state values
         nulls = {}
-        for null_state_value in self.null_state_values.filter(is_exposed=False):
-            nulls[str(null_state_value.null_state.id)] = {'lookup': null_state_value.null_state.attribute, 'value':  null_state_value.value}
+        for null_state_value in self.system_null_state_values.filter(is_exposed=False):
+            nulls[str(null_state_value.system_null_state.id)] = {'lookup': null_state_value.system_null_state.attribute, 'value':  null_state_value.value}
 
-        data = self.prospect.filter(query=query, nulls=nulls)
+        data = self.system_prospect.filter(query=query, nulls=nulls)
 
-
-        for context in self.prospect.source.contexts.all():
-            sanitized_query = context.variant.prospect.sanitize_query(**query)
+        for context in self.system_prospect.system_source.system_contexts.all():
+            sanitized_query = context.system_variant.system_prospect.sanitize_query(**query)
             #if sanitized_query:
-            context_values = list(context.variant.filter(user, **sanitized_query).values_list(context.value, flat=True))
+            context_values = list(context.system_variant.filter(user, **sanitized_query).values_list(context.value, flat=True))
             lookup = {smart_str("%s__in" % context.lookup): context_values}
             if context.mode in ('f', 'e'):
                 # if the context is in 'filter' or 'exclude' mode, retrieved objects are used
@@ -397,13 +396,14 @@ class ProspectVariant(models.Model):
             else:
                 # if the context s in 'merge' mode, the queryset is *extended*
                 data |= data.model._default_manager.filter(**lookup)
+	print data
             
 
         # User related lookup
         q_obj = {False: None, True: None}
         for as_exclude in q_obj:
-            for user_relation in self.user_relations.filter(as_exclude=as_exclude):
-                values = user_relation.content_type.model_class().objects.filter(**{smart_str(user_relation.user_field): user}).values_list(user_relation.value_field, flat=True)
+            for user_relation in self.system_user_relations.filter(as_exclude=as_exclude):
+                values = user_relation.system_content_type.model_class().objects.filter(**{smart_str(user_relation.user_field): user}).values_list(user_relation.value_field, flat=True)
                 if q_obj[as_exclude]:
                     q_obj[as_exclude] |= models.Q(**{smart_str("%s__in" % user_relation.related_by_field): values})
                 else:
@@ -416,11 +416,11 @@ class ProspectVariant(models.Model):
         # ----------------------------------------------
 
         # -------------------------------------
-        data = data.only(*self.fields.exclude(db_field='self').values_list('db_field', flat=True))
+        data = data.only(*self.system_fields.exclude(db_field='self').values_list('db_field', flat=True))
         # ------------------------------------
 
-        if self.prospect.operators.exists():
-            for operator in self.prospect.operators.all():
+        if self.system_prospect.operators.exists():
+            for operator in self.system_prospect.operators.all():
                 data = operator.callable(data)
         return data
 

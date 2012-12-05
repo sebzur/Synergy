@@ -13,17 +13,13 @@ from django.conf import settings
 from models import get_parent_field, get_parent_for_instance
 from synergy.templates.regions.views import RegionViewMixin
 from synergy.contrib.components.views import RecordComponentViewMixin
+from synergy.contrib.records.models import get_sys_db
 
 
 class RecordViewMixin(RecordComponentViewMixin):
 
     def get_record_setup(self, **kwargs):
-        db_name = 'default'
-        if settings.FRONTEND_DB:
-            db_name = { True: settings.FRONTEND_DB,
-                        False: 'default',
-                        }.get(kwargs.get('name').startswith(settings.FRONTEND_PREFIX))
-        return get_model('records', 'RecordSetup').objects.using(db_name).get(name=kwargs.get('name'))
+        return get_model('records', 'RecordSetup').objects.using(get_sys_db).get(name=kwargs.get('name'))
 
     def get_model(self):
         return self.get_record_setup(**self.kwargs).model.model_class()
