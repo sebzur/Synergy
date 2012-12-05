@@ -138,6 +138,10 @@ class RecordSetup(models.Model):
         # now we remove none elements to avoid zeroing in updates
         return dict(filter(lambda x: not x[1] is None, initial))
 
+    def get_update_initial(self, **kwargs):
+        initial = ((field.field, field.get_initial(**kwargs)) for field in self.fields.filter(default_in_update=True))
+        return dict(filter(lambda x: not x[1] is None, initial))
+
     def get_success_url(self, **kwargs):
         #print kwargs
         return self.get_url(self.success_url, self.reverse_success_url, **kwargs)
@@ -174,6 +178,7 @@ class RecordField(models.Model):
     field = models.SlugField() # this shuld be renamed to `name`
     
     default_value = models.CharField(max_length=255, blank=True)
+    default_in_update = models.BooleanField(default=False, help_text="Should default_value override already stored data?")
     is_hidden = models.BooleanField(default=False)
 
     def __unicode__(self):
