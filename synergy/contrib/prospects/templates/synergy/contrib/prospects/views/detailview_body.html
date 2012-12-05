@@ -18,8 +18,8 @@
 </div>
 
 <div  style="padding: 20px; float:left; width: 25%;">
-  {% for menu in objectdetail.menus.all %}
-  {% menu menu.menu object=object parent=parent %} 
+  {% for detail_menu in objectdetail.get_menus %}
+  {% menu detail_menu.routed_menu object=object parent=parent %} 
   {% endfor %}
 </div>
 {% endregion %}
@@ -40,13 +40,13 @@
 <div id="tabs" style="margin-top:20px;">
   <ul>
     {% for variant_context in variant_contexts %}
-    <li><a href="#tabs-{{ variant_context.id }}">{{ variant_context.variant.verbose_name }}</a></li>
+    <li><a href="#tabs-{{ variant_context.id }}">{{ variant_context.get_variant.verbose_name }}</a></li>
     {% endfor %}
   </ul>
 
   {% for variant_context, query in variant_contexts.iteritems %}
   <div id="tabs-{{ variant_context.id }}">
-    {% render_results variant_context.variant user query %}
+    {% render_results variant_context.get_variant user query %}
   </div>
   {% endfor %}
 </div>

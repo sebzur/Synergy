@@ -12,8 +12,70 @@ from django.core.exceptions import ValidationError
 from django import template
 from django.utils.datastructures import SortedDict
 
+from django.db.models.fields import FieldDoesNotExist
+
 LOOKUP_MODES = (('f', 'Filter'), ('e', 'Exclude'))
 CONTEXT_MODES = (('f', 'Filter'), ('e', 'Exclude'), ('m', 'Distinct merge'))
+
+def get_frontend_db(instance):
+    return settings.FRONTEND_DB
+
+
+FT_PREFIX = 'routed_'
+class RoutedFrontend(object):
+
+    def __getattr__(self, name):
+        # assumption made: name is in format 'get_`fieldname`'
+        if not name.startswith(FT_PREFIX):
+            raise AttributeError
+
+        rel_object, model, direct, m2m = self._meta.get_field_by_name(name.split(FT_PREFIX)[1])
+        if direct:
+            # Handle FK fields
+            _mgr = rel_object.rel.to._base_manager
+            return self._dd(rel_object, _mgr, 'id', getattr(self, '%s_id' % rel_object.name))
+        elif rel_object.field.unique:
+            # O2O Fields
+            _mgr = rel_object.model._base_manager
+            return self._dd(rel_object.field, _mgr, "%s__id" % rel_object.field.name, getattr(self, 'id'))
+        else:
+            return getattr(self, name.split(FT_PREFIX)[1]).using(get_frontend_db(self))
+
+
+    def _dd(self, field, _mgr, lookup, value):
+        try:
+            return getattr(self, field.frontend_cache_name)
+        except AttributeError:
+            db = get_frontend_db(self)
+            rel_obj = None
+            if value:
+                rel_obj = _mgr.using(db).get(**{lookup: value})
+            field.frontend_cache_name = "%s_frontend" % field.get_cache_name()
+            setattr(self, field.frontend_cache_name, rel_obj)
+            return rel_obj
+
+
+
+    def ___getattr__(self, name):
+        # assumption made: name is in format 'get_`fieldname`'
+        if not name.startswith(FT_PREFIX):
+            raise AttributeError
+        try:
+            # Handle general FK fields
+            field = self._meta.get_field(name.split(FT_PREFIX)[1])
+            try:
+                return getattr(self, field.frontend_cache_name)
+            except AttributeError:
+                field.frontend_cache_name = "%s_frontend" % field.get_cache_name()
+                db = get_frontend_db(self)
+                rel_obj = field.rel.to._base_manager.using(db).get(id=getattr(self, '%s_id' % field.name))
+                setattr(self, field.frontend_cache_name, rel_obj)
+                return rel_obj
+        except:
+            # We're asking about related_name, which can o2m or o2m backward relation
+            return getattr(self, name.split(FT_PREFIX)[1]).using(get_frontend_db(self))
+
+
 
 def get_field(model, attribute):
     chain = attribute.split('__')
@@ -95,23 +157,23 @@ class Prospect(models.Model):
         return self.verbose_name
 
     def get_source(self):
-        return self.source
+        return models.get_model('prospects', 'source').objects.using(get_frontend_db(self)).get(prospect=self.id)
 
     def filter(self, query, nulls):
         return self.get_source().filter(self.sanitize_query(**query), nulls)
-    
+
     def sanitize_query(self, **query):
         # the ids list of admissible aspects is build with id of source aspects
         # and the ids of source contexts aspects
-        ids = list(self.get_source().aspects.values_list('id', flat=True))
+        ids = list(self.get_source().routed_aspects.values_list('id', flat=True))
 
-        for related_context in self.get_source().contexts.all():
-            ids.extend(list(related_context.variant.prospect.source.aspects.values_list('id', flat=True)))
+        for related_context in self.get_source().routed_contexts.all():
+            ids.extend(list(related_context.routed_variant.routed_prospect.routed_source.routed_aspects.values_list('id', flat=True)))
         
         return dict([(smart_str(id), query.get(id)) for id in filter(lambda x: int(x) in ids, query.keys())])
 
     def get_required_aspects(self):
-        return self.get_source().aspects.filter(is_required=True)
+        return self.get_source().aspects.using(get_frontend_db(self)).filter(is_required=True)
 
     def get_optional_aspects(self):
         return self.get_source().aspects.exclude(id__in=self.get_required_aspects().values_list('id', flat=True))
@@ -137,7 +199,7 @@ class ProspectOperator(models.Model):
 # In general source does not have to be a SQL database. One can think 
 # about is as a generic data source, i.e. SQL engine, file storage, web resource 
 # available via REST interface, GranaryDB 
-class Source(models.Model):
+class Source(models.Model, RoutedFrontend):
     content_type = models.ForeignKey('contenttypes.ContentType')
     prospect = models.OneToOneField('Prospect', related_name='source')
 
@@ -150,6 +212,9 @@ class Source(models.Model):
     def get_model(self):
         return self.content_type.model_class()
 
+    def get_contexts(self):
+        return self.contexts.using(get_frontend_db(self)).all()
+
     def filter(self, query, nulls):
         # query is a python dictionary build as
         # {aspect_1: {'operator': 'exact', 'value': value},
@@ -160,13 +225,13 @@ class Source(models.Model):
 
     def build_query(self, query, mode):
         ids = query.keys()
-        for aspect_id in map(str, self.aspects.filter(mode=mode, id__in=ids).values_list('id', flat=True)): # str map to get the proper dict keys
-            yield (smart_str("%s__%s" % (self.aspects.get(id=aspect_id).attribute, query.get(aspect_id).get('lookup'))), query.get(aspect_id).get('value'))
+        for aspect_id in map(str, self.routed_aspects.filter(mode=mode, id__in=ids).values_list('id', flat=True)): # str map to get the proper dict keys
+            yield (smart_str("%s__%s" % (self.routed_aspects.get(id=aspect_id).attribute, query.get(aspect_id).get('lookup'))), query.get(aspect_id).get('value'))
 
     
     def build_null_query(self, query):
         for null_state_id in query:
-            yield (smart_str("%s__isnull" % self.null_states.get(id=null_state_id).attribute), query.get(null_state_id).get('value'))
+            yield (smart_str("%s__isnull" % self.routed_null_states.get(id=null_state_id).attribute), query.get(null_state_id).get('value'))
 
     class Meta:
         ordering = ('content_type__model', 'prospect__verbose_name')
@@ -297,7 +362,7 @@ class Aspect(models.Model):
         unique_together = (('attribute', 'source'),)
 
 
-class ProspectVariant(models.Model):
+class ProspectVariant(models.Model, RoutedFrontend):
     prospect = models.ForeignKey('Prospect')
     name = models.SlugField(verbose_name="Machine name", unique=True)
     verbose_name = models.CharField(max_length=255, verbose_name="Verbose name")
@@ -311,9 +376,24 @@ class ProspectVariant(models.Model):
     css_classes = models.CharField(max_length=255, help_text="The CSS class names will be added to the prospect variant. This enables you to use specific CSS code for each variant. You may define multiples classes separated by spaces.", blank=True)
     submit_label = models.CharField(max_length=255, verbose_name="Sumbmit button label", default="Submit")
 
+    def get_listrepresentation(self):
+        return models.get_model('prospects', 'listrepresentation').objects.using(get_frontend_db(self)).get(variant=self)
+
+    def get_objectdetail(self):
+        return models.get_model('prospects', 'objectdetail').objects.using(get_frontend_db(self)).get(variant=self)
+
+    def get_record(self):
+        return models.get_model('records', 'recordsetup').objects.using(get_frontend_db(self)).get(id=self.record_id)
+
+    def get_aspect_values(self):
+        return models.get_model('prospects', 'AspectValue').objects.using(get_frontend_db(self)).filter(variant=self)
+
+    def get_prospect(self):
+        return models.get_model('prospects','prospect').objects.using(get_frontend_db(self)).get(id=self.prospect_id)
+
     def validate_query(self, user, **query):
-        provided = self.aspect_values.filter(is_exposed=False).values_list('aspect', flat=True)
-        required = self.prospect.get_required_aspects().exclude(id__in=provided)
+        provided = self.aspect_values.using(get_frontend_db(self)).filter(is_exposed=False).values_list('aspect', flat=True)
+        required = self.get_prospect().get_required_aspects().exclude(id__in=provided)
 
         _left = required.exclude(id__in=query.keys())
         if _left.exists():
@@ -336,19 +416,20 @@ class ProspectVariant(models.Model):
 
         # Update query with stored aspect values
         c = {}
-        for aspect_value in self.aspect_values.filter(is_exposed=False):
-            c[str(aspect_value.aspect.id)] = {'lookup': aspect_value.lookup, 'value':  aspect_value.value}
+        for aspect_value in self.routed_aspect_values.filter(is_exposed=False):
+            c[str(aspect_value.routed_aspect.id)] = {'lookup': aspect_value.lookup, 'value':  aspect_value.value}
         query.update(c)
 
         # Update query with stored null state values
         nulls = {}
-        for null_state_value in self.null_state_values.filter(is_exposed=False):
-            nulls[str(null_state_value.null_state.id)] = {'lookup': null_state_value.null_state.attribute, 'value':  null_state_value.value}
+        for null_state_value in self.null_state_values.using(get_frontend_db(self)).filter(is_exposed=False):
+            nulls[str(null_state_value.null_state.id)] = {'lookup': null_state_value.routed_null_state.attribute, 'value':  null_state_value.value}
 
-        data = self.prospect.filter(query=query, nulls=nulls)
+        data = self.get_prospect().filter(query=query, nulls=nulls)
+        print 'After fiter', data
 
 
-        for context in self.prospect.source.contexts.all():
+        for context in self.get_prospect().get_source().get_contexts():
             sanitized_query = context.variant.prospect.sanitize_query(**query)
             #if sanitized_query:
             context_values = list(context.variant.filter(user, **sanitized_query).values_list(context.value, flat=True))
@@ -379,7 +460,7 @@ class ProspectVariant(models.Model):
         # ----------------------------------------------
 
         # -------------------------------------
-        data = data.only(*self.fields.exclude(db_field='self').values_list('db_field', flat=True))
+        data = data.only(*self.fields.using(get_frontend_db(self)).exclude(db_field='self').values_list('db_field', flat=True))
         # ------------------------------------
 
         if self.prospect.operators.exists():
@@ -559,17 +640,20 @@ class Field(models.Model):
         urls = {'o': 'detail', 'u': 'update', 'd': 'delete'}
         return getattr(self, 'get_object_%s_link' % urls.get(self.link_to))(obj)
 
+    def get_variant(self):
+        return models.get_model('prospects', 'prospectvariant').objects.using(get_frontend_db(self)).get(id=self.variant_id)
+
     def get_object_detail_link(self, obj):
-        return reverse('detail', args=[self.variant.name, obj.pk])
+        return reverse('detail', args=[self.get_variant().name, obj.pk])
 
     def get_object_update_link(self, obj):
-        return reverse('update', args=[self.variant.record.name, obj.pk])
+        return reverse('update', args=[self.get_variant().get_record().name, obj.pk])
 
     def get_object_delete_link(self, obj):
-        return reverse('delete', args=[self.variant.record.name, obj.pk])
+        return reverse('delete', args=[self.get_variant().get_record().name, obj.pk])
 
     def as_link(self):
-        return self.link_to or models.get_model('prospects', 'FieldURL').objects.filter(field=self).exists()
+        return self.link_to or models.get_model('prospects', 'FieldURL').objects.using(get_frontend_db(self)).filter(field=self).exists()
 
     def get_value(self, obj, **kwargs):
         # Should check if obj is instance of the variant source
@@ -589,7 +673,7 @@ class Field(models.Model):
 
 
     def _render_url(self, obj, value, **kwargs):
-        url_setup = self.field_url
+        url_setup = models.get_model('prospects', 'fieldurl').objects.using(get_frontend_db(self)).get(field=self)
         context = {'value': value, 'object': obj}
         context.update(kwargs)
         if url_setup.reverse_url:
@@ -634,7 +718,7 @@ class FieldURL(models.Model):
     target = models.CharField(choices=(('_blank', '_blank'), ('_parent', '_parent')), max_length=32, blank=True)
     alt_text = models.CharField(max_length=200, blank=True)
  
-class ObjectDetail(models.Model):
+class ObjectDetail(models.Model, RoutedFrontend):
     variant = models.OneToOneField('ProspectVariant')
     parent = models.ForeignKey('ObjectDetail', null=True, blank=True, verbose_name="Parent")
     postfix = models.BooleanField(default=False)
@@ -643,6 +727,10 @@ class ObjectDetail(models.Model):
 
     title = models.CharField(max_length=255, blank=True)
     body = models.TextField(blank=True)
+
+
+    def get_menus(self):
+        return self.menus.using(get_frontend_db(self)).all()
 
     def get_title(self, obj):
         if self.title:
@@ -656,32 +744,39 @@ class ObjectDetail(models.Model):
             return t.render(template.Context({'object': obj}))
         return ''
 
-
     def has_record(self):
-        return bool(self.variant.record)
+        return bool(self.routed_variant.routed_record)
 
     def get_record(self):
-        return self.variant.record
+        return self.routed_variant.routed_record
+
+    def get_variant(self):
+        return models.get_model('prospects', 'prospectvariant').objects.using(get_frontend_db(self)).get(id=self.variant_id)
+
+    def get_parent(self):
+        if self.parent:
+            return models.get_model('prospects', 'objectdetail').objects.using(get_frontend_db(self)).get(id=self.parent_id)
+        return None
 
     def __unicode__(self):
         return self.variant.name
 
     def get_variant_contexts(self):
-        return self.variant_contexts.filter(view_mode='a')
+        return self.routed_variant_contexts.filter(view_mode='a')
 
     def get_context_data(self, obj, parent, *args, **kwargs):
         ctx = {'variant_contexts': SortedDict((v_c, v_c.get_query(obj, parent)) for v_c in self.get_variant_contexts())}
 
-        postfix_value = "%s" % self.variant.name
+        postfix_value = "%s" % self.routed_variant.name
         postfixes =  {'posthead': [postfix_value] if self.use_posthead else [], 
                       'objectdetail': [postfix_value] if self.postfix else []}
 
         for variant_context in ctx['variant_contexts']:
-            postfixes['posthead'].extend(variant_context.variant.listrepresentation.representation.get_posthead_postfixes())
+            postfixes['posthead'].extend(variant_context.get_variant().get_listrepresentation().get_representation().get_posthead_postfixes())
         ctx.update({'region_postfixes': postfixes})
         return ctx
 
-class DetailField(models.Model):
+class DetailField(models.Model, RoutedFrontend):
     object_detail = models.ForeignKey('ObjectDetail', related_name="fields")
     field = models.ForeignKey('Field', related_name="detail_fields")
     weight = models.IntegerField()
@@ -708,7 +803,8 @@ class DetailFieldStyle(models.Model):
         verbose_name_plural = "Detail field styles"
         ordering = ('weight',)
 
-class DetailMenu(models.Model):
+
+class DetailMenu(models.Model, RoutedFrontend):
     object_detail = models.ForeignKey('ObjectDetail', related_name="menus")
     menu = models.ForeignKey('menu.Menu', related_name="object_details")
 
@@ -722,7 +818,7 @@ class DetailMenu(models.Model):
     
 
 # VariantContext should be renamed to DetailContext
-class VariantContext(models.Model):
+class VariantContext(models.Model, RoutedFrontend):
     object_detail = models.ForeignKey('prospects.ObjectDetail', related_name="variant_contexts")
     variant = models.ForeignKey('ProspectVariant')
 
@@ -734,30 +830,37 @@ class VariantContext(models.Model):
     def __unicode__(self):
         return u"%s <- %s" % (self.object_detail, self.variant)
 
+    def get_variant(self):
+        return models.get_model('prospects', 'prospectvariant').objects.using(get_frontend_db(self)).get(id=self.variant_id)
+
+    def get_objectdetail(self):
+        return models.get_model('prospects', 'objectdetail').objects.using(get_frontend_db(self)).get(id=self.object_detail_id)
+
     def _get_value_src(self, obj, parent):
-        value_src = [(obj, self.object_detail.variant)]
-        if self.object_detail.parent:
-            value_src.append((parent, self.object_detail.parent.variant))
+        _od = self.get_objectdetail()
+        value_src = [(obj, _od.get_variant())]
+        if _od.get_parent():
+            value_src.append((parent, _od.get_parent().variant))
         return value_src
 
     def get_query(self, obj, parent):
         query = {}
         for v_obj, src in self._get_value_src(obj, parent):
-            query.update(dict([(str(aspect_value.aspect.id), {'lookup': aspect_value.lookup, 'value': aspect_value.value_field.get_value(v_obj)}) for aspect_value in self.aspect_values.filter(value_field__variant=src)]))
-
+            query.update(dict([(str(aspect_value.routed_aspect.id), {'lookup': aspect_value.lookup, 'value': aspect_value.routed_value_field.get_value(v_obj)}) for aspect_value in self.routed_aspect_values.filter(value_field__variant=src)]))
+        print 'Query', query
         return query
 
     def get_arguments(self, obj, parent):
         arguments = {}
         for v_obj, src in self._get_value_src(obj, parent):
-            arguments.update(dict((smart_str(arg_val.argument.name), arg_val.value_field.get_value(v_obj))  for arg_val in self.argument_values.filter(value_field__variant=src)))
+            arguments.update(dict((smart_str(arg_val.argument.name), arg_val.value_field.get_value(v_obj))  for arg_val in self.routed_argument_values.filter(value_field__variant=src)))
         return arguments
     
     class Meta:
         ordering = ('weight',)
 
 
-class VariantContextAspectValue(models.Model):
+class VariantContextAspectValue(models.Model, RoutedFrontend):
     variant_context = models.ForeignKey('VariantContext', related_name="aspect_values")
     value_field = models.ForeignKey('Field')
     aspect = models.ForeignKey('Aspect')
@@ -828,7 +931,16 @@ class ListRepresentation(models.Model):
 
     representation_type = models.ForeignKey(ContentType, limit_choices_to={'model__in': ('custompostfix', 'table', 'calendar')})
     representation_id = models.PositiveIntegerField()
-    representation = generic.GenericForeignKey('representation_type', 'representation_id')
+
+    def get_variant(self):
+        return models.get_model('prospects', 'prospectvariant').objects.using(get_frontend_db(self)).get(id=self.variant_id)
+
+    def get_representation_type(self):
+        return  models.get_model('contenttypes', 'contenttype').objects.using(get_frontend_db(self)).get(id=self.representation_type_id)
+
+    def get_representation(self):
+        rpr_type= models.get_model('contenttypes', 'contenttype').objects.using(get_frontend_db(self)).get(id=self.representation_type_id)
+        return rpr_type.model_class().objects.using(get_frontend_db(self)).get(id=self.representation_id)
 
     class Meta:
         unique_together = (('name', 'variant'), ('representation_type', 'representation_id'))

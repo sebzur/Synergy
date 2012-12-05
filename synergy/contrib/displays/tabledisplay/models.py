@@ -1,5 +1,5 @@
 from django.db import models
-from synergy.contrib.prospects.models import RepresentationModel, resolve_lookup
+from synergy.contrib.prospects.models import RepresentationModel, resolve_lookup, get_frontend_db
 
 class Table(RepresentationModel):
     is_filtered = models.BooleanField(verbose_name="Should the table have filtering enabled?")
@@ -15,6 +15,9 @@ class Table(RepresentationModel):
     
     def get_posthead_postfix(self):
         return self.get_prospect_postfix()
+
+    def get_columns(self):
+        return self.columns.using(get_frontend_db(self)).all()
 
     class Meta:
         app_label = "prospects"
@@ -38,13 +41,16 @@ class Column(models.Model):
         return u"%s %s" % (self.table, self.field)
 
     def is_url(self, obj):
-        return self.field.as_link() and self.is_triggered(obj)
+        return self.get_field().as_link() and self.is_triggered(obj)
+
+    def get_field(self):
+        return models.get_model('prospects', 'field').objects.using(get_frontend_db(self)).get(id=self.field_id)
 
     def get_value(self, obj, **kwargs):
         triggered = self.is_triggered(obj)
         link = self.is_url(obj)
         if triggered or self.rewrite_disabled_as == 'b':
-            value = self.field.get_value(obj, **kwargs)
+            value = self.get_field().get_value(obj, **kwargs)
         if not triggered and self.rewrite_disabled_as == 'b':
             value = value.get('value')
         if not triggered and self.rewrite_disabled_as == 'a':

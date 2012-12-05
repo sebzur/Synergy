@@ -7,6 +7,7 @@ from django.template import Context, Template
 from django.contrib.contenttypes import generic
 from django.utils.datastructures import SortedDict
 
+from synergy.contrib.prospects.models import RoutedFrontend
 
 def render_url(url, **kwargs):
     bits = url.split()
@@ -67,7 +68,7 @@ class CategoricalValue(models.Model):
 #     update_trigger_lookup = models.CharField(max_length=128, verbose_name="A lookup on the object that triggers the class name to be applied", blank=True)
 
 
-class RecordActionSetup(models.Model):
+class RecordActionSetup(models.Model, RoutedFrontend):
     ACTIONS = (('c', 'Create'), ('u', 'Update'), ('d', 'Delete'))
     setup = models.ForeignKey('RecordSetup', related_name="actions")
     action = models.CharField(max_length=1, choices=ACTIONS)
@@ -80,7 +81,7 @@ class RecordActionSetup(models.Model):
     class Meta:
         unique_together = (('setup', 'action'),)
 
-class RecordSetup(models.Model):
+class RecordSetup(models.Model, RoutedFrontend):
     name = models.SlugField(max_length=255, unique=True)
     model = models.ForeignKey(ContentType, related_name="record_setups")
 

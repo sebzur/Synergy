@@ -34,8 +34,8 @@ def fields(obj, object_detail):
     for field in filter(lambda x: x.name != 'id', obj._meta.fields):
         context['model_fields'][field.verbose_name] = getattr(obj, field.name)
 
-    for field in object_detail.fields.all():
-        context['object_fields'][field.field] = field.field.get_value(obj)
+    for field in object_detail.routed_fields.all():
+        context['object_fields'][field.routed_field] = field.routed_field.get_value(obj)
 
     tpl = 'prospects/rendering/objectdetail/fields.html'
     return render_to_string(tpl, context)
@@ -90,7 +90,7 @@ class VariantResultsNode(template.Node):
         ctx['results'] = results
         ctx['variant'] = variant
         ctx['error'] = error_info
-        repr_obj = variant.listrepresentation.representation
+        repr_obj = variant.get_listrepresentation().get_representation()
         ctx[repr_obj._meta.object_name.lower()] = repr_obj
         ctx.update(repr_obj.get_context_data())
 

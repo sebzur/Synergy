@@ -1,8 +1,8 @@
 from django.db import models
-from synergy.contrib.prospects.models import fields, resolve_lookup
+from synergy.contrib.prospects.models import fields, resolve_lookup, RoutedFrontend
 
 
-class Menu(models.Model):
+class Menu(models.Model, RoutedFrontend):
     CATEGORY = (('p', 'Primary Menu'), ('s', 'Secondary Menu'), ('c', 'Context Menu'))
 
     name = models.SlugField(unique=True)
@@ -54,7 +54,7 @@ class MenuItemTrigger(models.Model):
     class Meta:
         ordering = ('weight', )
 
-class MenuItem(models.Model):
+class MenuItem(models.Model, RoutedFrontend):
     menu = models.ForeignKey('Menu', related_name='items')
     name = models.SlugField(unique=True)
     verbose_name = models.CharField(max_length=255)
@@ -92,7 +92,7 @@ class MenuItem(models.Model):
                 t = Template("{%% url %s %%}" % self.url)
 
             context = kwargs.copy()
-            arguments = self.menu.arguments.all().order_by('weight')
+            arguments = self.routed_menu.routed_arguments.all().order_by('weight')
             for i, arg in enumerate(args):
                 key = arguments[i].name
                 context[key] = arg

@@ -89,14 +89,14 @@ class ProtectedView(object):
             raise ValueError("Access prefix has to be defined!")
         assignment = self.get_component_assignment(**kwargs)
         if assignment:
-            return self._get_func_flag(assignment, self.access_prefix) or assignment.flag or assignment.component.flag
+            return self._get_func_flag(assignment, self.access_prefix) or assignment.routed_flag or assignment.routed_component.routed_flag
 
     def _get_func_flag(self, assignment, access_prefix):
         app, func = access_prefix.split('.')
 
         assignment_func_flag = getattr(assignment, '%s_flag' % func)
-        component_func_flag = getattr(assignment.component, '%s_flag' % func)
-        app_flag = getattr(assignment.component, '%s_flag' % app)
+        component_func_flag = getattr(assignment.routed_component, '%s_flag' % func)
+        app_flag = getattr(assignment.routed_component, '%s_flag' % app)
         return assignment_func_flag or component_func_flag or app_flag
 
 
@@ -116,14 +116,16 @@ class ComponentViewMixin(ProtectedView, AuthBase):
 
     def get_component(self, **kwargs):
         assignment = self.get_component_assignment(**kwargs)
+        print 'Test comp ass', assignment
         if assignment: 
-            return assignment.component
+            return assignment.routed_component
         return None
 
     def get_component_assignment(self, **kwargs):
         item = self.get_component_item(**kwargs)
+        print 'Item:', item
         try:
-            return item.component_assignment
+            return item.routed_component_assignment
         except ObjectDoesNotExist:
             return None
 

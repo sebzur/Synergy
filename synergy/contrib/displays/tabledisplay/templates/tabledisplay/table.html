@@ -2,12 +2,12 @@
 {% if results %}
 <table class="results-table display">
   <thead>
-    {% for column in table.columns.all %}
-    <th>{{ column.field.verbose_name }}</th>
+    {% for column in table.get_columns %}
+    <th>{{ column.get_field.verbose_name }}</th>
     {% endfor %}
   </thead>
   <tbody>
-    {% with table.columns.all as columns %}
+    {% with table.get_columns as columns %}
     {% for obj in results %}
     {% table_row obj table columns arguments  %}
     {% endfor %}

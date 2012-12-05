@@ -16,6 +16,7 @@ from djangorestframework import status, permissions
 
 from synergy.templates.regions.views import RegionViewMixin
 from synergy.contrib.prospects.forms import prospectform_factory, build_query
+from synergy.contrib.prospects.models import get_frontend_db
 from synergy.contrib.components.views import ProspectComponentViewMixin
 
 
@@ -44,18 +45,13 @@ class ProspectMixin(ProspectComponentViewMixin):
 
 
     def get_prospect_variant(self, **kwargs):
-	db_name = 'default'
-	if settings.FRONTEND_DB:
-        	db_name = { True: settings.FRONTEND_DB,
-                    	False: 'default',
-                    	}.get(kwargs.get('variant').startswith(settings.FRONTEND_PREFIX))
-        return get_model('prospects', 'ProspectVariant').objects.using(db_name).get(name=kwargs.get('variant'))
+        return get_model('prospects', 'ProspectVariant').objects.using(get_frontend_db(self)).get(name=kwargs.get('variant'))
 
     def get_prospect(self, **kwargs):
-        return self.get_prospect_variant(**kwargs).prospect
+        return self.get_prospect_variant(**kwargs).get_prospect()
 
     def get_representation(self, **kwargs):
-        return self.get_prospect_variant(**kwargs).listrepresentation.representation
+        return self.get_prospect_variant(**kwargs).get_listrepresentation().get_representation()
 
     def get_query_dict(self):
         kwgs = dict([(smart_str(k), v.encode('utf8')) for k, v in self.request.GET.iteritems() if k.split('__')[0] in ('aspect', 'lookup') ])
@@ -65,7 +61,7 @@ class ProspectMixin(ProspectComponentViewMixin):
         ctx = super(ProspectMixin, self).get_context_data(*args, **kwargs)
         prospect_variant = self.get_prospect_variant(**self.kwargs)
         ctx['title'] = u"%s" % prospect_variant.verbose_name
-        ctx['prospect'] = prospect_variant.prospect
+        ctx['prospect'] = prospect_variant.get_prospect()
         ctx['variant'] = prospect_variant
         ctx['arguments'] = self.get_arguments()
         ctx['encoded'] = urllib.urlencode(self.get_query_dict())
@@ -147,28 +143,28 @@ class DetailView(ProspectMixin, RegionViewMixin, generic.DetailView):
         arguments = self.kwargs.copy()
 
         obj, parent = self.get_object(), self.get_parent()
-        for d in self.get_prospect_variant(**self.kwargs).objectdetail.get_variant_contexts():
+        for d in self.get_objectdetail().get_variant_contexts():
             arguments.update(d.get_arguments(obj, parent))
 
         return arguments
 
-    def get_object_detail(self):
-        return self.get_prospect_variant(**self.kwargs).objectdetail
+    def get_objectdetail(self):
+        return self.get_prospect_variant(**self.kwargs).get_objectdetail()
 
     def get_parent(self):
         parent_id = self.kwargs.get('parent')
         if parent_id:
-            return self.get_object_detail().parent.variant.get_model_class().objects.get(id=parent_id)
+            return self.get_objectdetail().parent.variant.get_model_class().objects.get(id=parent_id)
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(DetailView, self).get_context_data(*args, **kwargs)
-        ctx['objectdetail'] = self.get_object_detail()
+        ctx['objectdetail'] = self.get_objectdetail()
         ctx['title'] = ctx['objectdetail'].get_title(self.get_object())
         ctx['body'] = ctx['objectdetail'].get_body(self.get_object())
         ctx['name'] = self.get_prospect_variant(**self.kwargs).name
         ctx['parent'] = self.get_parent()
-        ctx.update(self.get_prospect_variant(**self.kwargs).objectdetail.get_context_data(self.get_object(), self.get_parent(), *args, **kwargs))
-        ctx_operator = self.get_prospect_variant(**self.kwargs).objectdetail.context_operator
+        ctx.update(self.get_objectdetail().get_context_data(self.get_object(), self.get_parent(), *args, **kwargs))
+        ctx_operator = self.get_objectdetail().context_operator
         if ctx_operator:
             ctx_operator(self.request, self.get_object(), ctx, *args, **kwargs)
         return ctx

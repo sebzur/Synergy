@@ -1,6 +1,7 @@
 from django.db import models
+from synergy.contrib.prospects.models import RoutedFrontend
 
-class Component(models.Model):
+class Component(models.Model, RoutedFrontend):
     name = models.SlugField(unique=True, verbose_name="Component machine name", help_text="This is slug field")
     verbose_name = models.CharField(max_length=255, verbose_name="Component verbose name", unique=True)
 
@@ -25,7 +26,7 @@ class Component(models.Model):
         verbose_name = "Component"
         verbose_name_plural = "Components"
 
-class ComponentProspectVariant(models.Model):
+class ComponentProspectVariant(models.Model, RoutedFrontend):
     component = models.ForeignKey('Component', related_name='prospect_variants')
     prospect_variant = models.OneToOneField('prospects.ProspectVariant', related_name="component_assignment")
 

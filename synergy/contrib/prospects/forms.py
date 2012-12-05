@@ -5,6 +5,9 @@ from django import forms
 from django.db.models import get_model
 from django.template.loader import render_to_string
 from django.utils.datastructures import SortedDict
+
+from synergy.contrib.prospects.models import get_frontend_db
+
 import signals
 
 def build_aspect_hash(aspect):
@@ -25,10 +28,10 @@ def get_fields(request, prospect, variant):
     fields = SortedDict()
     source = prospect.get_source()
 
-    excluded = list(get_model('prospects', 'aspectvalue').objects.filter(variant__name=variant, is_exposed=False).values_list('aspect', flat=True))
-    excluded = list(prospect.source.aspects.exclude(is_exposed=True).values_list('id', flat=True)) + excluded
+    excluded = list(get_model('prospects', 'aspectvalue').objects.using(get_frontend_db(variant)).filter(variant__name=variant, is_exposed=False).values_list('aspect', flat=True))
+    excluded = list(prospect.source.aspects.using(get_frontend_db(source)).exclude(is_exposed=True).values_list('id', flat=True)) + excluded
 
-    for aspect in source.aspects.exclude(id__in=excluded):
+    for aspect in source.aspects.using(get_frontend_db(source)).exclude(id__in=excluded):
         aspect_hash = build_aspect_hash(aspect)
         aspect_field_name = build_field_name("aspect", aspect_hash)
         lookup_field_name = build_field_name("lookup", aspect_hash)
@@ -126,7 +129,7 @@ def build_query(data):
 def prospectform_factory(request, prospect, variant):
     fields = get_fields(request, prospect, variant)
     contexts = {}
-    for context in prospect.source.contexts.all():
+    for context in prospect.get_source().get_contexts():
         contexts[context] = prospectform_factory(request, context.variant.prospect, context.variant.name)
     attributes = {}
     return type('ProspectForm', (ProspectBaseForm,), {'base_fields': fields, 'attributes': attributes, 'prospect': prospect, 'contexts': contexts})
