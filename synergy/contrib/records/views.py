@@ -13,7 +13,7 @@ from django.conf import settings
 from models import get_parent_field, get_parent_for_instance
 from synergy.templates.regions.views import RegionViewMixin
 from synergy.contrib.components.views import RecordComponentViewMixin
-from synergy.contrib.records.models import get_sys_db
+from synergy.contrib.prospects.models import get_sys_db
 
 
 class RecordViewMixin(RecordComponentViewMixin):
