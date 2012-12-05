@@ -89,12 +89,9 @@ class SecondaryMenuNode(template.Node):
 
     def render(self, context):
         component = self.component.resolve(context)
-        #ids = []
-	#db = 'default'
         menus = get_model('menu', 'Menu').objects.none()
         if component:
             ids = component.menus.all().values_list('menu', flat=True)
-	    #db = ids.db
             menus = get_model('menu', 'Menu').objects.using(ids.db).filter(id__in=ids)
 
         user = self.user.resolve(context)
