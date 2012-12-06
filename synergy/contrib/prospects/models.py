@@ -447,7 +447,7 @@ class ProspectVariant(models.Model, RelationRouter):
     class Meta:
         ordering = ('verbose_name', 'name')
 
-class AspectValue(models.Model):
+class AspectValue(models.Model, RelationRouter):
     variant = models.ForeignKey('ProspectVariant', related_name="aspect_values")
     aspect = models.ForeignKey('Aspect', related_name="variant_values")
     value = models.CharField(max_length=255, verbose_name="A value entered")
