@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.conf.urls.defaults import *
-from synergy.contrib.pdfgen import views
+from synergy.contrib.prospects.printouts import views
 
 urlpatterns = patterns('',
                        #url(r'^list/(?P<variant>[-\w]+)/$', views.ListView.as_view(), name="list"),
