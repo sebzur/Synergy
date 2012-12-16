@@ -100,7 +100,7 @@ class FlagsBackend(object):
                                                                                 content_type__model__exact=model_name,
                                                                                 flag__name__exact=perm_name)    
         
-        
+        #tutaj chyba moze byc get
         model_perm_query = permission_queryset.filter(object_id__exact=None)
         
         if not obj is None and permission_queryset.filter(object_id__exact=obj.id).exists():

@@ -54,7 +54,7 @@ class CreateRecordView(ProtectedView, RegionViewMixin, ObjectViewMixin, CreateVi
     def dispatch(self, request, *args, **kwargs):
         setup = get_model('records', 'RecordSetup').objects.get(name=kwargs.get('name'))
         expressions = []
-        for argument in setup.arguments.all():
+        for argument in setup.arguments.all().order_by('weight'):
             expressions.append("(?P<%s>%s)" % (argument.name, argument.regex))
         regex = "/".join(expressions)
         path = kwargs.get('arguments')
@@ -111,7 +111,7 @@ class CreateRecordView(ProtectedView, RegionViewMixin, ObjectViewMixin, CreateVi
     def get_success_url(self):
         tmp = self.get_arguments().copy()
         tmp.update({'object': self.object})
-        print 'Got succses url:', [self.get_model_setup().get_success_url(**tmp)]
+        #print 'Got succses url:', [self.get_model_setup().get_success_url(**tmp)]
         return self.get_model_setup().get_success_url(**tmp)
 
 
@@ -136,14 +136,14 @@ class UpdateRecordView(ObjectViewMixin, ProtectedView, RegionViewMixin, UpdateVi
         ctx.update(setup.get_context_elements(ctx, 'u'))
         return  ctx
 
-#    def get_arguments(self):
-#        _kwargs = self.kwargs.copy()
-#        _kwargs.pop('name') # remove record name
-#        _kwargs.update({'request': self.request})
-#        return _kwargs
+    def get_arguments(self):
+        _kwargs = self.kwargs.copy()
+        _kwargs.pop('name') # remove record name
+        _kwargs.update({'request': self.request})
+        return _kwargs
 
-#    def get_initial(self):
-#        return self.get_model_setup().get_initial(**self.get_arguments())
+    def get_initial(self):
+        return self.get_model_setup().get_update_initial(**self.get_arguments())
 
     def form_valid(self, form):
         return super(UpdateRecordView, self).form_valid(form)            
