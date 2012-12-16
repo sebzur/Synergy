@@ -101,7 +101,7 @@ class Block(models.Model):
        
 class BlockMenu(models.Model):
     block = models.ForeignKey('Block', related_name='menus')
-    menu = models.ForeignKey('menu.Menu', limit_choices_to={'category': 's'}, related_name="blocks", null=True, blank=True)
+    menu = models.ForeignKey('menu.Menu', limit_choices_to={'category': 's'}, related_name="blocks")
     weight = models.IntegerField(verbose_name="Weight")
 
 class BlockACLItem(models.Model):
