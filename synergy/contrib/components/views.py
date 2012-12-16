@@ -163,7 +163,7 @@ class ComponentViewMixin(ProtectedView, AuthBase):
         ctx = super(ComponentViewMixin, self).get_context_data(*args, **kwargs)
         ctx['component'] = self.get_component(**self.kwargs)
 
-        ctx['blocks'] = []
+        ctx['blocks'] = {}
         if ctx['component']:
             ctx['blocks'] = self.get_blocks()
         return ctx
