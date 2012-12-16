@@ -19,6 +19,7 @@ admin.site.register(ComponentMenu)
 
 admin.site.register(Region)
 admin.site.register(Block)
+admin.site.register(BlockMenu)
 admin.site.register(BlockACLItem)
 
 

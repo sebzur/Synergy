@@ -1,6 +1,8 @@
 {% extends "shade/body.html" %}
 {% load synergy_region %}
 {% load menu_tags %}
+{% load region_blocks %}
+
 {% block main %}
 <div id="sidebar">
 
@@ -10,13 +12,9 @@
 
   <div id="sidebar-inner">
     {% secondary_menu user component %}
-    {% region sidebar %}{% endregion %}
-    {% if user.username == 'chewusz' or user.is_superuser %}
-    <h3>REC Menu</h3>
-    <ul>
-      <li> <a href=" /list/rec-requests/"><strong>Registration requests</strong></a> </li>
-    </ul>
-    {% endif %}
+    {% region sidebar %}
+    {% region-blocks sidebar user %}
+    {% endregion %}
   </div> <!-- end content -->
 
 </div> <!-- end outer3 -->
