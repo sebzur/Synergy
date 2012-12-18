@@ -1,5 +1,5 @@
 {% if object_fields %}
-    <table>
+    <table style="width:100%;">
       {% for field, value in object_fields.iteritems %}
       <tr class="{% cycle "odd" "even" %}">
 	<td class="record-field">{{ field.verbose_name }}</td>
@@ -13,7 +13,7 @@
       {% endfor %}
     </table>
 {% else %}
-<table>
+<table style="width:100%;">
   {% for field, value in model_fields.iteritems %}
   <tr class="{% cycle "odd" "even" %}">
     <td class="record-field">{{ field }}</td>

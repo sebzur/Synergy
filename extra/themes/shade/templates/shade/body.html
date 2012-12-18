@@ -1,6 +1,7 @@
 {% extends "shade/base.html" %}
 {% load i18n %}
 {% load synergy_region %}
+{% load region_blocks %}
 {% block body %}
     <div id="page">
       {# ------------ HEADER --------------- #}
@@ -40,11 +41,7 @@
 	<div id="footer-menu">
 	  <br />
 	  <br />
-	  {% if blocks.footer %}
-	     {% for block in blocks.footer %}
-	       {{ block.body|safe }}
-	      {% endfor %}
-	  {% endif %}
+	  {% region-blocks footer user %}
 	</div>
         {% endregion %}
       </div>

@@ -1,0 +1,13 @@
+{% load menu_tags %}
+
+{% if blocks %}
+  {% for block in blocks %}
+    {{ block.body|safe }}
+     {% for menu in block.menus.all %}
+        {% if menu.menu.is_enabled %}
+           {% menu menu.menu user=user %} 
+        {% endif %}
+      {% endfor %}
+  {% endfor %}
+{% endif %}
+

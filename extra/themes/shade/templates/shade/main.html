@@ -1,6 +1,8 @@
 {% extends "shade/body.html" %}
 {% load synergy_region %}
 {% load menu_tags %}
+{% load region_blocks %}
+
 {% block main %}
 <div id="sidebar">
 
@@ -10,7 +12,9 @@
 
   <div id="sidebar-inner">
     {% secondary_menu user component %}
-    {% region sidebar %}{% endregion %}
+    {% region sidebar %}
+    {% region-blocks sidebar user %}
+    {% endregion %}
   </div> <!-- end content -->
 
 </div> <!-- end outer3 -->

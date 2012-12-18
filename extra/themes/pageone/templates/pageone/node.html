@@ -1,5 +1,6 @@
 {% extends "pageone/body.html" %}
 {% load synergy_region %}
+{% load region_blocks %}
 
 {% block content %}
     {% region content %}
@@ -14,17 +15,11 @@
 	{% include 'pageone/default_node_content.html' %}
 	{% endregion %}
 	</div>
-            <aside>
-	      {% region sidebar %}
-	      {% if blocks.sidebar %}
-	        {% for block in blocks.sidebar %}
-	           {{ block.body|safe }}
-	         {% endfor %}
-	      {% endif %}
-	      {% endregion %}
-            </aside>
-
-
+        <aside>
+	  {% region sidebar %}
+	  {% region-blocks sidebar user %}
+	  {% endregion %}
+        </aside>
       </section>
 {% endregion %}
 {% endblock %}

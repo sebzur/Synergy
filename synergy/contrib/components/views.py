@@ -149,8 +149,13 @@ class ComponentViewMixin(ProtectedView, AuthBase):
                 _b = get_model('components', 'block').objects.filter(region__name=region, acl_mode=mode, acl__isnull=False)
                 blocks.append(getattr(_b, query_action[mode])(acl__in=acl).values_list('id', flat=True))
 
-                
-            regions[region] = get_model('components', 'block').objects.filter(id__in=itertools.chain(*blocks)).order_by('weight',)
+            # filtering by block flag access: we are looping over flagged blocks
+            excluded = []
+            for flagged_block in get_model('components', 'block').objects.filter(id__in=itertools.chain(*blocks), flag__isnull=False).order_by('weight',):
+                if not self.request.user.has_perm('components.block.%s' % flagged_block.flag.name, flagged_block):
+                    excluded.append(flagged_block.id)
+
+            regions[region] = get_model('components', 'block').objects.filter(id__in=itertools.chain(*blocks)).order_by('weight',).exclude(id__in=excluded)
         return regions
 
 
@@ -158,7 +163,7 @@ class ComponentViewMixin(ProtectedView, AuthBase):
         ctx = super(ComponentViewMixin, self).get_context_data(*args, **kwargs)
         ctx['component'] = self.get_component(**self.kwargs)
 
-        ctx['blocks'] = []
+        ctx['blocks'] = {}
         if ctx['component']:
             ctx['blocks'] = self.get_blocks()
         return ctx

@@ -54,6 +54,12 @@ class ComponentRecord(models.Model):
 
 
 class ComponentMenu(models.Model):
+    """ Component Menu -- the set of menu objects related the component displayed.
+    If the user has component access the menu access is also granted.  For granural
+    flag-bassed menu please referer to the BlockMenu class.
+
+    """
+
     component = models.ForeignKey('Component', related_name='menus')
     menu = models.OneToOneField('menu.Menu', limit_choices_to={'category': 's'}, related_name="component_assignment")
 
@@ -77,16 +83,26 @@ class Region(models.Model):
 
 class Block(models.Model):
     region = models.ForeignKey('Region', related_name='elements')
-    weight = models.IntegerField(verbose_name="weight")
+    flag = models.ForeignKey('flags.Flag', null=True, blank=True, related_name="blocks")    
+
+    weight = models.IntegerField(verbose_name="Weight")
+
     title = models.CharField(max_length=100, verbose_name="Title", help_text="Use {{ object, user, request }} tags for dynamic title")
     body = models.TextField(verbose_name="Block body", blank=True, help_text="Use {{ object, user, request }} tags for dynamic content")
     
     ACL_MODES = (('r', 'List rejected'), ('a', 'List allowed'))
     acl_mode = models.CharField(max_length=1, choices=ACL_MODES, verbose_name="Vew ACL list mode", default='r')
 
+    def __unicode__(self):
+        return self.title
+
     class Meta:
         ordering = ('weight',)
-        
+       
+class BlockMenu(models.Model):
+    block = models.ForeignKey('Block', related_name='menus')
+    menu = models.ForeignKey('menu.Menu', limit_choices_to={'category': 's'}, related_name="blocks")
+    weight = models.IntegerField(verbose_name="Weight")
 
 class BlockACLItem(models.Model):
     block = models.ForeignKey('Block', related_name="acl")

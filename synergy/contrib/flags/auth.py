@@ -127,6 +127,15 @@ class FlagsBackend(object):
         permission_queryset =  get_model('flags', 'ContentFlag').objects.filter(content_type__app_label__exact=app_name,
                                                                                 content_type__model__exact=model_name,
                                                                                 flag__name__exact=perm_name)    
+        
+        # Very important part of the puzzule: if there's no `ContentFlag` object registerd
+        # with the flag, the permission is not granted ant the procedure stops here
+        if not permission_queryset.exists():
+            return False
+
+        # If we're here, there's at least one contentflag related to this flag, now
+        # let's browse through it...
+
         model_perm_query = permission_queryset.filter(object_id__exact=None)
         
         if not obj is None and permission_queryset.filter(object_id__exact=obj.id).exists():

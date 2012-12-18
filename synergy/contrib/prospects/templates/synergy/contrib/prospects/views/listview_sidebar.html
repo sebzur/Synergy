@@ -1,14 +1,5 @@
 {% load menu_tags %}
+{% load region_blocks %}
 
-{% for menu in variant.menus.all %}
-{% if menu.menu.is_enabled %}
-{% menu menu.menu.name user=user %} 
-{% endif %}
-{% endfor %}
-
-{% if blocks.sidebar %}
-  {% for block in blocks.sidebar %}
-    {{ block.body|safe }}
-  {% endfor %}
-{% endif %}
+{% region-blocks sidebar user %}
 
