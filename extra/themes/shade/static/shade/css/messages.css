@@ -1,0 +1,25 @@
+.messages{
+    padding: 0 20px 0 20px;
+/*    background-color: #036415; */
+    color: white;
+    text-shadow: none;
+}
+
+.messages ul{
+    list-style: none;
+    padding: 0px;
+
+}
+
+.messages li.error {
+    background-color: #FFCF40;
+    color: #6B6B6A;
+}
+
+.messages li.success {
+    background-color: #1D8330;
+}
+
+.messages li{
+    padding: 10px;
+}
