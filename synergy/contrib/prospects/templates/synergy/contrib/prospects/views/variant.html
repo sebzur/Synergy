@@ -5,7 +5,7 @@
   {{ variant.header|safe|linebreaks|default:"To get the results fill in the form fields and submit the query. The results will be listed below the form." }}
 </p>
 
-{% if form.fields %}
+{% if form.fields or form.contexts %}
 {% include 'synergy/contrib/prospects/views/aspect_form.html' %}
 {% endif %}
 

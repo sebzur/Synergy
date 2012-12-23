@@ -27,6 +27,8 @@
 
 {% for context, context_form in form.contexts.iteritems %}
 
+{% if context_form.fields %}
+
 <fieldset>
   <legend>{{ context.variant.verbose_name }}</legend>
 
@@ -55,9 +57,9 @@
   </table>
 </fieldset>
 
+{% endif %}
+
 {% endfor %}
-
-
 
 {% csrf_token %}
 <p>
