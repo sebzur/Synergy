@@ -3,16 +3,20 @@ import forms
 import re
 import urlparse
 
+from django.utils.translation import ugettext_lazy as _
+from django.contrib import messages
 from django.core.urlresolvers import reverse
+from django.conf import settings
 from django.db.models import get_model
 from django.forms import models as model_forms
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.views.generic import ListView, TemplateView, DetailView, CreateView, UpdateView, DeleteView, FormView, View
 from django.utils.encoding import smart_str 
-from django.conf import settings
+from django.template import RequestContext
 from models import get_parent_field, get_parent_for_instance
 from synergy.templates.regions.views import RegionViewMixin
 from synergy.contrib.components.views import RecordComponentViewMixin
+
 
 
 class RecordViewMixin(RecordComponentViewMixin):
@@ -42,9 +46,57 @@ class RecordViewMixin(RecordComponentViewMixin):
         setup = self.get_record_setup(**self.kwargs)
         return setup.fields.filter(is_hidden=True).values_list('field', flat=True)
 
+    def get_action_setup(self):
+        return self.get_record_setup(**self.kwargs).get_action_setup(action=self.action_code)
+    
 
-class CreateRecordView(RegionViewMixin, RecordViewMixin, CreateView):
+class MessagesMixin(object):
+
+    def get_success_message(self, **kwargs):
+        action_setup = self.get_action_setup()
+        std_msg = self.success_message % {'object': self.object}
+        if action_setup:
+            return action_setup.get_success_message(**kwargs) or std_msg
+        return std_msg
+
+    def get_error_message(self, **kwargs):
+        action_setup = self.get_action_setup()
+        std_msg = self.error_message % {'object': self.object}
+
+        if action_setup:
+            return action_setup.get_error_message(**kwargs) or std_msg
+        return std_msg
+
+    def handle_success(self, handler, *args, **kwargs):
+        return self.handle('success', handler, *args, **kwargs)
+
+    def handle_error(self, handler, *args, **kwargs):
+        return self.handle('error', handler, *args, **kwargs)
+
+    def handle(self, tag, handler, *args, **kwargs):
+        handler_output = handler(*args, **kwargs)
+        getattr(messages, tag)(self.request, getattr(self, 'get_%s_message' % tag)(**kwargs), fail_silently=True)
+        return handler_output
+
+
+
+class CUMessagesMixin(MessagesMixin):
+    def form_valid(self, *args, **kwargs):
+        return self.handle_success(super(CUMessagesMixin, self).form_valid, *args, **kwargs)
+  
+    def form_invalid(self, *args, **kwargs):
+        return self.handle_error(super(CUMessagesMixin, self).form_invalid, *args, **kwargs)
+
+class DMessagesMixin(MessagesMixin):
+    def delete(self, *args, **kwargs):
+        return self.handle_success(super(DMessagesMixin, self).delete, *args, **kwargs)
+
+# Due to MRO it is important to keep CUMessagexMixin priori to CreateView
+class CreateRecordView(RegionViewMixin, RecordViewMixin, CUMessagesMixin, CreateView):
     access_prefix = 'record.create'
+    action_code = 'c'
+    success_message = _("Object %(object)s has been created!")                
+    error_message = _("Form errors have been detected! Object has not been created. Please refer to the form fields for the detail errors log.")                
 
     def get_object(self):
         # required for proper dispatch in components
@@ -95,8 +147,8 @@ class CreateRecordView(RegionViewMixin, RecordViewMixin, CreateView):
         setup = self.get_record_setup(**self.kwargs)
         ctx['initial'] = self.get_initial()
         ctx['cancel_url'] = setup.get_cancel_url(**self.get_arguments())
-        ctx.update(setup.get_context_elements(ctx, 'c'))
-        return  ctx
+        ctx.update(setup.get_context_elements(ctx, self.action_code))
+        return ctx
 
     def get_success_url(self):
         tmp = self.get_arguments().copy()
@@ -104,9 +156,12 @@ class CreateRecordView(RegionViewMixin, RecordViewMixin, CreateView):
         return self.get_record_setup(**self.kwargs).get_success_url(**tmp)
 
     
-
-class UpdateRecordView(RecordViewMixin, RegionViewMixin, UpdateView):
+# Due to MRO it is important to keep CUMessagexMixin priori to UpdateMixin
+class UpdateRecordView(RecordViewMixin, RegionViewMixin, CUMessagesMixin, UpdateView):
     access_prefix = 'record.update'
+    action_code = 'u'
+    success_message = _("Object %(object)s has been updated!")                
+    error_message = _("Form errors have been detected! Object has not been updated. Please refer to the form fields for the detail errors log.")                
 
     def get_object(self):
         return self.get_model().objects.get(pk=self.kwargs.get('pk'))
@@ -123,7 +178,7 @@ class UpdateRecordView(RecordViewMixin, RegionViewMixin, UpdateView):
 
         ctx['delete_enabled'] = setup.is_delete_enabled()
 
-        ctx.update(setup.get_context_elements(ctx, 'u'))
+        ctx.update(setup.get_context_elements(ctx, self.action_code))
         return  ctx
 
 #    def get_arguments(self):
@@ -141,8 +196,11 @@ class UpdateRecordView(RecordViewMixin, RegionViewMixin, UpdateView):
     def get_success_url(self):
         return self.get_record_setup(**self.kwargs).get_success_url(**{'object': self.get_object()})
 
-class DeleteRecordView(RecordViewMixin, RegionViewMixin, DeleteView):
+class DeleteRecordView(RecordViewMixin, RegionViewMixin, DMessagesMixin, DeleteView):
     access_prefix = 'record.delete'
+    action_code = 'd'
+    success_message = _("Object %(object)s has been deleted!")                
+    error_message = _("Form errors have been detected! Object has not been deleted. Please refer to the form fields for the detail errors log.")                
 
     def get_object(self):
         return self.get_model().objects.get(pk=self.kwargs.get('pk'))
@@ -151,7 +209,7 @@ class DeleteRecordView(RecordViewMixin, RegionViewMixin, DeleteView):
         ctx = super(DeleteRecordView, self).get_context_data(*args, **kwargs)
         ctx['cancel_url'] = self.get_record_setup(**self.kwargs).get_success_url(**{'object': self.object})
         setup = self.get_record_setup(**self.kwargs)
-        ctx.update(setup.get_context_elements(ctx, 'd'))
+        ctx.update(setup.get_context_elements(ctx, self.action_code))
         return  ctx
 
     def get_success_url(self):

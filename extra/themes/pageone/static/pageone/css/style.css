@@ -536,7 +536,7 @@ a.button:visited{
 
 }
 
-a.ref-btn:visited, a.ref-btn-warn:visited{
+a.ref-btn{
     color: #ffffff;
 }
 
@@ -728,14 +728,30 @@ ul.errorlist
   padding:0;
 }
 
+
 .messages{
     margin: 90px auto -120px auto;
     width: 940px;
     padding: 0 20px 0 20px;
-    background-color: #036415;
+/*    background-color: #036415; */
     color: white;
     text-shadow: none;
 }
+
+.messages ul{
+    list-style: none;
+    padding: 0px;
+
+}
+
+.messages li.error {
+    background-color: #FF9C00;
+}
+
+.messages li.success {
+    background-color: #036415;
+}
+
 
 .messages li{
     padding: 10px;

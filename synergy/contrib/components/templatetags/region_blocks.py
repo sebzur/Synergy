@@ -22,7 +22,6 @@ class RegionBlocksNode(template.Node):
 
     def render(self, context):
         user = self.user.resolve(context)
-        print context['blocks']
         blocks = context['blocks'].get(self.region)
         tpl = 'components/region/blocks.html'
         return render_to_string(tpl, {'blocks': blocks})

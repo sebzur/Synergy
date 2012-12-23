@@ -10,17 +10,29 @@
 <span class="vertical-rule-corner-top"></span>
 <span class="vertical-rule-corner-bottom"></span>
 
-  <div id="sidebar-inner">
-    {% secondary_menu user component %}
-    {% region sidebar %}
-    {% region-blocks sidebar user %}
-    {% endregion %}
-  </div> <!-- end content -->
+<div id="sidebar-inner">
+  {% secondary_menu user component %}
+  {% region sidebar %}
+  {% region-blocks sidebar user %}
+  {% endregion %}
+</div> <!-- end content -->
 
 </div> <!-- end outer3 -->
 <div id="content">
   <div id="content-top">     
+
+    {% if messages %}
+    <div class="messages">
+      <ul>
+	{% for message in messages %}
+	<li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+	{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
     {% block content_top %} {% endblock %}
+
   </div>
   <div id="content-inner">
     {% block content %}

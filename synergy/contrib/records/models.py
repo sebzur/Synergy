@@ -71,11 +71,25 @@ class RecordActionSetup(models.Model):
     ACTIONS = (('c', 'Create'), ('u', 'Update'), ('d', 'Delete'))
     setup = models.ForeignKey('RecordSetup', related_name="actions")
     action = models.CharField(max_length=1, choices=ACTIONS)
-    is_enabled = models.BooleanField(verbose_name="Is this action enabled", default=False)
+    is_enabled = models.BooleanField(verbose_name="Is this action enabled", default=True)
 
     title = models.CharField(max_length=255, blank=True)
     body = models.TextField(blank=True)
     action_label = models.CharField(max_length=255, blank=True)
+    success_message = models.TextField(blank=True, help_text="Custom success message displayed to the user after the form is submitted")
+    error_message = models.TextField(blank=True, help_text="Custom error message displayed to the user if there are errors in the form")
+
+    def get_success_message(self, **context):
+        return self.get_message('success', **context)
+
+    def get_error_message(self, **context):
+        return self.get_message('error', **context)
+
+    def get_message(self, action, **context):
+        tpl = getattr(self, "%s_message" % action)
+        if tpl:
+            return Template(tpl).render(Context(context))
+        return None
 
     class Meta:
         unique_together = (('setup', 'action'),)
@@ -103,6 +117,13 @@ class RecordSetup(models.Model):
 
     def is_delete_enabled(self):
         return not self.actions.filter(action='d', is_enabled=False).exists()
+
+    def get_action_setup(self, action):
+        try:
+            return self.actions.get(action=action)
+        except RecordActionSetup.DoesNotExist:
+            return None
+
 
     def get_context_elements(self, context, action):
 
@@ -166,6 +187,9 @@ class RecordField(models.Model):
     setup = models.ForeignKey('RecordSetup', related_name="fields")
     field = models.SlugField() # this shuld be renamed to `name`
     
+    label = models.CharField(verbose_name="Custom field label", max_length=255, blank=True)
+    help_text = models.CharField(verbose_name="Custom hetlp text", max_length=255, blank=True)
+
     default_value = models.CharField(max_length=255, blank=True)
     is_hidden = models.BooleanField(default=False)
 
