@@ -153,6 +153,10 @@ class RecordSetup(models.Model):
         # now we remove none elements to avoid zeroing in updates
         return dict(filter(lambda x: not x[1] is None, initial))
 
+    def get_update_initial(self, **kwargs):
+        initial = ((field.field, field.get_initial(**kwargs)) for field in self.fields.filter(default_in_update=True))
+        return dict(filter(lambda x: not x[1] is None, initial))
+
     def get_success_url(self, **kwargs):
         return self.get_url(self.success_url, self.reverse_success_url, **kwargs)
 
@@ -191,6 +195,7 @@ class RecordField(models.Model):
     help_text = models.CharField(verbose_name="Custom hetlp text", max_length=255, blank=True)
 
     default_value = models.CharField(max_length=255, blank=True)
+    default_in_update = models.BooleanField(default=False, help_text="Should default_value override already stored data?")
     is_hidden = models.BooleanField(default=False)
 
     def __unicode__(self):

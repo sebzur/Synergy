@@ -181,14 +181,14 @@ class UpdateRecordView(RecordViewMixin, RegionViewMixin, CUMessagesMixin, Update
         ctx.update(setup.get_context_elements(ctx, self.action_code))
         return  ctx
 
-#    def get_arguments(self):
-#        _kwargs = self.kwargs.copy()
-#        _kwargs.pop('name') # remove record name
-#        _kwargs.update({'request': self.request})
-#        return _kwargs
+    def get_arguments(self):
+        _kwargs = self.kwargs.copy()
+        _kwargs.pop('name') # remove record name
+        _kwargs.update({'request': self.request})
+        return _kwargs
 
-#    def get_initial(self):
-#        return self.get_record_setup(**self.kwargs).get_initial(**self.get_arguments())
+    def get_initial(self):
+        return self.get_record_setup(**self.kwargs).get_update_initial(**self.get_arguments())
 
     def form_valid(self, form):
         return super(UpdateRecordView, self).form_valid(form)            
