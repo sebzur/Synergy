@@ -16,6 +16,9 @@ class PDFTemplate(models.Model):
     footer = models.TextField(blank=True)
     parent = models.ForeignKey('self', null=True, blank=True)
 
+    def __unicode__(self):
+	return self.name
+
     def get_template(self):
         return template.Template(self.header + self.body + self.footer)
 
@@ -42,6 +45,9 @@ class PDFTemplateImage(models.Model):
     template = models.ForeignKey('PDFTemplate', related_name='images')
     image = models.ForeignKey('Image', related_name='templates')
 
+    def __unicode__(self):
+	return "%s <- %s" % (self.template.name, self.image.name)
+
 files_location = os.path.join(settings.MEDIA_ROOT,'imagelibrary')
 file_system_storage = FileSystemStorage(location=files_location, base_url=settings.MEDIA_URL)
 
@@ -54,6 +60,9 @@ class Image(models.Model):
     note = models.CharField(max_length=255, verbose_name='Note', blank=True)
     date = models.DateTimeField(auto_now_add=True)
     library = models.ForeignKey('ImageLibrary', related_name='images', verbose_name="Library")
+
+    def __unicode__(self):
+	return self.name
 
 class ImageLibrary(models.Model):
     name = models.SlugField(max_length=255, verbose_name="Image library machine-name", unique=True)
