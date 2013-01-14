@@ -34,6 +34,11 @@ a:link, a:visited, .ui-widget-content a:link, .ui-widget-content a:visited {
     text-decoration:none;
 }
 
+a.pdf-link {
+    background:url("graphics/pdf.png") top left no-repeat;
+    padding-left: 18px;
+    margin-left: 10px;
+}
 
 h1, h2, h3, h4 {
     color: #333333;

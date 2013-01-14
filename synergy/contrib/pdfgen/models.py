@@ -4,6 +4,7 @@ from django.core.files.storage import FileSystemStorage
 from django.conf import settings
 import xhtml2pdf.pisa as pisa
 import cStringIO as StringIO
+from pyPdf import PdfFileReader
 import os
 import uuid
 
@@ -17,7 +18,7 @@ class PDFTemplate(models.Model):
     parent = models.ForeignKey('self', null=True, blank=True)
 
     def __unicode__(self):
-	return self.name
+        return self.name
 
     def get_template(self):
         return template.Template(self.header + self.body + self.footer)
@@ -32,7 +33,15 @@ class PDFTemplate(models.Model):
         html = tpl.render(template.Context(local_ctx))
         result = StringIO.StringIO()
         pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("UTF-8")), result)
-        return result.getvalue()
+        # HACK: get number of pages in pdf
+        output = PdfFileReader( result )
+        local_ctx['pdf_num_pages'] = output.getNumPages()
+
+        html = tpl.render(template.Context(local_ctx))
+        result = StringIO.StringIO()
+        pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("UTF-8")), result)
+
+        return result
 
     def get_filename(self, context):
         local_ctx = context.copy()
@@ -46,7 +55,7 @@ class PDFTemplateImage(models.Model):
     image = models.ForeignKey('Image', related_name='templates')
 
     def __unicode__(self):
-	return "%s <- %s" % (self.template.name, self.image.name)
+        return "%s <- %s" % (self.template.name, self.image.name)
 
 files_location = os.path.join(settings.MEDIA_ROOT,'imagelibrary')
 file_system_storage = FileSystemStorage(location=files_location, base_url=settings.MEDIA_URL)
@@ -62,7 +71,7 @@ class Image(models.Model):
     library = models.ForeignKey('ImageLibrary', related_name='images', verbose_name="Library")
 
     def __unicode__(self):
-	return self.name
+        return self.name
 
 class ImageLibrary(models.Model):
     name = models.SlugField(max_length=255, verbose_name="Image library machine-name", unique=True)

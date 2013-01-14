@@ -170,3 +170,39 @@ def model_relations(obj):
 
     tpl = 'prospects/rendering/objectdetail/model_relations.html'
     return render_to_string(tpl, context)
+
+class GetResultsNode(template.Node):
+    def __init__(self, variant, user, query):
+        self.variant = template.Variable(variant)
+        self.query = template.Variable(query)
+        self.user = template.Variable(user)
+
+    def render(self, context):
+        variant = self.variant.resolve(context)
+        query = self.query.resolve(context)
+        user = self.user.resolve(context)
+
+        error_info = None
+        try:
+            results = variant.filter(user, **query)
+        except Exception, error:
+            if settings.DEBUG:
+                error_info = error
+            results = None
+
+        context['results'] = results
+        context['error'] = error_info
+
+        return ''
+
+
+@register.tag
+def get_results(parser, token):
+    # This version uses a regular expression to parse tag contents.
+    try:
+        # Splitting by None == splitting by spaces.
+        tag_name, variant, user, query = token.contents.split(None, 3)
+    except ValueError:
+        raise template.TemplateSyntaxError("%r tag requires arguments" % token.contents.split()[0])
+    return GetResultsNode(variant, user, query)
+
