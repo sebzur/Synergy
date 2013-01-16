@@ -177,7 +177,7 @@ class Context(models.Model):
     source = models.ForeignKey('Source', related_name="contexts")
     variant = models.ForeignKey('ProspectVariant', related_name="contexts")
     value = models.SlugField(verbose_name="Value", help_text="Value to extract as flatted values_list from variant queryset")
-    lookup = models.SlugField(verbose_name="Relation lookup", help_text="__in operator is used, provide here the model field" )
+    lookup = models.SlugField(verbose_name="Relation lookup", help_text="__in operator is used, provide here the model field", max_length=255)
     mode = models.CharField(max_length=1, choices=CONTEXT_MODES, verbose_name="Context mode")
 
     class Meta:
