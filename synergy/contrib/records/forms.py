@@ -82,6 +82,11 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                                                                       )
 
 
+            for field in self.fields:
+                hook = getattr(self.fields[field], 'init_hook', None)
+                if hook:
+                    hook(self.fields[field], self)
+
             if can_delete and instance:
                  self.fields.insert(0, "%s_%d_DELETE" % (instance._meta.object_name.lower(), instance.id), forms.BooleanField(label="Usunąć wpis?", required=False, initial=False))                
 
