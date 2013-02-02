@@ -86,6 +86,13 @@ class ProspectBaseForm(forms.BaseForm):
         
         signals.prospect_form_created.send(sender=instance, form=self, request=request)
 
+    def has_context_fields(self):
+        for context in self.contexts:
+            if self.contexts[context].fields:
+                return True
+        return False
+
+
     def is_valid(self):
         valid = [super(ProspectBaseForm, self).is_valid()]
         for c, f in self.contexts.iteritems():
