@@ -8,6 +8,12 @@ from pyPdf import PdfFileReader
 import os
 import uuid
 
+#class MemoryFile(StringIO):
+#    def set_name(self,name):
+#        self.name = name
+
+
+
 class PDFTemplate(models.Model):
     name = models.SlugField(max_length=255, verbose_name="PDF template machine-name",unique=True)
     verbose_name = models.CharField(max_length=255, verbose_name="Verbose name")
@@ -30,18 +36,21 @@ class PDFTemplate(models.Model):
         local_ctx = context.copy()
         local_ctx.update(self.get_context())
         tpl = self.get_template()
-        html = tpl.render(template.Context(local_ctx))
-        result = StringIO.StringIO()
-        pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("UTF-8")), result)
+        pdf_ctx = self.write_result(tpl,local_ctx)
         # HACK: get number of pages in pdf
-        output = PdfFileReader( result )
+        output = PdfFileReader( pdf_ctx.dest )
         local_ctx['pdf_num_pages'] = output.getNumPages()
 
-        html = tpl.render(template.Context(local_ctx))
-        result = StringIO.StringIO()
-        pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("UTF-8")), result)
+        pdf_ctx = self.write_result(tpl,local_ctx)
 
-        return result
+        return pdf_ctx.dest
+
+    def write_result(self, tpl, context):
+        html = tpl.render(template.Context(context))
+        pdf_ctx = pisa.pisaDocument(StringIO.StringIO(html.encode("UTF-8")),StringIO.StringIO())
+        #pdf_ctx = pisa.pisaDocument(StringIO.StringIO(html.encode("UTF-8")),MemoryFile.StringIO())
+        return pdf_ctx
+        
 
     def get_filename(self, context):
         local_ctx = context.copy()
