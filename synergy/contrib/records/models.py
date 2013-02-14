@@ -79,6 +79,9 @@ class RecordActionSetup(models.Model):
     success_message = models.TextField(blank=True, help_text="Custom success message displayed to the user after the form is submitted")
     error_message = models.TextField(blank=True, help_text="Custom error message displayed to the user if there are errors in the form")
 
+    def __unicode__(self):
+        return "%s: %s" % (self.setup.name, self.action)
+
     def get_success_message(self, **context):
         return self.get_message('success', **context)
 

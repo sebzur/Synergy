@@ -519,6 +519,7 @@ a.button:visited{
     border: 1px solid #B1ACAC;
     text-align: center;
     line-height: 38px;
+    height: 38px;
 
     font-size: 14px;
     font-weight: bold;
@@ -539,6 +540,11 @@ a.button:visited{
 a.ref-btn{
     color: #ffffff;
 }
+
+a.ref-btn:visited{
+    color: #ffffff;
+}
+
 
 .ref-btn-warn{
     background: #FF2000;
