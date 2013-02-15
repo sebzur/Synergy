@@ -751,12 +751,13 @@ ul.errorlist
 }
 
 .messages li.error {
-    background-color: #FF9C00;
+    background-color: #FF2E2E;
 }
 
 .messages li.success {
-    background-color: #036415;
+    background-color: #FF9C00;
 }
+/* #036415; */
 
 
 .messages li{
