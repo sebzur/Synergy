@@ -1,15 +1,26 @@
 from django import template, http
 from django.db.models import get_model
+from django.views import generic
 from synergy.contrib.prospects.views import DetailView, ListView
 from pyPdf import PdfFileReader, PdfFileWriter
 import cStringIO as StringIO
+from django.core.files import File
+from django.core.files.uploadedfile import SimpleUploadedFile
+
 
 class PDFResponseMixin(object):
     def render_to_response(self, context):
-        return self.get_pdf_response(context, self.convert_context_to_pdf(context))
+        content = self.convert_context_to_pdf(context)
+        if self.get_variant_pdf().is_stored:
+            pdf = get_model('printouts','PDFFile')()
+            pdf.pdf.save(self.get_pdf_template_obj(context).get_filename(context), SimpleUploadedFile('tmp.pdf',content.getvalue()))
+            pdf.save()
+
+        return self.get_pdf_response(context, content)
 
     def get_pdf_response(self, context, content, **httpresponse_kwargs):
-        response = http.HttpResponse(content, 
+        # w content siedzi wygenerowany PDF
+        response = http.HttpResponse(content.getvalue(), 
                                 mimetype='application/pdf',
                                 **httpresponse_kwargs)
         response['Content-Disposition'] = 'attachement; filename=%s' % self.get_pdf_template_obj(context).get_filename(context)
@@ -17,10 +28,14 @@ class PDFResponseMixin(object):
 
     def convert_context_to_pdf(self, context):
         pdf_template = self.get_pdf_template_obj(context)
-        return pdf_template.get_pdf(context).getvalue()
+        #return pdf_template.get_pdf(context).getvalue()
+        return pdf_template.get_pdf(context)
 
     def get_pdf_template_obj(self, context):
         pass
+
+    def get_variant_pdf(self):
+        return get_model('printouts', 'VariantPDF').objects.get(name=self.kwargs.get('variant_pdf'))
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(PDFResponseMixin, self).get_context_data(*args, **kwargs)
@@ -30,17 +45,21 @@ class PDFResponseMixin(object):
 
 class PDFDetailView(PDFResponseMixin, DetailView):
     def get_pdf_template_obj(self, context, **kwargs):
-        return get_model('pdfgen', 'PDFTemplate').objects.get(name=self.kwargs.get('template'))
+        #return get_model('pdfgen', 'PDFTemplate').objects.get(name=self.kwargs.get('template'))
+        #return get_model('printouts', 'VariantPDF').objects.get(name=self.kwargs.get('variant_pdf')).tpl
+        return self.get_variant_pdf().tpl
 
     
 class PDFListView(PDFResponseMixin, ListView):
     def get_pdf_template_obj(self, context):
-        return get_model('pdfgen', 'PDFTemplate').objects.get(name=self.kwargs.get('template'))
+        #return get_model('pdfgen', 'PDFTemplate').objects.get(name=self.kwargs.get('template'))
+        return self.get_variant_pdf().tpl
 
 
 class PDFDetailListView(PDFResponseMixin, ListView):
     def get_pdf_template_obj(self, context):
-        return get_model('pdfgen', 'PDFTemplate').objects.get(name=self.kwargs.get('template'))
+        #return get_model('pdfgen', 'PDFTemplate').objects.get(name=self.kwargs.get('template'))
+        return self.get_variant_pdf().tpl
 
     def convert_context_to_pdf(self, context):
         results = self.get_results()
@@ -54,3 +73,15 @@ class PDFDetailListView(PDFResponseMixin, ListView):
         output.write(strIO)
         return strIO.getvalue()
 
+
+class StoredPDFView(generic.DetailView):
+    def get_object(self):
+        return get_model('printouts','PDFFile').objects.get(uuid=self.kwargs.get('uuid'))
+
+    def render_to_response(self,context, **httpresponse_kwargs):
+        content = open(self.get_object().pdf.file.name)
+        response = http.HttpResponse(content.read(),
+                                mimetype='application/pdf',
+                                **httpresponse_kwargs)
+        response['Content-Disposition'] = 'attachement; filename=%s' % self.get_object().get_filename()
+        return response    
