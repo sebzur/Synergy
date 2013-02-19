@@ -67,7 +67,8 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
             for hidden in hidden_fields:
                 self.fields[hidden].widget = forms.widgets.HiddenInput()
                 
-            for field in [field for field in self._meta.model._meta.fields if field.name not in to_exclude]:
+            #for field in [field for field in self._meta.model._meta.fields if field.name not in to_exclude]:
+            for field in [field for field in self._meta.model._meta.fields if field.name not in to_exclude and field.name in self.fields]:
                 db_type = field.db_type()
                 if db_type == 'boolean':
                     # Specjalna obsługa dla boola, ze względu na potrzebę jasności wyboru, lepiej jeżeli
