@@ -25,7 +25,8 @@ class VariantPDF(models.Model):
             return _("PDF detail list %s" % self.tpl.verbose_name)
 
     def __unicode__(self):
-        return self.variant.__unicode__() + ' PDFs'
+        #return self.variant.__unicode__() + ' PDFs'
+	return '%s (%s)' % (self.name, self.variant.name)
 
     class Meta:
         verbose_name = "PDF"
@@ -39,7 +40,7 @@ def pdf_save(instance, filename):
     return  os.path.join("%s" % settings.PDF_STORAGE_PATH, '%s.pdf' % uuid4() )
 
 class PDFFile(models.Model):
-    uuid = models.CharField(max_length=36, db_index=True)
+    uuid = models.CharField(max_length=36, db_index=True, unique=True)
     pdf = models.FileField(upload_to = pdf_save, storage = file_system_storage)
     date = models.DateField(auto_now_add=True)
     user = CurrentUserField()

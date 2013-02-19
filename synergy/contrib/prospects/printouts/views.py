@@ -71,7 +71,8 @@ class PDFDetailListView(PDFResponseMixin, ListView):
                 output.addPage( stream.getPage(page_num) )
         strIO = StringIO.StringIO() 
         output.write(strIO)
-        return strIO.getvalue()
+        #return strIO.getvalue()
+        return strIO
 
 
 class StoredPDFView(generic.DetailView):
