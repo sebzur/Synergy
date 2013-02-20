@@ -11,11 +11,6 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 class PDFResponseMixin(object):
     def render_to_response(self, context):
         content = self.convert_context_to_pdf(context)
-        if self.get_variant_pdf().is_stored:
-            pdf = get_model('printouts','PDFFile')()
-            pdf.pdf.save(self.get_pdf_template_obj(context).get_filename(context), SimpleUploadedFile('tmp.pdf',content.getvalue()))
-            pdf.save()
-
         return self.get_pdf_response(context, content)
 
     def get_pdf_response(self, context, content, **httpresponse_kwargs):
@@ -28,8 +23,7 @@ class PDFResponseMixin(object):
 
     def convert_context_to_pdf(self, context):
         pdf_template = self.get_pdf_template_obj(context)
-        #return pdf_template.get_pdf(context).getvalue()
-        return pdf_template.get_pdf(context)
+        return pdf_template.get_pdf(context,self.get_variant_pdf())
 
     def get_pdf_template_obj(self, context):
         pass
@@ -45,20 +39,16 @@ class PDFResponseMixin(object):
 
 class PDFDetailView(PDFResponseMixin, DetailView):
     def get_pdf_template_obj(self, context, **kwargs):
-        #return get_model('pdfgen', 'PDFTemplate').objects.get(name=self.kwargs.get('template'))
-        #return get_model('printouts', 'VariantPDF').objects.get(name=self.kwargs.get('variant_pdf')).tpl
         return self.get_variant_pdf().tpl
 
     
 class PDFListView(PDFResponseMixin, ListView):
     def get_pdf_template_obj(self, context):
-        #return get_model('pdfgen', 'PDFTemplate').objects.get(name=self.kwargs.get('template'))
         return self.get_variant_pdf().tpl
 
 
 class PDFDetailListView(PDFResponseMixin, ListView):
     def get_pdf_template_obj(self, context):
-        #return get_model('pdfgen', 'PDFTemplate').objects.get(name=self.kwargs.get('template'))
         return self.get_variant_pdf().tpl
 
     def convert_context_to_pdf(self, context):
@@ -66,12 +56,11 @@ class PDFDetailListView(PDFResponseMixin, ListView):
         pdf_template = self.get_pdf_template_obj(context)
         output = PdfFileWriter()
         for result in results:
-            stream = PdfFileReader( pdf_template.get_pdf({'object': result,}) )
+            stream = PdfFileReader( pdf_template.get_pdf({'object': result,},self.get_variant_pdf()) )
             for page_num in range(stream.getNumPages()):
                 output.addPage( stream.getPage(page_num) )
         strIO = StringIO.StringIO() 
         output.write(strIO)
-        #return strIO.getvalue()
         return strIO
 
 
@@ -84,5 +73,5 @@ class StoredPDFView(generic.DetailView):
         response = http.HttpResponse(content.read(),
                                 mimetype='application/pdf',
                                 **httpresponse_kwargs)
-        response['Content-Disposition'] = 'attachement; filename=%s' % self.get_object().get_filename()
+        response['Content-Disposition'] = 'attachement; filename=%s.pdf' % self.get_object().uuid
         return response    
