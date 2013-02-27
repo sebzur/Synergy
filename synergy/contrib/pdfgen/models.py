@@ -7,11 +7,7 @@ import cStringIO as StringIO
 from pyPdf import PdfFileReader
 import os
 import uuid
-
-#class MemoryFile(StringIO):
-#    def set_name(self,name):
-#        self.name = name
-
+from synergy.contrib.prospects.printouts.signals import pdf_done
 
 
 class PDFTemplate(models.Model):
@@ -32,9 +28,10 @@ class PDFTemplate(models.Model):
     def get_context(self):
         return {'images': dict((image.image.name, image.image) for image in self.images.all()) }
 
-    def get_pdf(self,context):
+    def get_pdf(self,context,variant_pdf):
         local_ctx = context.copy()
         local_ctx.update(self.get_context())
+        local_ctx['uuid'] = uuid.uuid4()
         tpl = self.get_template()
         pdf_ctx = self.write_result(tpl,local_ctx)
         # HACK: get number of pages in pdf
@@ -42,13 +39,12 @@ class PDFTemplate(models.Model):
         local_ctx['pdf_num_pages'] = output.getNumPages()
 
         pdf_ctx = self.write_result(tpl,local_ctx)
-
+        pdf_done.send(sender=variant_pdf.__class__, instance=variant_pdf, pdf_content=pdf_ctx.dest,  uuid=local_ctx['uuid'])
         return pdf_ctx.dest
 
     def write_result(self, tpl, context):
         html = tpl.render(template.Context(context))
         pdf_ctx = pisa.pisaDocument(StringIO.StringIO(html.encode("UTF-8")),StringIO.StringIO())
-        #pdf_ctx = pisa.pisaDocument(StringIO.StringIO(html.encode("UTF-8")),MemoryFile.StringIO())
         return pdf_ctx
         
 

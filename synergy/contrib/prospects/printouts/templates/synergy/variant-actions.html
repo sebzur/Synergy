@@ -2,10 +2,10 @@
     {% for variant_pdf in variant.pdfs.all %}
         {% if variant_pdf.is_variant_action %}
             {% if variant_pdf.mode == 'l' %}
-                <a class="pdf-link list-pdf-link" href="{% url list-pdf variant.name variant_pdf.tpl.name %}{% if encoded %}?{{ encoded }}{% endif %}">{{ variant_pdf.get_action_name }}</a>
+                <a class="pdf-link list-pdf-link" href="{% url list-pdf variant_pdf.variant.name variant_pdf.name %}{% if encoded %}?{{ encoded }}{% endif %}">{{ variant_pdf.get_action_name }}</a>
             {% endif %}
             {% if variant_pdf.mode == 'd' %}
-                <a class="pdf-link detail-pdf-link" href="{% url detail-list-pdf variant.name variant_pdf.tpl.name %}{% if encoded %}?{{ encoded }}{% endif %}">{{ variant_pdf.get_action_name }}</a>
+                <a class="pdf-link detail-pdf-link" href="{% url detail-list-pdf variant_pdf.variant.name variant_pdf.name %}{% if encoded %}?{{ encoded }}{% endif %}">{{ variant_pdf.get_action_name }}</a>
             {% endif %}
         {% endif %}
     {% endfor %}
