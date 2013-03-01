@@ -7,6 +7,7 @@ from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.views import redirect_to_login
 from django.db.models import get_model, ObjectDoesNotExist, Q
 
+
 class ProtectedView(object):
     access_prefix = None
     # access prefix is defined as a pair 'prospect.variant', 

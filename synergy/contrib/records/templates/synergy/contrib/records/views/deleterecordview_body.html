@@ -7,7 +7,7 @@
 
 
 <div class="grains-form">
-<form action="." method="POST">
+<form action="{{ request.get_full_path }}" method="POST">
   {% csrf_token %}
 
   <p>
