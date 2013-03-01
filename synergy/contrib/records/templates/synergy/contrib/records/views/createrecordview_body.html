@@ -1,3 +1,4 @@
+{% load i18n %}
 {% if body %}
 <div>
   {{ body|linebreaks }}
@@ -5,15 +6,12 @@
 {% endif %}
 
 <div class="grains-form">
-
-<form action="." method="POST" {% if form.is_multipart %} enctype="multipart/form-data" {% endif %} >
-  {% include 'synergy/contrib/records/views/form.html' %} 
-
-  <p class="clearfix">
-    <input class="button" style="width: 200px; float:right;" type="submit" value="{{ action_label|default:"Zapisz" }}" />
-    <a class="ref-btn" style="width: 200px; float:right;" href="{{ cancel_url }}">Anuluj</a>
-  </p>
-
-</form>
+  <form action="." method="POST" {% if form.is_multipart %} enctype="multipart/form-data" {% endif %} >
+    {% include 'synergy/contrib/records/views/form.html' %} 
+    <p class="clearfix">
+      <input class="submit button" type="submit" value="{{ action_label|default:"Save" }}" />
+      <a class="cancel button" href="{{ cancel_url }}">{% trans "Cancel" %}</a>
+    </p>
+  </form>
 </div>
 

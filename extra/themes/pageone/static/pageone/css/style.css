@@ -487,18 +487,13 @@ section#about-us aside .download-btn {
 }
 
 
-.ref-btn {
+a.button {
     background: url(../images/btn-bg.png);
     display: block;
-    width: 250px;
-    height: 53px;
     border: 1px solid #066a19;
     margin: 0 0 20px 0;
     text-align: center;
-    line-height: 55px;
-
     font-family: "MerriweatherBold", Georgia, Serif;
-    font-size: 20px;
     color: #ffffff;
     text-shadow: 0 -1px 0 rgba(0,0,0,0.5);
 
@@ -507,7 +502,7 @@ section#about-us aside .download-btn {
     -webkit-box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #28a441;
 }
 
-a.ref-btn:visited{
+a.button:visited{
     color: #ffffff;
 }
 

@@ -17,8 +17,10 @@ import re
 from django.utils.encoding import smart_str 
 
 class ProtectedView(object):
+    pass
+
     @method_decorator(login_required)
-    def dispatch(self, *args, **kwargs):
+    def _dispatch(self, *args, **kwargs):
         return super(ProtectedView, self).dispatch(*args, **kwargs)
 
 
@@ -95,8 +97,16 @@ class CreateRecordView(ProtectedView, RegionViewMixin, ObjectViewMixin, CreateVi
         ctx['initial'] = self.get_initial()
         ctx['cancel_url'] = setup.get_cancel_url(**self.get_arguments())
         ctx['component'] = self.get_component()
+        ctx['blocks'] = self.get_blocks()
         ctx.update(setup.get_context_elements(ctx, 'c'))
         return  ctx
+
+    def get_blocks(self):
+        regions = dict( (region, None) for region in get_model('components', 'region').objects.values_list('name', flat=True))
+        for region in regions:
+            regions[region] = get_model('components', 'block').objects.filter(region__name=region)
+        return regions
+
 
     def get_success_url(self):
         tmp = self.get_arguments().copy()
