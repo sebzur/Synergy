@@ -1,33 +1,28 @@
 # -*- coding: utf-8 -*-
-import re
-import urllib 
 import signals
-import itertools
+import urllib 
+import re
 
-from django.views import generic
-from django.db.models import get_model
-from django.shortcuts import get_object_or_404
-from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
-from django.utils.decorators import method_decorator
-from django.contrib.auth.decorators import login_required
-from django.utils.encoding import smart_str 
-
+from django.db.models import get_model
 from django.http import HttpResponseRedirect, HttpResponse, Http404
+from django.utils.encoding import smart_str 
+from django.views import generic
+from django.shortcuts import get_object_or_404
+from django.conf import settings
+
 from djangorestframework.views import View
 from djangorestframework import status, permissions
+
 from synergy.templates.regions.views import RegionViewMixin
 from synergy.contrib.prospects.forms import prospectform_factory, build_query
-from synergy.contrib.components import urlresolvers
+from synergy.contrib.components.views import ProspectComponentViewMixin
 
 
-class ProspectMixin(object):
+class ProspectMixin(ProspectComponentViewMixin):
 
-    @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        #variant = get_model('prospects', 'ProspectVariant').objects.get(name=kwargs.get(self.get_arguments_url_kwarg()))
         expressions = []
-
         for argument in self.get_variant_arguments(**kwargs):
             expressions.append("(?P<%s>%s)" % (argument.name, argument.regex))
         regex = "/".join(expressions)
@@ -38,8 +33,8 @@ class ProspectMixin(object):
                 raise Http404
             str_converted = dict(((smart_str(k), v) for k, v in _kwargs.iteritems()))
             kwargs.update(str_converted)
-
         return super(ProspectMixin, self).dispatch(request, *args, **kwargs)
+
 
     def resolve(self, regex, path):
         _regex = re.compile(regex, re.UNICODE)
@@ -47,21 +42,20 @@ class ProspectMixin(object):
         if match:
             return match.groupdict()
 
-    def get_prospect_variant(self):
-        return self._get_prospect_variant(**self.kwargs)
 
-    def _get_prospect_variant(self, **kwargs):
-        return get_model('prospects', 'ProspectVariant').objects.get(name=kwargs.get('variant'))
+    def get_prospect_variant(self, **kwargs):
+        db_name = 'default'
+        if settings.FRONTEND_DB:
+            db_name = { True: settings.FRONTEND_DB,
+                        False: 'default',
+                        }.get(kwargs.get('variant').startswith(settings.FRONTEND_PREFIX))
+        return get_model('prospects', 'ProspectVariant').objects.using(db_name).get(name=kwargs.get('variant'))
 
-    def get_representation(self):
-        return self.get_prospect_variant().listrepresentation.representation
+    def get_prospect(self, **kwargs):
+        return self.get_prospect_variant(**kwargs).prospect
 
-    def get_prospect(self):
-        return self.get_prospect_variant().prospect
-
-    def get_component(self):
-        return self.get_prospect_variant().get_component()
-        
+    def get_representation(self, **kwargs):
+        return self.get_prospect_variant(**kwargs).listrepresentation.representation
 
     def get_query_dict(self):
         kwgs = dict([(smart_str(k), v.encode('utf8')) for k, v in self.request.GET.iteritems() if k.split('__')[0] in ('aspect', 'lookup') ])
@@ -69,25 +63,25 @@ class ProspectMixin(object):
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(ProspectMixin, self).get_context_data(*args, **kwargs)
-        ctx['title'] = u"%s" % self.get_prospect().verbose_name
-        ctx['prospect'] = self.get_prospect()
-        ctx['variant'] = self.get_prospect_variant()
+        prospect_variant = self.get_prospect_variant(**self.kwargs)
+        ctx['title'] = u"%s" % prospect_variant.verbose_name
+        ctx['prospect'] = prospect_variant.prospect
+        ctx['variant'] = prospect_variant
         ctx['arguments'] = self.get_arguments()
         ctx['encoded'] = urllib.urlencode(self.get_query_dict())
         ctx['query'] = build_query(self.get_query_dict())
-        ctx['component'] = self.get_component()
         return ctx
 
 
 class AspectFormMixin(generic.FormView):
 
     def get_form_class(self):
-        return prospectform_factory(self.request, self.get_prospect(), self.kwargs.get('variant'))
+        return prospectform_factory(self.request, self.get_prospect(**self.kwargs), self.kwargs.get('variant'))
 
     def get_form_kwargs(self, *args, **kwargs):
         kwargs = super(AspectFormMixin, self).get_form_kwargs(*args, **kwargs)
         kwargs['request'] = self.request
-        kwargs['instance'] = self.get_prospect_variant()
+        kwargs['instance'] = self.get_prospect_variant(**self.kwargs)
         return kwargs
 
     def get_initial(self):
@@ -118,41 +112,82 @@ class AspectFormMixin(generic.FormView):
         return HttpResponseRedirect("%s?%s" % (self.get_success_url(), encoded))
 
 class ListView(ProspectMixin, RegionViewMixin, AspectFormMixin):
-
-
-#    def get_arguments_url_kwarg(self):
-#        return 'variant'
+    access_prefix = 'prospect.list'
 
     def get_variant_arguments(self, **kwargs):
-        return self._get_prospect_variant(**kwargs).arguments.all()
+        return self.get_prospect_variant(**kwargs).arguments.all()
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(ListView, self).get_context_data(*args, **kwargs)
-        repr_obj = self.get_representation()
+        repr_obj = self.get_representation(**self.kwargs)
         ctx[repr_obj._meta.object_name.lower()] = repr_obj
-        ctx.update(self.get_representation().get_context_data(*args, **kwargs))
+        ctx.update(repr_obj.get_context_data(*args, **kwargs))
         return ctx
+
+    def get_results(self):
+        variant = self.get_prospect_variant( **self.kwargs)
+        query = build_query(self.get_query_dict())
+        user = self.request.user
+        return variant.filter(user, **query)
 
     def get_arguments(self):
         return self.kwargs
 
     def get_success_url(self):
-        return urlresolvers.component_url('list', self.get_prospect_variant().name, **self.get_arguments())
+        return reverse('list', args=[self.get_prospect_variant(**self.kwargs).name])
 
-    
-
-class DetailContextView(ProspectMixin, RegionViewMixin, AspectFormMixin, generic.detail.SingleObjectMixin):
-
-#    def get_arguments_url_kwarg(self, **kwargs):
-#        return 'context'
+class DetailView(ProspectMixin, RegionViewMixin, generic.DetailView):
+    access_prefix = 'prospect.detail'
 
     def get_variant_arguments(self, **kwargs):
-        ids = self._get_variant_context(**kwargs).argument_values.all().values_list('argument', flat=True)
-        return self._get_prospect_variant(**kwargs).arguments.exclude(id__in=ids)
+        return self.get_prospect_variant(**kwargs).arguments.all()
+
+    def get_queryset(self):
+        return self.get_prospect(**self.kwargs).filter(self.get_query_dict(), {})
+
+    def get_query_dict(self):
+        return {}
 
     def get_arguments(self):
         arguments = self.kwargs.copy()
-        arguments.update(dict((smart_str(arg_val.argument.name), arg_val.value_field.get_value(self.get_object()))  for arg_val in self.get_variant_context().argument_values.all()))
+
+        obj, parent = self.get_object(), self.get_parent()
+        for d in self.get_prospect_variant(**self.kwargs).objectdetail.get_variant_contexts():
+            arguments.update(d.get_arguments(obj, parent))
+
+        return arguments
+
+    def get_object_detail(self):
+        return self.get_prospect_variant(**self.kwargs).objectdetail
+
+    def get_parent(self):
+        parent_id = self.kwargs.get('parent')
+        if parent_id:
+            return self.get_object_detail().parent.variant.get_model_class().objects.get(id=parent_id)
+
+    def get_context_data(self, *args, **kwargs):
+        ctx = super(DetailView, self).get_context_data(*args, **kwargs)
+        ctx['objectdetail'] = self.get_object_detail()
+        ctx['title'] = ctx['objectdetail'].get_title(self.get_object())
+        ctx['body'] = ctx['objectdetail'].get_body(self.get_object())
+        ctx['name'] = self.get_prospect_variant(**self.kwargs).name
+        ctx['parent'] = self.get_parent()
+        ctx.update(self.get_prospect_variant(**self.kwargs).objectdetail.get_context_data(self.get_object(), self.get_parent(), *args, **kwargs))
+        ctx_operator = self.get_prospect_variant(**self.kwargs).objectdetail.context_operator
+        if ctx_operator:
+            ctx_operator(self.request, self.get_object(), ctx, *args, **kwargs)
+        return ctx
+
+class DetailContextView(ProspectMixin, RegionViewMixin, AspectFormMixin, generic.detail.SingleObjectMixin):
+    access_prefix = 'prospect.detail'
+
+    def get_variant_arguments(self, **kwargs):
+        ids = self.get_variant_context(**kwargs).argument_values.all().values_list('argument', flat=True)
+        return self.get_prospect_variant(**kwargs).arguments.exclude(id__in=ids)
+
+    def get_arguments(self):
+        arguments = self.kwargs.copy()
+        arguments.update(dict((smart_str(arg_val.argument.name), arg_val.value_field.get_value(self.get_object()))  for arg_val in self.get_variant_context(**self.kwargs).argument_values.all()))
         return arguments
 
     def get_success_url(self):
@@ -162,18 +197,11 @@ class DetailContextView(ProspectMixin, RegionViewMixin, AspectFormMixin, generic
         self.object = self.get_object()
         return super(DetailContextView, self).get(request, **kwargs)
 
-    def get_variant_context(self):
-        # this is required, when the view sefl.kwargs has not been already initialized
-        return self._get_variant_context(**self.kwargs)
+    def get_prospect_variant(self, **kwargs):
+        return self.get_variant_context(**kwargs).variant
 
-    def get_prospect_variant(self):
-        return self.get_variant_context().variant
-
-    def _get_variant_context(self, **kwargs):
+    def get_variant_context(self, **kwargs):
         return get_model('prospects', 'VariantContext').objects.get(variant__name=kwargs.get('context'), object_detail__variant__name=kwargs.get('variant'))
-
-    def _get_prospect_variant(self, **kwargs):
-        return self._get_variant_context(**kwargs).variant
 
     def get_object_detail(self):
         return get_model('prospects', 'ProspectVariant').objects.get(name=self.kwargs.get('variant')).objectdetail
@@ -191,32 +219,36 @@ class DetailContextView(ProspectMixin, RegionViewMixin, AspectFormMixin, generic
         ctx['object'] = self.get_object()
         ctx['title'] = ctx['objectdetail'].get_title(self.get_object())
         ctx['body'] = ctx['objectdetail'].get_body(self.get_object())
-        ctx['name'] = self.get_prospect_variant().name
+        ctx['name'] = self.get_prospect_variant(**self.kwargs).name
 
 
         ctx.update(self.get_object_detail().get_context_data(self.get_object(), self.get_parent(), *args, **kwargs))
-        ctx.update(self.get_representation().get_context_data(*args, **kwargs))
+        ctx.update(self.get_representation(**self.kwargs).get_context_data(*args, **kwargs))
 
-        ctx['detail_context'] = self.get_variant_context()
+        ctx['detail_context'] = self.get_variant_context(**self.kwargs)
 
         ctx['query'] = ctx['detail_context'].get_query(self.get_object(), self.get_parent())
         ctx['query'].update(build_query(self.get_query_dict()))
         return ctx
 
 
-
 class RESTListView(ProspectMixin, View):
+    access_prefix = 'prospect.list'
+
     permissions = (permissions.IsAuthenticated, )
     """ Provides the API to retrive PUMSREC settings information like countries, programmes, commision members. """
     
-    #def get(self, request, *args, **kwargs):
-    #    return self.get_results(self, *args, **kwargs)
-
     def get(self, request, *args, **kwargs):
         kwgs = dict([(k,v,) for k,v in  self.request.GET.iteritems() if k.split('__')[0] in ('aspect', 'lookup') ])
         return self.get_results(**kwgs)
 
+# --------------------------------------
+# Do przeniesienia do indywidualnego modulu
+# --------------------------------------
+
 class RESTCalendarView(ProspectMixin, View):
+    access_prefix = 'prospect.list'
+
     def get(self, request, *args, **kwargs):
         kwgs = dict([(k,v,) for k,v in  self.request.GET.iteritems() if k.split('__')[0] in ('aspect', 'lookup') ])
 
@@ -232,79 +264,10 @@ class RESTCalendarView(ProspectMixin, View):
 
     def get_results(self, *args, **kwargs):
         try:
-            self.get_prospect_variant().validate_query(self.request.user, **build_query(kwargs))
-            results = self.get_prospect_variant().filter(self.request.user, **build_query(kwargs))
-            signals.prospect_results_created.send(sender=self.get_prospect_variant(), results=results, request=self.request)
+            self.get_prospect_variant(**self.kwargs).validate_query(self.request.user, **build_query(kwargs))
+            results = self.get_prospect_variant(**self.kwargs).filter(self.request.user, **build_query(kwargs))
+            signals.prospect_results_created.send(sender=self.get_prospect_variant(**self.kwargs), results=results, request=self.request)
             return results
         except:
             return None
             
-
-#    def do(self):
-#        results = [ {'id': x.id, 
-#                     'title': u"%s" % x.get_title(),
-#                     'start': x.get_start().isoformat(),
-#                     'end': x.get_stop().isoformat(),
-#                     'allDay': False,
-#                     'color': colour.htmlRgb(x.get_count(), 0, max_color),
-#                     'textColor': "#000000",#colour.htmlRgb(255-x.get_count(), 0, 255),
-#                     'className': '%s' % 'term-event',
-#                    ]
- 
-
-class DetailView(ProspectMixin, RegionViewMixin, generic.DetailView):
-
-    def get_variant_arguments(self, **kwargs):
-        return self._get_prospect_variant(**kwargs).arguments.all()
-
-#    def get_arguments_url_kwarg(self):
-#        #return self.kwargs.get('context')
-#        return 'variant'
-
-    def get_prospect_variant(self):
-        return get_model('prospects', 'ProspectVariant').objects.get(name=self.kwargs.get('variant'))
-    
-    def get_queryset(self):
-        return self.get_prospect().filter(self.get_query_dict(), {})
-        #return self.get_results(**self.get_query_dict())
-
-    def get_query_dict(self):
-        return {}
-
-    def get_arguments(self):
-        arguments = self.kwargs.copy()
-
-
-        obj, parent = self.get_object(), self.get_parent()
-        for d in self.get_prospect_variant().objectdetail.get_variant_contexts():
-            arguments.update(d.get_arguments(obj, parent))
-
-#        for d in self.get_prospect_variant().objectdetail.get_variant_contexts():
-#            arguments.update(dict((smart_str(arg_val.argument.name), arg_val.value_field.get_value(self.get_object()))  for arg_val in d.argument_values.all()))
-
-
-        return arguments
-
-    def get_object_detail(self):
-        return self.get_prospect_variant().objectdetail
-
-    def get_parent(self):
-        parent_id = self.kwargs.get('parent')
-        if parent_id:
-            return self.get_object_detail().parent.variant.get_model_class().objects.get(id=parent_id)
-
-    def get_context_data(self, *args, **kwargs):
-        ctx = super(DetailView, self).get_context_data(*args, **kwargs)
-        ctx['objectdetail'] = self.get_object_detail()
-        ctx['title'] = ctx['objectdetail'].get_title(self.get_object())
-        ctx['body'] = ctx['objectdetail'].get_body(self.get_object())
-        ctx['name'] = self.get_prospect_variant().name
-        ctx['parent'] = self.get_parent()
-        ctx.update(self.get_prospect_variant().objectdetail.get_context_data(self.get_object(), self.get_parent(), *args, **kwargs))
-        ctx_operator = self.get_prospect_variant().objectdetail.context_operator
-        if ctx_operator:
-            ctx_operator(self.request, self.get_object(), ctx, *args, **kwargs)
-        return ctx
-
-
-

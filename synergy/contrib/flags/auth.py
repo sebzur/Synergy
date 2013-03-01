@@ -47,7 +47,7 @@ class FlagsBackend(object):
         if model_queryset.exists():
             state = model_queryset.get().content_object.check(user, perm, obj)  #jest unque na object_id i contet wiec NULL jest tylko jeden
         elif obj_exists:
-                state = obj_queryset.get().check(user, perm, obj)
+            state = obj_queryset.get().check(user, perm, obj)
             
         model_exists = model_queryset.exists()
         #zakladam, ze ten jest ostatni w kolejce, a wiec zawsze zwroci True lub False
@@ -59,10 +59,35 @@ class FlagsBackend(object):
             obj_exists = get_model('flags', 'UserContentFlag').objects.filter(user__exact=user, content_flag__exact=object_flag).exists()
         else:
             obj_exists = False
-    
+
         if model_exists or obj_exists:
             return model_exists ^ obj_exists
         return None
+
+    def _check_user_context(self, user, perm, obj, model_perm_query, object_flag):
+        # model_perm_query to jest zawsze content_flag, ale idzie jako lista??
+        model_exists = self._has_context(model_perm_query[0], obj, user)
+
+        if object_flag:
+            obj_exists = self._has_context(object_flag, obj, user)
+        else:
+            obj_exists = False
+
+        if model_exists or obj_exists:
+            return model_exists ^ obj_exists
+        return None
+
+    def _has_context(self, content_flag, obj, user):
+        entries_present = False
+        for context in get_model('flags', 'UserContextContentFlag').objects.filter(content_flag=content_flag):
+            user_content = context.user_content_type.model_class().objects.filter(**{context.user_field: user})
+            if obj:
+                modes = {'f': 'filter', 'e': 'exclude'}
+                for mode, action in modes.iteritems():
+                    obj_query = dict((query.lookup, getattr(obj, query.value_field)) for query in context.object_query_setups.filter(mode=mode))
+                    user_content = getattr(user_content, action)(**obj_query)
+            entries_present = user_content.exists()
+        return entries_present
         
     def _check_groups(self,user, perm, obj, model_perm_query, object_flag):
         #jedna negujaca - nie ma uprawnienia, jedna pozytywne i brak negujacych - pozytywne
@@ -88,8 +113,11 @@ class FlagsBackend(object):
         return None
         
     def has_perm(self, user, perm, obj=None):
-        app_name, model_name, perm_name = perm.split('.')
-       
+        try:
+            app_name, model_name, perm_name = perm.split('.')
+        except:
+            return False
+
         
         if not obj is None:
             if app_name != obj._meta.app_label or model_name != obj._meta.object_name.lower():
@@ -97,10 +125,17 @@ class FlagsBackend(object):
       
         #pobierz wszystkie contenty zwiazane z tym permem dla tego modelu
         permission_queryset =  get_model('flags', 'ContentFlag').objects.filter(content_type__app_label__exact=app_name,
-                                                     content_type__model__exact=model_name,
-                                                     flag__name__exact=perm_name)    
+                                                                                content_type__model__exact=model_name,
+                                                                                flag__name__exact=perm_name)    
         
-        #tutaj chyba moze byc get
+        # Very important part of the puzzule: if there's no `ContentFlag` object registerd
+        # with the flag, the permission is not granted ant the procedure stops here
+        if not permission_queryset.exists():
+            return False
+
+        # If we're here, there's at least one contentflag related to this flag, now
+        # let's browse through it...
+
         model_perm_query = permission_queryset.filter(object_id__exact=None)
         
         if not obj is None and permission_queryset.filter(object_id__exact=obj.id).exists():
@@ -117,7 +152,7 @@ class FlagsBackend(object):
             return self._check_custom(user,perm,obj, model_perm_query, object_flag)
                 
         #sprawdz usera
-        PRIORTY=['user','groups','auth','custom']
+        PRIORTY=['user', 'groups', 'auth', 'user_context', 'custom']
         
         for i in PRIORTY:
             try:
