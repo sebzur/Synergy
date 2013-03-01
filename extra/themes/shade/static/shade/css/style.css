@@ -335,3 +335,14 @@ a.ref-btn:visited, a.ref-btn-warn:visited{
 .ie7 .grains-form form input.button, .ie7 .grains-form form input.dangerous-button {
     padding: 0 2px;
 }
+
+.border-applicant-data {
+    background-color:#F6F6EF; 
+    padding:15px; 
+    border:1px solid #AAAAAA;
+}
+
+.border-applicant-data div.add-button {
+    text-align: right;
+    font-weight: bold;
+}

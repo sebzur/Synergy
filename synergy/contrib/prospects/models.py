@@ -368,7 +368,7 @@ class ProspectVariant(models.Model):
             for user_relation in self.user_relations.filter(as_exclude=as_exclude):
                 values = user_relation.content_type.model_class().objects.filter(**{smart_str(user_relation.user_field): user}).values_list(user_relation.value_field, flat=True)
                 if q_obj[as_exclude]:
-                    q_obj[as_exclude] |= models.Q(**{smart_str("%s__in" % user_relation.related_by_field): values})
+                    q_obj[as_exclude] &= models.Q(**{smart_str("%s__in" % user_relation.related_by_field): values})
                 else:
                     q_obj[as_exclude] = models.Q(**{smart_str("%s__in" % user_relation.related_by_field): values})
 
