@@ -24,13 +24,13 @@ def get_current_request():
 
 
 class RequireSignedURLMiddleware(object):
-    def __init__(self):
-        self.require_login_path = getattr(settings, 'REQUIRE_LOGIN_PATH', '/login/')
-    
     def process_request(self, request):
         _thread_locals.user = getattr(request, 'user', None)
         _thread_locals.path = getattr(request, 'path', None)
         _thread_locals.request = request
+        if settings.DEBUG and (request.path.startswith(settings.MEDIA_URL) or request.path.startswith(settings.STATIC_URL)):
+           return  
+        
         if request.path not in settings.OPEN_URLS:
             if not request.GET.has_key('sign'):
                 raise Http404
