@@ -106,10 +106,14 @@ class AspectFormMixin(generic.FormView):
                     # sometimes v is not unicode instance
                     pass
         #c_kwgs = dict([(k, v.encode('utf-8')) for k, v in c_kwgs.items()])
-        encoded = urllib.urlencode(c_kwgs)
 
+        encoded = urllib.urlencode(c_kwgs)
+        if self.request.GET.has_key('sign'):
+            separator = "&"
+        else:
+            separator = "?"
         
-        return HttpResponseRedirect("%s?%s" % (self.get_success_url(), encoded))
+        return HttpResponseRedirect("%s%s%s" % (self.get_success_url(), separator, encoded))
 
 class ListView(ProspectMixin, RegionViewMixin, AspectFormMixin):
     access_prefix = 'prospect.list'
