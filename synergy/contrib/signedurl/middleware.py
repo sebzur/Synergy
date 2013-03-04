@@ -5,7 +5,6 @@ import hashlib
 from django.http import Http404
 from synergy.contrib.signedurl import signer
 
-# threadlocals middleware
 try:
     from threading import local
 except ImportError:
@@ -24,14 +23,12 @@ def get_current_request():
 
 
 class RequireSignedURLMiddleware(object):
-    def __init__(self):
-        self.require_login_path = getattr(settings, 'REQUIRE_LOGIN_PATH', '/login/')
-    
     def process_request(self, request):
         _thread_locals.user = getattr(request, 'user', None)
         _thread_locals.path = getattr(request, 'path', None)
         _thread_locals.request = request
-        if request.path not in settings.OPEN_URLS:
+        
+        if not signer.open_url_match.match(request.path):
             if not request.GET.has_key('sign'):
                 raise Http404
             proper_hash = signer.get_sign(request.path)
