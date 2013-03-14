@@ -37,6 +37,11 @@ class ListRepresentationAdmin(admin.ModelAdmin):
 class DetailMenuAdmin(admin.ModelAdmin):
     list_display = ('object_detail', 'menu')
 
+class DetailFieldAdmin(admin.ModelAdmin):
+    list_display = ('object_detail', 'field', 'weight')
+    list_filter = ('object_detail',)
+
+
 class VariantMenuAdmin(admin.ModelAdmin):
     list_display = ('variant', 'menu')
     list_filter = ('menu',)
@@ -70,7 +75,7 @@ admin.site.register(Calendar)
 
 
 admin.site.register(DetailMenu, DetailMenuAdmin)
-admin.site.register(DetailField)
+admin.site.register(DetailField, DetailFieldAdmin)
 admin.site.register(DetailFieldStyle)
 admin.site.register(VariantMenu, VariantMenuAdmin)
 
