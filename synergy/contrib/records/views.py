@@ -146,6 +146,7 @@ class CreateRecordView(RegionViewMixin, RecordViewMixin, CUMessagesMixin, Create
         ctx = super(CreateRecordView, self).get_context_data(*args, **kwargs)
         setup = self.get_record_setup(**self.kwargs)
         ctx['initial'] = self.get_initial()
+        ctx['request'] = self.request
         ctx['cancel_url'] = setup.get_cancel_url(**self.get_arguments())
         ctx.update(setup.get_context_elements(ctx, self.action_code))
         return ctx
@@ -175,7 +176,7 @@ class UpdateRecordView(RecordViewMixin, RegionViewMixin, CUMessagesMixin, Update
         setup = self.get_record_setup(**self.kwargs)
         ctx['cancel_url'] = self.get_success_url()
         ctx['setup'] = setup
-
+        ctx['request'] = self.request
         ctx['delete_enabled'] = setup.is_delete_enabled()
 
         ctx.update(setup.get_context_elements(ctx, self.action_code))
@@ -208,6 +209,7 @@ class DeleteRecordView(RecordViewMixin, RegionViewMixin, DMessagesMixin, DeleteV
     def get_context_data(self, *args, **kwargs):
         ctx = super(DeleteRecordView, self).get_context_data(*args, **kwargs)
         ctx['cancel_url'] = self.get_record_setup(**self.kwargs).get_success_url(**{'object': self.object})
+        ctx['request'] = self.request
         setup = self.get_record_setup(**self.kwargs)
         ctx.update(setup.get_context_elements(ctx, self.action_code))
         return  ctx

@@ -6,7 +6,7 @@
 {% endif %}
 
 <div class="grains-form">
-  <form action="." method="POST" {% if form.is_multipart %} enctype="multipart/form-data" {% endif %} >
+  <form action="{{ request.get_full_path }}" method="POST" {% if form.is_multipart %} enctype="multipart/form-data" {% endif %} >
     {% include 'synergy/contrib/records/views/form.html' %} 
 
     <p class="clearfix">

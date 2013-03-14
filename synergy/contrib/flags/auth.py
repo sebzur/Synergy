@@ -84,7 +84,8 @@ class FlagsBackend(object):
             if obj:
                 modes = {'f': 'filter', 'e': 'exclude'}
                 for mode, action in modes.iteritems():
-                    obj_query = dict((query.lookup, getattr(obj, query.value_field)) for query in context.object_query_setups.filter(mode=mode))
+                    #obj_query = dict((query.lookup, getattr(obj, query.value_field)) for query in context.object_query_setups.filter(mode=mode))
+                    obj_query = dict((query.lookup, obj.__class__._default_manager.filter(id=obj.pk).values_list(query.value_field, flat=True)[0]) for query in context.object_query_setups.filter(mode=mode))
                     user_content = getattr(user_content, action)(**obj_query)
             entries_present = user_content.exists()
         return entries_present
