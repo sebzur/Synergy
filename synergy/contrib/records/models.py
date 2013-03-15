@@ -161,13 +161,22 @@ class RecordSetup(models.Model):
         return dict(filter(lambda x: not x[1] is None, initial))
 
     def get_success_url(self, **kwargs):
-        return self.get_url(self.success_url, self.reverse_success_url, **kwargs)
+        anchor_name = kwargs['request'].GET.get('anchor_name','')
+        if anchor_name:
+            anchor_name = '#'+anchor_name
+        return self.get_url(self.success_url, self.reverse_success_url, **kwargs)+anchor_name
 
     def get_generic_url(self, **kwargs):
-        return self.get_url(self.generic_url, self.reverse_generic_url, **kwargs)
+        anchor_name = kwargs['request'].GET.get('anchor_name','')
+        if anchor_name:
+            anchor_name = '#'+anchor_name
+        return self.get_url(self.generic_url, self.reverse_generic_url, **kwargs)+anchor_name
 
     def get_cancel_url(self, **kwargs):
-        return self.get_url(self.cancel_url, self.reverse_cancel_url, **kwargs)
+        anchor_name = kwargs['request'].GET.get('anchor_name','')
+        if anchor_name:
+            anchor_name = '#'+anchor_name
+        return self.get_url(self.cancel_url, self.reverse_cancel_url, **kwargs)+anchor_name
 
     def get_url(self, url, reverse, **kwargs):
         if reverse:
