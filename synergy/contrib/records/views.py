@@ -195,7 +195,7 @@ class UpdateRecordView(RecordViewMixin, RegionViewMixin, CUMessagesMixin, Update
         return super(UpdateRecordView, self).form_valid(form)            
 
     def get_success_url(self):
-        return self.get_record_setup(**self.kwargs).get_success_url(**{'object': self.get_object()})
+        return self.get_record_setup(**self.kwargs).get_success_url(**{'object': self.get_object(),'request': self.request})
 
 class DeleteRecordView(RecordViewMixin, RegionViewMixin, DMessagesMixin, DeleteView):
     access_prefix = 'record.delete'
@@ -208,11 +208,12 @@ class DeleteRecordView(RecordViewMixin, RegionViewMixin, DMessagesMixin, DeleteV
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(DeleteRecordView, self).get_context_data(*args, **kwargs)
-        ctx['cancel_url'] = self.get_record_setup(**self.kwargs).get_success_url(**{'object': self.object})
+        ctx['cancel_url'] = self.get_record_setup(**self.kwargs).get_success_url(**{'object': self.object,'request': self.request})
         ctx['request'] = self.request
         setup = self.get_record_setup(**self.kwargs)
         ctx.update(setup.get_context_elements(ctx, self.action_code))
         return  ctx
 
     def get_success_url(self):
-        return self.get_record_setup(**self.kwargs).get_generic_url(**{'object': self.object})
+        return self.get_record_setup(**self.kwargs).get_generic_url(**{'object': self.object,'request': self.request})
+

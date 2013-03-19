@@ -10,26 +10,6 @@
  /* ------------------------------------------------
     CUSTOM WEB FONTS
 --------------------------------------------------*/
-@font-face {
-    font-family: 'MerriweatherRegular';
-    src: url('fonts/merriweather-regular-webfont.eot');
-    src: url('fonts/merriweather-regular-webfont.eot?#iefix') format('embedded-opentype'),
-         url('fonts/merriweather-regular-webfont.woff') format('woff'),
-         url('fonts/merriweather-regular-webfont.ttf') format('truetype'),
-         url('fonts/merriweather-regular-webfont.svg#MerriweatherRegular') format('svg');
-    font-weight: normal;
-    font-style: normal;
-}
-@font-face {
-    font-family: 'MerriweatherBold';
-    src: url('fonts/merriweather-bold-webfont.eot');
-    src: url('fonts/merriweather-bold-webfont.eot?#iefix') format('embedded-opentype'),
-         url('fonts/merriweather-bold-webfont.woff') format('woff'),
-         url('fonts/merriweather-bold-webfont.ttf') format('truetype'),
-         url('fonts/merriweather-bold-webfont.svg#MerriweatherBold') format('svg');
-    font-weight: normal;
-    font-style: normal;
-}
 
 /* --------------------------------------
     RESET
@@ -83,7 +63,6 @@ table {
 ---------------------------------------------------------- */
 html { overflow-y: scroll; }
 body {
-    font-family: Georgia, Serif;
     font-size: 16px;
     line-height: 25px;
     color: #3B3B3B;
@@ -113,7 +92,7 @@ a:link, a:visited, .ui-widget-content a:link, .ui-widget-content a:visited {
 
 /* Headers */
 h1, h2, h3, h4, h5, h6 {
-    font-family: 'MerriweatherBold', Serif;
+
 }
 h1 {
     font-size: 40px;
@@ -466,7 +445,6 @@ section#about-us .primary ul.the-team li p {
     margin: 5px 0 0 0;
 }
 section#about-us .primary ul.the-team li p.mname {
-    font-family: "MerriweatherBold", Serif;
     margin: 10px 0 0 0;
 }
 section#about-us .primary ul.the-team li.odd {
@@ -483,7 +461,6 @@ section#about-us aside .download-btn {
     text-align: center;
     line-height: 55px;
 
-    font-family: "MerriweatherBold", Georgia, Serif;
     font-size: 20px;
     color: #ffffff;
     text-shadow: 0 -1px 0 rgba(0,0,0,0.5);
@@ -500,7 +477,6 @@ a.button {
     border: 1px solid #066a19;
     margin: 0 0 20px 0;
     text-align: center;
-    font-family: "MerriweatherBold", Georgia, Serif;
     color: #ffffff;
     text-shadow: 0 -1px 0 rgba(0,0,0,0.5);
 
@@ -568,13 +544,11 @@ form {
     
 }
 form p {
-	font-family: "MerriweatherBold", Serif;
 	font-size: 14.5px;
 	color: #046416;
 }
 form label {
     display: block;
-    font-family: "MerriweatherBold", Serif;
     font-size: 14px;
     line-height: 25px;
     margin: 0 0 5px 0;
@@ -617,8 +591,8 @@ form input.button {
     margin: 5px 0;
     background: #1F8532 url(../images/btn-bg.png);
     border: 1px solid #066a19;
-    font-family: "MerriweatherBold", Georgia, Serif;
     color: #ffffff;
+    font-weight: bold;
     cursor: pointer;
     text-shadow: 0 -1px 0 rgba(0,0,0,0.5);
     box-shadow: 0px 1px 1px rgba(0,0,0,0.4), inset 0 1px 0 #28a441;
@@ -663,7 +637,6 @@ section#contact aside .social li.flickr a {
     Footer
 ----------------------------------------------------- */
 footer p.footer-text {
-    font-family: "MerriweatherRegular", Serif;
     font-size: .75em;
     padding: 0 10px;
     margin-bottom: 0;
@@ -685,7 +658,6 @@ footer  ul.footer-menu li {
 }
 footer  ul.footer-menu li a {
     display: block;
-    font-family: "MerriweatherBold", Serif;
     font-size: .75em;
     line-height: 1em;
     color: #3B3B3B;
