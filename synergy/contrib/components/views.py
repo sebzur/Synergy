@@ -31,8 +31,8 @@ class ProtectedView(object):
         # the current domain is allowed to see this component
         access_site = self.get_access_site(**kwargs)
         if access_site:
-            current_site = get_model('sites','site').objects.get_current()
-            if current_site.domain == access_site.domain:
+            current_site = get_current_site(request)
+            if current_site.domain != access_site.domain:
                 raise Http404
                 
 

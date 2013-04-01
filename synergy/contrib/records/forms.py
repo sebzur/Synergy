@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 import itertools
+import hashlib
+from django.conf import settings
+
 
 from django import forms
 from django.forms import models as model_forms
@@ -59,6 +62,8 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
     to_exclude = excluded_fields + map(lambda x: str(x.name), created_model._meta.many_to_many)
 
     class CreateBaseForm(forms.ModelForm):
+
+
         def __init__(self, instance=None, parent=None, *args, **kwargs):
             super(CreateBaseForm, self).__init__(instance=instance, *args, **kwargs)
 
@@ -66,6 +71,8 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
 
             for hidden in hidden_fields:
                 self.fields[hidden].widget = forms.widgets.HiddenInput()
+
+
                 
             #for field in [field for field in self._meta.model._meta.fields if field.name not in to_exclude]:
             for field in [field for field in self._meta.model._meta.fields if field.name not in to_exclude and field.name in self.fields]:
@@ -165,8 +172,11 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                         self.internal_m2m[related_m2m_model].append(m2m_form_factory([related_m2m_model.model._meta.object_name.lower()], related_m2m_model.rel.through._meta.object_name.lower(), related_m2m_model.rel.through)(prefix=prefix, instance=ins, select=choice, 
                                                                                                                                                      empty_permitted=empty_permitted,
                                                                                                                                                      *args, **kwargs))
-                
-
+        def clean(self):
+            # Check if hidden fields values were not changed
+            if any([self.cleaned_data.get(field.name) != self.initial.get(field.name) for field in self.hidden_fields()]):
+                raise forms.ValidationError(_("Security exception raised - it is forbidden to change hidden fields values!"))
+            return super(CreateBaseForm, self).clean()
 
         def has_data(self):
             return bool(self.cleaned_data) or (not self.has_changed() and not self.instance.pk is None)
