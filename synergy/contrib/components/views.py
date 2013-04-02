@@ -5,8 +5,9 @@ import urlparse
 from django.conf import settings
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.views import redirect_to_login
+from django.contrib.sites.models import get_current_site
 from django.db.models import get_model, ObjectDoesNotExist, Q
-
+from django.http import Http404
 
 class ProtectedView(object):
     access_prefix = None
@@ -24,6 +25,16 @@ class ProtectedView(object):
         # is required to have `get_object` method working properly)
         # ---
         handler = super(ProtectedView, self).dispatch(request, *args, **kwargs)
+
+
+        # If component site attribute is set, we check if 
+        # the current domain is allowed to see this component
+        access_site = self.get_access_site(**kwargs)
+        if access_site:
+            current_site = get_current_site(request)
+            if current_site.domain != access_site.domain:
+                raise Http404
+                
 
         # And here comes the auth stuff
 
@@ -77,6 +88,12 @@ class ProtectedView(object):
                 return None
         return None
 
+
+    def get_access_site(self, **kwargs):
+        assignment = self.get_component_assignment(**kwargs)
+        if assignment:
+            return assignment.component.site
+        
 
     def get_access_flag(self, **kwargs):
         """ Returns view access flag. To have this working it is required to register

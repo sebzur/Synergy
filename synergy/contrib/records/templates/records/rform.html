@@ -9,6 +9,15 @@
 </div>
 {% endif %}
 
+
+{% for hidden in form.hidden_fields %}
+  {% if hidden.errors %}
+  {% trans "Hidden field" %} "{{ hidden.name }}" {% trans "errors detected:" %}
+  {{ hidden.errors }}
+  {% endif %}
+{% endfor %}
+
+
 <div style="margin-bottom: 10px;">
   {{ form|layout }}
 </div>
