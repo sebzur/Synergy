@@ -138,7 +138,10 @@ class ListView(ProspectMixin, RegionViewMixin, AspectFormMixin):
         return self.kwargs
 
     def get_success_url(self):
+        if self.kwargs.has_key('arguments'):
+            return reverse('list', args=[self.get_prospect_variant(**self.kwargs).name, self.kwargs.get('arguments')])
         return reverse('list', args=[self.get_prospect_variant(**self.kwargs).name])
+
 
 class DetailView(ProspectMixin, RegionViewMixin, generic.DetailView):
     access_prefix = 'prospect.detail'
