@@ -174,7 +174,20 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                                                                                                                                                      *args, **kwargs))
         def clean(self):
             # Check if hidden fields values were not changed
-            if any([self.cleaned_data.get(field.name) != self.initial.get(field.name) for field in self.hidden_fields()]):
+
+            def get_id(value):
+                """ Returns value `id` atribute if present, returns value otherwise.
+                
+                Returned values are converted to strings, becasue it is possible for the `self.initial` elements
+                to be strings.
+                
+                """
+                try:
+                    return "%d" % value.id
+                except AttributeError:
+                    return "%s" % value
+
+            if any([get_id(self.cleaned_data.get(field.name)) != get_id(self.initial.get(field.name)) for field in self.hidden_fields() if self.initial.get(field.name)]):
                 raise forms.ValidationError(_("Security exception raised - it is forbidden to change hidden fields values!"))
             return super(CreateBaseForm, self).clean()
 
