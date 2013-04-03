@@ -260,7 +260,7 @@ class Aspect(models.Model):
                    'NullBooleanField': None,
                    'PositiveIntegerField': None,
                    'PositiveSmallIntegerField': None,
-                   'SlugField': None,
+                   'SlugField': 'textual',
                    'SmallIntegerField': None,
                    'TextField': None,
                    'TimeField': None,
