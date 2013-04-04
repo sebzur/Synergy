@@ -63,6 +63,9 @@ class UserContextContentFlag(models.Model):
     user_content_type = models.ForeignKey('contenttypes.ContentType', verbose_name="User related content type")
     user_field = models.SlugField(max_length=255, verbose_name="User field", help_text="User field name used to filter out objects (of CT) related to the currently authenticated user" )
 
+    def __unicode__(self):
+        return u"%s - %s" % (self.content_flag, self.user_content_type)
+
     class Meta:
         verbose_name = "User context content flag"
         verbose_name_plural = "User context content flag"

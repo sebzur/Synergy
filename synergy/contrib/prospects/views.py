@@ -176,7 +176,7 @@ class DetailView(ProspectMixin, RegionViewMixin, generic.DetailView):
         ctx = super(DetailView, self).get_context_data(*args, **kwargs)
         ctx['objectdetail'] = self.get_object_detail()
         ctx['title'] = ctx['objectdetail'].get_title(self.get_object())
-        ctx['body'] = ctx['objectdetail'].get_body(self.get_object())
+        ctx['body'] = ctx['objectdetail'].get_body(self.get_object(), self.request)
         ctx['name'] = self.get_prospect_variant(**self.kwargs).name
         ctx['parent'] = self.get_parent()
         ctx.update(self.get_prospect_variant(**self.kwargs).objectdetail.get_context_data(self.get_object(), self.get_parent(), *args, **kwargs))
@@ -225,7 +225,7 @@ class DetailContextView(ProspectMixin, RegionViewMixin, AspectFormMixin, generic
         ctx['objectdetail'] = self.get_object_detail()
         ctx['object'] = self.get_object()
         ctx['title'] = ctx['objectdetail'].get_title(self.get_object())
-        ctx['body'] = ctx['objectdetail'].get_body(self.get_object())
+        ctx['body'] = ctx['objectdetail'].get_body(self.get_object(), self.request)
         ctx['name'] = self.get_prospect_variant(**self.kwargs).name
 
 

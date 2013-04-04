@@ -650,10 +650,10 @@ class ObjectDetail(models.Model):
             return t.render(template.Context({'object': obj}))
         return u"%s" % obj
 
-    def get_body(self, obj):
+    def get_body(self, obj, request):
         if self.body:
             t = template.Template(self.body)
-            return t.render(template.Context({'object': obj}))
+            return t.render(template.Context({'object': obj, 'request': request}))
         return ''
 
 
