@@ -44,8 +44,6 @@ def layout(form):
         items = get_content(form, _layout.items.all())
         fields = [field for field in form if field.name not in _layout.fields.values_list('field', flat=True)]
 
-
-
         _handled = [m2m_relation.relation.through for m2m_relation in _layout.m2m_relations.all()]
         _get = get_model('contenttypes','contenttype').objects.get_for_model
         external_m2ms = dict([(relation, form.external_m2m[relation]) for relation in form.external_m2m if relation.through not in _handled])

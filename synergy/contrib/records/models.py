@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.utils.encoding import smart_str 
 from django.template import Context, Template
 from django.contrib.contenttypes import generic
@@ -118,6 +118,19 @@ class RecordSetup(models.Model):
     # this will be used when object was deleted
     generic_url = models.CharField(max_length=255)
     reverse_generic_url = models.BooleanField()
+
+    def get_custom_field_label(self, field_name):
+        try:
+            return self.fields.get(field=field_name).label
+        except ObjectDoesNotExist:
+            return None
+
+    def get_custom_field_help_text(self, field_name):
+        try:
+            return self.fields.get(field=field_name).help_text
+        except ObjectDoesNotExist:
+            return None
+
 
     def is_delete_enabled(self):
         return not self.actions.filter(action='d', is_enabled=False).exists()

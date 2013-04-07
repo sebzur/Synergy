@@ -57,7 +57,7 @@ def m2m_form_factory(to_exclude, r_name, through_model, m2m_relation_setup=None)
     return M2MBaseForm
 
 
-def createform_factory(created_model, related_models, related_m2m_models, use_model_m2m_fields, excluded_fields=[], hidden_fields=[], can_delete=False):
+def createform_factory(setup, created_model, related_models, related_m2m_models, use_model_m2m_fields, excluded_fields=[], hidden_fields=[], can_delete=False):
 
     to_exclude = excluded_fields + map(lambda x: str(x.name), created_model._meta.many_to_many)
 
@@ -72,9 +72,6 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
             for hidden in hidden_fields:
                 self.fields[hidden].widget = forms.widgets.HiddenInput()
 
-
-                
-            #for field in [field for field in self._meta.model._meta.fields if field.name not in to_exclude]:
             for field in [field for field in self._meta.model._meta.fields if field.name not in to_exclude and field.name in self.fields]:
                 db_type = field.db_type()
                 if db_type == 'boolean':
@@ -86,7 +83,7 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                                                                       choices=(('False', _('No')), ('True', _('Yes'))),
                                                                       widget=forms.RadioSelect,
                                                                       initial=self.fields[field.name].initial,
-                                                                      label=self.fields[field.name].label
+                                                                      label=setup.get_custom_field_label(field.name) or self.fields[field.name].label
                                                                       )
 
 
@@ -94,10 +91,11 @@ def createform_factory(created_model, related_models, related_m2m_models, use_mo
                 hook = getattr(self.fields[field], 'init_hook', None)
                 if hook:
                     hook(self.fields[field], self)
+                self.fields[field].label = setup.get_custom_field_label(field) or self.fields[field].label
+                self.fields[field].help_text = setup.get_custom_field_help_text(field) or self.fields[field].help_text
 
             if can_delete and instance:
                  self.fields.insert(0, "%s_%d_DELETE" % (instance._meta.object_name.lower(), instance.id), forms.BooleanField(label="Usunąć wpis?", required=False, initial=False))                
-
 
 
             for related_model in related_models:
