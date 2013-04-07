@@ -337,7 +337,7 @@ class ProspectVariant(models.Model):
         # Update query with stored aspect values
         c = {}
         for aspect_value in self.aspect_values.filter(is_exposed=False):
-            c[str(aspect_value.aspect.id)] = {'lookup': aspect_value.lookup, 'value':  aspect_value.value}
+            c[str(aspect_value.aspect.id)] = {'lookup': aspect_value.lookup, 'value':  template.Template(aspect_value.value).render(template.Context({}))}
         query.update(c)
 
         # Update query with stored null state values
