@@ -6,7 +6,18 @@
 {% load_plugin jquery %}
 {% load_plugin jqueryui %}
 {% load_plugin datatables %}
-{% simple_table .results-table %}
+
+
+{% if variant_contexts %}
+    {% for variant_context in variant_contexts %}
+       {% if variant_context.variant.listrepresentation.representation_type.model == 'table' %}
+           {% with variant_context.variant.listrepresentation.representation as tab %}
+              {% simple_table tab.get_css_selector tab.lang tab.is_filtered tab.is_paginated tab.page_rows %}
+           {% endwith %}
+       {% endif %}
+    {% endfor %}
+{% endif %}
+
 
 
 

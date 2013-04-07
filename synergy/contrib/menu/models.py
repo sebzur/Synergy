@@ -105,4 +105,4 @@ class MenuItem(models.Model):
 
     class Meta:
         unique_together = (('menu', 'name'),)
-        ordering = ('weight',)
+        ordering = ('menu__name', 'weight',)

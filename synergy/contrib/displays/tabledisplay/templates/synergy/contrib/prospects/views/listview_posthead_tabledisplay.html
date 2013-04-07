@@ -6,7 +6,7 @@
 {% load_plugin jquery %}
 {% load_plugin jqueryui %}
 {% load_plugin datatables %}
-{% simple_table .results-table %}
+{% simple_table table.get_css_selector table.lang table.is_filtered table.is_paginated table.page_rows %}
 
 
 

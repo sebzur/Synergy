@@ -10,6 +10,12 @@ class Table(RepresentationModel):
     is_paginated = models.BooleanField(verbose_name="Should the table be paginated?")
     page_rows = models.PositiveIntegerField(verbose_name="Number of rows per page", default=100)
 
+    def get_css_id(self):
+        return 'results-table-%d' % self.id
+
+    def get_css_selector(self):
+        return '#%s' % self.get_css_id()
+
     def get_prospect_postfix(self):
         return 'tabledisplay'
     
@@ -18,7 +24,6 @@ class Table(RepresentationModel):
 
     class Meta:
         app_label = "prospects"
-
 
 
 class Column(models.Model):

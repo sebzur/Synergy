@@ -95,6 +95,7 @@ class RecordActionSetup(models.Model):
         return None
 
     class Meta:
+        ordering = ('setup__name', 'action')
         unique_together = (('setup', 'action'),)
 
 class RecordSetup(models.Model):
@@ -188,6 +189,10 @@ class RecordSetup(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    class Meta:
+        ordering = ('name',)
+
 
 class RecordArgument(models.Model):
     setup = models.ForeignKey(RecordSetup, related_name="arguments")

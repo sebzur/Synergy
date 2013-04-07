@@ -1,6 +1,6 @@
 {% load tabledisplay_rendering %}
 {% if results %}
-<table class="results-table display">
+<table class="display" id="{{ table.get_css_id }}">
   <thead>
     {% for column in table.columns.all %}
     <th>{{ column.field.verbose_name }}</th>

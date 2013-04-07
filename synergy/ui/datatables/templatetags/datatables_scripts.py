@@ -6,48 +6,55 @@ register = template.Library()
 @register.tag('simple_table')
 def default_table(parser, token):
     contents = token.split_contents()
-    print contents
     if len(contents) > 6:
         raise template.TemplateSyntaxError("%r tag requires at maximum six arguments" % contents[0])
-    if len(contents) < 2:        
-        raise template.TemplateSyntaxError("%r tag requires at least selector defined" % contents[0])
-    tag_name, selector = contents[:2]
-    return LoadPluginNode(selector, *contents[2:])
+    extract_map = [not (var[0] == var[-1] and var[0] in ('"', "'")) for var in contents[1:]]
+    return LoadPluginNode(extract_map, *contents[1:])
 
 
 class LoadPluginNode(template.Node):
     # order matters!
-    DEFAULT_OPTIONS = (('lang', 'en'), ('is_filtered', True), ('is_paginated', True), ('page_rows', 100))
+    DEFAULT_OPTIONS = (('selector', '.datatable'), ('lang', 'en'), ('is_filtered', True), ('is_paginated', True), ('page_rows', 100))
 
-    def __init__(self, selector, *args):
-        self.options = {}
-        self.defaults = {'selector': selector.strip("'")}
+    def __init__(self, extract_map, *args):
+        self.extract_map = extract_map
+        self.args = args
+
+    def map_args(self, extract_map, *args):
+        options = {}
+        defaults = {}
 
         i = 0 # in case no args provided
         for i, arg in enumerate(args):
             handler = self.DEFAULT_OPTIONS[i]
-            self.options[handler[0]] = template.Variable(arg)
+            options[handler[0]] = template.Variable(arg) if extract_map[i] else arg.strip("'").strip('"')
         
-        for arg in self.DEFAULT_OPTIONS[i:]:
-            self.defaults[arg[0]] = arg[1]
+        for arg in self.DEFAULT_OPTIONS[i+1:]:
+            defaults[arg[0]] = arg[1]
+
+        return options, defaults
 
     def render(self, context):
         try:
             # resolving values
-            for option, value in self.options.iteritems():
-                self.options[option] = value.resolve(context)
+            options, defaults = self.map_args(self.extract_map, *self.args)
+
+            for option, value in options.iteritems():
+                if hasattr(value, 'resolve'):
+                    options[option] = value.resolve(context)
+                else:
+                    options[option] = value
 
             # processing translation file info
-            print self.options.get('lang'), self.defaults.get('lang')
-            print self.defaults
-            lang = self.options.get('lang') or self.defaults.get('lang')
+            lang = options.get('lang') or defaults.get('lang')
             transfiles = {'pl': "/static/datatables/language/pl_PL.txt",
                           'en': None}
-            self.options['transfile'] = transfiles[lang]
+            options['transfile'] = transfiles[lang]
             
             # updating with defaults
-            self.options.update(self.defaults)
-            return render_to_string('datatables/init_default.js', self.options)
+            options.update(defaults)
+
+            return render_to_string('datatables/init_default.js', options)
         except template.VariableDoesNotExist, error:
             return ''
 
