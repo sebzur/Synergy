@@ -225,7 +225,7 @@ class RecordField(models.Model):
     field = models.SlugField() # this shuld be renamed to `name`
     
     label = models.CharField(verbose_name="Custom field label", max_length=255, blank=True)
-    help_text = models.CharField(verbose_name="Custom hetlp text", max_length=255, blank=True)
+    help_text = models.CharField(verbose_name="Custom hetlp text", max_length=512, blank=True)
 
     default_value = models.CharField(max_length=255, blank=True)
     default_in_update = models.BooleanField(default=False, help_text="Should default_value override already stored data?")
