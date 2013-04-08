@@ -179,6 +179,16 @@ class UpdateRecordView(RecordViewMixin, RegionViewMixin, CUMessagesMixin, Update
         ctx['request'] = self.request
         ctx['delete_enabled'] = setup.is_delete_enabled()
 
+
+        ctx['delete_url'] = reverse('delete', args=[setup.name, self.kwargs.get('pk')])
+        if self.request.GET.has_key('anchor_name'):
+            if self.request.GET.has_key('sign'):
+                separator = "&"
+            else:
+                separator = "?"
+            ctx['delete_url'] = "%s%sanchor_name=%s" % (ctx['delete_url'], separator, self.request.GET.get('anchor_name'))
+
+
         ctx.update(setup.get_context_elements(ctx, self.action_code))
         return  ctx
 
