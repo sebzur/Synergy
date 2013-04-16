@@ -23,6 +23,24 @@
     {% load ui_loaders %}
     {% load_plugin jquery %}
     {% load_plugin jqueryui %}
+
+
+    <link rel="stylesheet" href="{{ STATIC_URL }}cookieCuttr/cookiecuttr.css" type="text/css" />
+    <script src="{{ STATIC_URL }}jquery-cookie/jquery.cookie.js"></script>
+    <script src="{{ STATIC_URL }}cookieCuttr/jquery.cookiecuttr.js"></script>
+    <script>
+      $(document).ready(function () {
+      // activate cookie cutter
+      $.cookieCuttr({
+      cookieDeclineButton: false,
+      cookieAnalytics: false,
+      cookieAcceptButtonText: "ZAAKCEPUTJ I ZAMKNIJ",
+      cookieMessage: 'System wykorzystuje pliki cookie do utrzymania sesji zalogowanego użytkownika oraz obsługi formularzy'
+      });
+      });    
+    </script>
+
+
     {# ------------ ROBOTS --------------- #}
     <meta name="robots" content="NONE,NOARCHIVE" />
     {% block posthead %}
