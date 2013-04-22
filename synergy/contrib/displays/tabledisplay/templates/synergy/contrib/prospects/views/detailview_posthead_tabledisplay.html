@@ -6,19 +6,18 @@
 {% load_plugin jquery %}
 {% load_plugin jqueryui %}
 {% load_plugin datatables %}
-
+{% load prospects_rendering %}
 
 {% if variant_contexts %}
-    {% for variant_context in variant_contexts %}
+    {% for variant_context, query in variant_contexts.iteritems %}
        {% if variant_context.variant.listrepresentation.representation_type.model == 'table' %}
            {% with variant_context.variant.listrepresentation.representation as tab %}
-              {% simple_table tab.get_css_selector tab.lang tab.is_filtered tab.is_paginated tab.page_rows %}
+              {% get_ajax_url variant_context.variant arguments query as ajax_url %}
+              {% simple_table tab.get_css_selector tab.lang tab.is_filtered tab.is_paginated tab.page_rows ajax_url %}
            {% endwith %}
        {% endif %}
     {% endfor %}
 {% endif %}
-
-
 
 
 

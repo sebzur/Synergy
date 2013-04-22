@@ -1,9 +1,0 @@
-{% load tabledisplay_rendering %}
-{# <td {{ column|css_styles:object }}> #}
-<td>
-  {% if link %}
-  <a href="{{ value.url }}">{{ value.value }}</a>
-  {% else %}
-  {{ value|default_if_none:"n/a" }}
-  {% endif %}
-</td>

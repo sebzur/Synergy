@@ -4,11 +4,57 @@ from django.conf import settings
 from django.db.models import get_model
 import re
 import copy
+import urllib 
 
 from synergy.contrib.records.models import get_parent_field
 from django.utils.datastructures import SortedDict
 
+from django.core.urlresolvers import reverse
+
 register = template.Library()
+
+
+@register.tag
+def get_ajax_url(parser, token):
+    try:
+        # Splitting by None == splitting by spaces.
+        tag_name, variant, arguments, query, as_keyword, as_var = token.contents.split(None, 5)
+    except ValueError:
+        raise template.TemplateSyntaxError("%r tag requires arguments" % token.contents.split()[0])
+    return AjaxUrlNode(variant, arguments, query, as_var)
+
+class AjaxUrlNode(template.Node):
+    def __init__(self, variant, arguments, query, as_var):
+        self.variant = template.Variable(variant)
+        self.arguments = template.Variable(arguments)
+        self.query = template.Variable(query)
+        self.as_var = as_var
+
+    def urlquery(self, args, variant):
+        print 'Sprawdzam argumenty dla', variant, variant.arguments.values_list('name', flat=True)
+        return "/".join(("%s" % args.get(arg) for arg in variant.arguments.values_list('name', flat=True)))
+
+    def urlgetquery(self, obj):
+        def gen(obj):
+            for aspect_id, attrs in obj.iteritems():
+                for key, attr in {'aspect': 'value', 'lookup': 'lookup'}.iteritems():
+                    yield ('%s__%s' % (key, aspect_id), attrs.get(attr))
+        return urllib.urlencode(dict(gen(obj)))
+
+
+    def render(self, context):
+        variant = self.variant.resolve(context)
+        arguments = self.arguments.resolve(context)
+        query = self.query.resolve(context)
+        url_query = self.urlquery(arguments, variant)
+        if url_query:
+            base_url = reverse('pr', args=[variant.name, url_query])
+        else:
+            base_url = reverse('pr', args=[variant.name])
+        separator = '&'
+        full_url = "%s%s%s" % (base_url, separator, self.urlgetquery(query))
+        context[self.as_var] = full_url
+
 
 @register.filter(name='teaser')
 def teaser(obj):

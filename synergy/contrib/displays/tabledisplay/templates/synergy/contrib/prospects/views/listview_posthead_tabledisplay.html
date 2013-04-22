@@ -6,7 +6,12 @@
 {% load_plugin jquery %}
 {% load_plugin jqueryui %}
 {% load_plugin datatables %}
-{% simple_table table.get_css_selector table.lang table.is_filtered table.is_paginated table.page_rows %}
+{% load prospects_rendering %}
+
+{% get_ajax_url table.variant arguments query as ajax_url %}
+{% simple_table table.get_css_selector table.lang table.is_filtered table.is_paginated table.page_rows ajax_url %}
+
+
 
 
 

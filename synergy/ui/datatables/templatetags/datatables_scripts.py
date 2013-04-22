@@ -6,7 +6,7 @@ register = template.Library()
 @register.tag('simple_table')
 def default_table(parser, token):
     contents = token.split_contents()
-    if len(contents) > 6:
+    if len(contents) > 7:
         raise template.TemplateSyntaxError("%r tag requires at maximum six arguments" % contents[0])
     extract_map = [not (var[0] == var[-1] and var[0] in ('"', "'")) for var in contents[1:]]
     return LoadPluginNode(extract_map, *contents[1:])
@@ -14,7 +14,8 @@ def default_table(parser, token):
 
 class LoadPluginNode(template.Node):
     # order matters!
-    DEFAULT_OPTIONS = (('selector', '.datatable'), ('lang', 'en'), ('is_filtered', True), ('is_paginated', True), ('page_rows', 100))
+    DEFAULT_OPTIONS = (('selector', '.datatable'), ('lang', 'en'), ('is_filtered', True), ('is_paginated', True), ('page_rows', 100),
+                       ('ajax_url', ''))
 
     def __init__(self, extract_map, *args):
         self.extract_map = extract_map

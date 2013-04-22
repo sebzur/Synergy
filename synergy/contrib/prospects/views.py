@@ -241,7 +241,6 @@ class DetailContextView(ProspectMixin, RegionViewMixin, AspectFormMixin, generic
 
 class RESTListView(ProspectMixin, View):
     access_prefix = 'prospect.list'
-
     permissions = (permissions.IsAuthenticated, )
     """ Provides the API to retrive PUMSREC settings information like countries, programmes, commision members. """
     

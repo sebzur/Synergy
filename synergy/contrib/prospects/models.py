@@ -12,18 +12,26 @@ from django.core.exceptions import ValidationError
 from django import template
 from django.utils.datastructures import SortedDict
 
+from operator import __or__ as OR
+
 LOOKUP_MODES = (('f', 'Filter'), ('e', 'Exclude'))
 CONTEXT_MODES = (('f', 'Filter'), ('e', 'Exclude'), ('m', 'Distinct merge'))
 
 def get_field(model, attribute):
     chain = attribute.split('__')
     for i, attribute in enumerate(chain):
-        field = model._meta.get_field(attribute)
-        if chain[i+1:]:
-            if not field.rel:
-                raise ValueError('Something went wrong. Field retrival for `%s` stoped at `%s` while it should represents relation' % (self.attribute, attribute))
-            model = field.rel.to
+        try:
+            field = model._meta.get_field(attribute)
+            model = None
+            if field.rel:
+                model = field.rel.to
+        except models.FieldDoesNotExist:
+            field = getattr(model, attribute)
+            model = field.related.model
+        if chain[i+1:] and model is None:
+            raise ValueError('Something went wrong. Field retrival for `%s` stoped at `%s` while it should represents relation' % (self.attribute, attribute))
     return field
+
 
 def get_related_value(obj, path):
     if path == 'self':
@@ -224,15 +232,7 @@ class Aspect(models.Model):
         return u"%s (%s)" % (self.source.prospect.verbose_name, self.attribute)
 
     def get_field(self):
-        chain = self.attribute.split('__')
-        model = self.source.get_model()
-        for i, attribute in enumerate(chain):
-            field = model._meta.get_field(attribute)
-            if chain[i+1:]:
-                if not field.rel:
-                    raise ValueError('Something went wrong. Field retrival for `%s` stoped at `%s` while it should represents relation' % (self.attribute, attribute))
-                model = field.rel.to
-        return field
+        return get_field(self.source.get_model(), self.attribute)
 
     def get_formfield(self):
         return self.get_field().formfield()        
@@ -320,6 +320,111 @@ class ProspectVariant(models.Model):
             
             raise ValueError("Some required query arguments are missing: %s" % _left.values_list('attribute', flat=True))
 
+
+
+    def get_data(self, user, query, fields, arguments, results_from, results_to, ordering, url_triggers, search_phrase='', search_lookup='icontains'):
+        print 'Getin data'
+        # First, get the db_fields that we will query for
+        db_fields = fields.values_list('db_field', flat=True)
+        # Then apply a mapping ('self'->'id'), we need this for the proper db
+        # lookup with values_list.
+        # ----
+        # Note:
+        # We use 'self' in the prospects.Field.db_field
+        # to mark that the filed represents the full Python object of 
+        # the underlying Source
+        # ----
+        mapped_fields = map(lambda x: 'id' if x == 'self' else x, db_fields)
+
+        def sort_order(order, field):
+            return field if order == 'asc' else "-%s" % field
+        order_by = [sort_order(ordering[fields[field_id]], m_field) for field_id, m_field in enumerate(mapped_fields) if ordering.has_key(fields[field_id])]
+
+        # Create a list of the models related to the field values represented by
+        # the field `db_field` attribute.
+        field_value_models = [field.get_field_value_model() for field in fields]
+
+        # Create a list field objects -- this list contains None if the field `db_field` 
+        # attribute represents relation or is set as `self`.
+        field_objs = [field.get_field_object() for field in fields]
+
+        # ---------------------------------------------------------------------
+        # Field Indices Tables -- these should be kept as short as possible
+        # to get the data efficiently (i.e. with DB query only, without Python loops)
+        # ---------------------------------------------------------------------
+        # Create a list of indices of fields that represents full objects
+        full_obj_columns = [i for i, field in enumerate(fields) if field_objs[i] is None or field_objs[i].rel]
+        # Indices of fields that have url link attached
+        url_fields = [i for i, field in  enumerate(fields) if field.is_url()]
+        # Indices of fields that require rewritting
+        rewritten_columns = [i for i, field in enumerate(fields) if field.is_rewritten()]
+
+        # For full object fields and rewritten fields, prepare the mapper
+        def _unity(value, **kwargs): return value # 1<->1 map
+        obj_mapper = [_unity if not field.is_rewritten() else field.rewrite_value for field in fields]
+
+
+        # -----------------------------
+        # Results retrival part
+        # ----------------------------
+        # First, get the raw queryset of the data
+        results = self.filter(user, **query).order_by(*order_by)
+        # Next, apply global filter to all db fields (reduce idea based on:
+        # http://simeonfranklin.com/blog/2011/jun/14/best-way-or-list-django-orm-q-objects/)
+        search_queries = []
+        if search_phrase:
+            try:
+                search_queries = [models.Q(**{u"%s__%s" % (field, search_lookup): search_phrase}) for i, field in enumerate(mapped_fields) if not i in rewritten_columns and not i in full_obj_columns]
+            except Exception, error:
+                print 'Madsada err or ', error
+
+        filtered_results = results.all()
+        if search_queries:
+            filtered_results = filtered_results.filter(reduce(OR, search_queries))
+
+        def columns(mapped_fields, results):
+            for field_id, mapped_db_field in enumerate(mapped_fields):
+                values = results.values_list(mapped_db_field, flat=True)
+
+                # First, check if the current field value should be tranfered to
+                # full python object, if so, map values to new values list
+                if field_id in full_obj_columns:
+                    objs = field_value_models[field_id].objects.in_bulk(list(values))
+                    values = map(lambda x: objs.get(x), values)
+
+                
+                # URL handler part: performs actions for all values that should be 
+                # returned as URL
+                if field_id in url_fields:
+
+                    def trig(obj): 
+                        """ Checks if the URL of the given object shold be rendered. Returns True|False.
+                        If no trigger is give, returns True
+                        
+                        """
+                        if url_triggers[field_id][0]:
+                            return url_triggers[field_id][1] ^ bool(resolve_lookup(obj, url_triggers[field_id][0]))
+                        return True
+
+                    # First, build a ((trigger, url, obj),...) structure, where trigger is boolean that informs
+                    # if the url link should be rendered
+                    _values = map(lambda x: (trig(x[1]), fields[field_id].get_url(results[x[0]], x[1], **arguments), obj_mapper[field_id](x[1], **arguments)), enumerate(values))
+                    values = map(lambda x: u'<a href="%s">%s</a>' % (x[1], x[2]) if x[0] else u"%s" % x[2], _values)
+                # if field_id is not url, it might require to be rewritten 
+                elif field_id in rewritten_columns:
+                    values = map(lambda x: u"%s" % obj_mapper[field_id](x, **arguments), values)
+                # if the field_id is not url, it was not rewritten, but it is full object
+                # we tranform it to unicode object
+                elif field_id in full_obj_columns:
+                    values = map(unicode, values)
+                yield values
+
+
+        return {'data': zip(*columns(mapped_fields, filtered_results[results_from:results_to if results_to > results_from else filtered_results.count()])),
+                'results': results,
+                'filtered_results': filtered_results
+                }
+
     def filter(self, user, **query):
         """ Returns variant results.
 
@@ -379,7 +484,7 @@ class ProspectVariant(models.Model):
         # ----------------------------------------------
 
         # -------------------------------------
-        data = data.only(*self.fields.exclude(db_field='self').values_list('db_field', flat=True))
+        #data = data.only(*self.fields.exclude(db_field='self').values_list('db_field', flat=True))
         # ------------------------------------
 
         if self.prospect.operators.exists():
@@ -530,17 +635,26 @@ class Field(models.Model):
     rewrite_as = models.TextField(verbose_name="Rewrite the output of this field", help_text="If checked, you can alter the output of this field by specifying a string of text with replacement tokens that can use any existing field output.", blank=True)
     
     class Meta:
-        ordering = ('variant__verbose_name', 'weight')
+        ordering = ('weight', 'variant__verbose_name')
 
     def get_field_object(self):
         if not hasattr(self, '_field_obj'):
             self._field_obj = None
             if self.db_field != 'self':
                 try:
-                    self._field_obj = self.variant.prospect.source.content_type.model_class()._meta.get_field(self.db_field)
+                    self._field_obj = get_field(self.variant.prospect.source.content_type.model_class(), self.db_field)
                 except Exception, error:
                     raise 
         return self._field_obj
+
+    def get_field_model(self):
+        return self.get_field_object().model
+
+    def get_field_value_model(self):
+        field_obj = self.get_field_object()
+        if not field_obj is None and not field_obj.rel is None:
+            return field_obj.rel.to
+        return self.variant.prospect.source.content_type.model_class()
 
     def get_db_type(self):
         try:
@@ -586,6 +700,22 @@ class Field(models.Model):
             return {'url': self._render_url(obj, value, **kwargs), 'value': self._rewrite(value, **kwargs)} 
         except models.get_model('prospects', 'FieldURL').DoesNotExist:
             return self._rewrite(value, **kwargs)
+
+    def rewrite_value(self, value, **kwargs):
+        if self.lookup and not (value is None): # if value is None, leave the lookup
+            value = self._resolve_lookup(value, self.lookup)
+        return self._rewrite(value, **kwargs)
+
+    def get_url(self, obj, value, **kwargs):
+        if self.link_to:
+            return self.get_object_link(obj)
+        return self._render_url(obj, value, **kwargs)
+
+    def is_url(self):
+        return self.link_to or models.get_model('prospects','fieldurl').objects.filter(field=self).exists()
+
+    def is_rewritten(self):
+        return self.lookup or self.rewrite_as or self.default_if_none_text or self.default_text
 
 
     def _render_url(self, obj, value, **kwargs):
@@ -740,11 +870,18 @@ class VariantContext(models.Model):
             value_src.append((parent, self.object_detail.parent.variant))
         return value_src
 
+    def _prepare_value(self, value):
+        """ Preparese the value to be useful in string context --
+        if the value is full object, maps this to its `id`.
+        """
+        if hasattr(value, '_meta'):
+            return value.pk
+        return value
+
     def get_query(self, obj, parent):
         query = {}
         for v_obj, src in self._get_value_src(obj, parent):
-            query.update(dict([(str(aspect_value.aspect.id), {'lookup': aspect_value.lookup, 'value': aspect_value.value_field.get_value(v_obj)}) for aspect_value in self.aspect_values.filter(value_field__variant=src)]))
-
+            query.update(dict([(str(aspect_value.aspect.id), {'lookup': aspect_value.lookup, 'value': self._prepare_value(aspect_value.value_field.get_value(v_obj))}) for aspect_value in self.aspect_values.filter(value_field__variant=src)]))
         return query
 
     def get_arguments(self, obj, parent):

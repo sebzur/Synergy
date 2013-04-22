@@ -1,4 +1,3 @@
-{% load tabledisplay_rendering %}
 {% if results %}
 <table class="display" id="{{ table.get_css_id }}">
   <thead>
@@ -7,13 +6,10 @@
     {% endfor %}
   </thead>
   <tbody>
-    {% with table.columns.all as columns %}
-    {% for obj in results %}
-    {% table_row obj table columns arguments  %}
-    {% endfor %}
-    {% endwith %}
   </tbody>
 </table>
 {% else %}
-   {{ table.get_variant.empty_text|default:"No results were found. The query is to strict or it was not submitted." }}
+  {{ table.get_variant.empty_text|default:"No results were found. The query is to strict or it was not submitted." }}
 {% endif %}
+
+
