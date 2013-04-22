@@ -10,7 +10,7 @@
 {% load prospects_rendering %}
 
 {% with variant.listrepresentation.representation as tab %}
-  {% get_ajax_url table.variant arguments query as ajax_url %}
+  {% get_ajax_url tab.variant arguments query as ajax_url %}
   {% simple_table tab.get_css_selector tab.lang tab.is_filtered tab.is_paginated tab.page_rows ajax_url %}
 {% endwith %}
 

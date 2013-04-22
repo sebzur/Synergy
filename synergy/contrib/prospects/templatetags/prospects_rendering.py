@@ -13,7 +13,6 @@ from django.core.urlresolvers import reverse
 
 register = template.Library()
 
-
 @register.tag
 def get_ajax_url(parser, token):
     try:
@@ -31,7 +30,6 @@ class AjaxUrlNode(template.Node):
         self.as_var = as_var
 
     def urlquery(self, args, variant):
-        print 'Sprawdzam argumenty dla', variant, variant.arguments.values_list('name', flat=True)
         return "/".join(("%s" % args.get(arg) for arg in variant.arguments.values_list('name', flat=True)))
 
     def urlgetquery(self, obj):
@@ -54,6 +52,7 @@ class AjaxUrlNode(template.Node):
         separator = '&'
         full_url = "%s%s%s" % (base_url, separator, self.urlgetquery(query))
         context[self.as_var] = full_url
+        return ''
 
 
 @register.filter(name='teaser')

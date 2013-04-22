@@ -88,8 +88,7 @@ class AspectFormMixin(generic.FormView):
         return self.get_query_dict()
 
     def form_valid(self, form):
-        kwgs = self.get_query_dict()
-        kwgs.update(dict((smart_str(key), value) for key, value in form.cleaned_data.iteritems()))
+        kwgs = dict((smart_str(key), value) for key, value in form.cleaned_data.iteritems())
         for context in form.contexts.values():
             kwgs.update(dict((smart_str(key), value) for key, value in context.cleaned_data.iteritems()))
 
