@@ -23,6 +23,10 @@
     {% load ui_loaders %}
     {% load_plugin jquery %}
     {% load_plugin jqueryui %}
+    <link rel="stylesheet" href="{{ STATIC_URL }}cookieCuttr/cookiecuttr.css" type="text/css" />
+    <script src="{{ STATIC_URL }}jquery-cookie/jquery.cookie.js"></script>
+    <script src="{{ STATIC_URL }}cookieCuttr/jquery.cookiecuttr.js"></script>
+    {% include 'pageone/cookie.js' %}
     {# ------------ ROBOTS --------------- #}
     <meta name="robots" content="NONE,NOARCHIVE" />
     {% block posthead %}
