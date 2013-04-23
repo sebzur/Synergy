@@ -323,7 +323,6 @@ class ProspectVariant(models.Model):
 
 
     def get_data(self, user, query, fields, arguments, results_from, results_to, ordering, url_triggers, search_phrase='', search_lookup='icontains'):
-        print 'Getin data'
         # First, get the db_fields that we will query for
         db_fields = fields.values_list('db_field', flat=True)
         # Then apply a mapping ('self'->'id'), we need this for the proper db
@@ -373,10 +372,7 @@ class ProspectVariant(models.Model):
         # http://simeonfranklin.com/blog/2011/jun/14/best-way-or-list-django-orm-q-objects/)
         search_queries = []
         if search_phrase:
-            try:
-                search_queries = [models.Q(**{u"%s__%s" % (field, search_lookup): search_phrase}) for i, field in enumerate(mapped_fields) if not i in rewritten_columns and not i in full_obj_columns]
-            except Exception, error:
-                print 'Madsada err or ', error
+            search_queries = [models.Q(**{u"%s__%s" % (field, search_lookup): search_phrase}) for i, field in enumerate(mapped_fields) if not i in rewritten_columns and not i in full_obj_columns]
 
         filtered_results = results.all()
         if search_queries:

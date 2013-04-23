@@ -22,6 +22,10 @@ class Table(RepresentationModel):
     def get_posthead_postfix(self):
         return self.get_prospect_postfix()
 
+    def get_columns_attrs(self):
+        true_map = {True: 'true', False: 'false'}
+        return "[%s]" % ','.join(['{"bSortable": %s}' % true_map[column.sortable] for column in self.columns.all().order_by('weight')])
+
     class Meta:
         app_label = "prospects"
 
