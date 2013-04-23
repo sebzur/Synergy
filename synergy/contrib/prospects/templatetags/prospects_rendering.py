@@ -5,6 +5,7 @@ from django.db.models import get_model
 import re
 import copy
 import urllib 
+from urlparse import urlparse
 
 from synergy.contrib.records.models import get_parent_field
 from django.utils.datastructures import SortedDict
@@ -49,7 +50,11 @@ class AjaxUrlNode(template.Node):
             base_url = reverse('pr', args=[variant.name, url_query])
         else:
             base_url = reverse('pr', args=[variant.name])
-        separator = '&'
+
+        if urlparse(base_url).query:
+            separator = "&"
+        else:
+            separator = "?"
         full_url = "%s%s%s" % (base_url, separator, self.urlgetquery(query))
         context[self.as_var] = full_url
         return ''
